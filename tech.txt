@@ -1,0 +1,180 @@
+This is a comprehensive architectural blueprint for your regional auction platform, tailored for a Laravel-centric ecosystem. Since you are an Application Architect, I have focused on structural integrity, concurrency handling, and scalability.
+
+01-system-overview.md
+System Overview: Regional Auction Platform
+Core Purpose
+A high-concurrency auction engine designed for the Balkan market, supporting real-time bidding, automated proxy bids, and integrated regional logistics.
+
+Key Subsystems
+Auction Engine: Manages bid increments, anti-sniping logic, and state transitions.
+
+Notification Hub: Real-time socket updates for outbid alerts and auction endings.
+
+Trust & Safety: User verification (KYC), rating systems, and Escrow-lite payment flows.
+
+Logistics Bridge: Integration with regional couriers (EuroExpress, PostExpress, etc.).
+
+02-tech-stack.md
+Technology Stack
+Framework: Laravel 11.x
+
+Real-time: Laravel Reverb (WebSocket) + Laravel Echo.
+
+Database: PostgreSQL 16+ (Strict ACID compliance for bidding transactions).
+
+Caching/Locking: Redis (Atomic operations for bid locks).
+
+Search Engine: Meilisearch (High speed, typo-tolerant for regional dialects).
+
+Frontend: Tailwind CSS + Livewire v3 (for reactive UI without full SPA complexity) or Vue.js 3 for complex dashboards.
+
+Queue Management: Laravel Horizon (Redis-backed).
+
+03-database-schema.md
+Database Schema (Core Tables)
+SQL
+-- High-level representation of critical tables
+Table users {
+  id uuid [pk]
+  role enum('admin', 'seller', 'buyer')
+  kyc_verified boolean
+  balance decimal
+}
+
+Table auctions {
+  id uuid [pk]
+  seller_id uuid
+  title varchar
+  start_price decimal
+  current_price decimal
+  reserve_price decimal
+  status enum('draft', 'active', 'finished', 'cancelled')
+  end_at timestamp
+  auto_extension boolean -- Anti-sniping
+}
+
+Table bids {
+  id uuid [pk]
+  auction_id uuid
+  user_id uuid
+  amount decimal
+  is_proxy boolean
+  created_at timestamp [index]
+}
+04-auth-and-roles.md
+Authentication and Authorization
+Provider: Laravel Breeze or Jetstream (Fortify).
+
+RBAC: Spatie Laravel-Permission.
+
+Roles:
+
+SuperAdmin: System configuration, dispute resolution.
+
+Moderator: Content verification, category management.
+
+Verified Seller: High-limit auctions, API access for inventory.
+
+Buyer: Basic bidding, watchlists.
+
+Security: Multi-factor authentication (MFA) required for all Seller roles.
+
+05-api-design.md
+API Design
+Format: RESTful JSON API.
+
+Versioning: /api/v1/.
+
+Core Endpoints:
+
+GET /auctions: Filtered list (Livewire handles this for web; API for mobile).
+
+POST /auctions/{id}/bid: Atomic bidding endpoint.
+
+GET /users/me/watchlists: Current user's tracked items.
+
+07-frontend-structure.md
+Frontend Structure
+Layouts: Guest, App, Admin.
+
+Components (Livewire/Vue):
+
+AuctionCard: Displays real-time timer and current price.
+
+BiddingConsole: Input for bids with instant validation.
+
+CountdownTimer: Client-side sync with server NTP.
+
+Assets: Vite for bundling.
+
+08-deployment.md
+Deployment & Infrastructure
+Environment: Docker (Laravel Sail for local, custom image for Prod).
+
+Hosting: AWS (Frankfurt) or DigitalOcean (Frankfurt) for low latency to the Balkans.
+
+CI/CD: GitHub Actions or GitLab CI.
+
+CDN: Cloudflare (WAF protection against DDoS during high-profile auctions).
+
+Object Storage: AWS S3 for product images.
+
+09-activity-plan.md
+Activity Plan (Roadmap)
+Phase 1 (Foundation): Setup Laravel, Database, and Auth.
+
+Phase 2 (Auction Engine): Implement Bidding logic, Proxy bids, and Anti-sniping.
+
+Phase 3 (Real-time): Integrate Laravel Reverb for live updates.
+
+Phase 4 (Regional Edge): Payment gateway integration (CorvusPay/Monri) and Logistics API.
+
+Phase 5 (Launch): Beta testing with selected regional sellers.
+
+12-laravel-architecture.md
+Laravel Internal Architecture
+Pattern: Service Layer + Repository (Optional).
+
+Domain Logic:
+
+App\Services\BiddingService: Handles the math and transaction locks for bids.
+
+App\Services\AuctionService: Handles state changes and extensions.
+
+Events:
+
+BidPlaced: Triggers WebSocket broadcast.
+
+AuctionEnded: Triggers payment processing and email notifications.
+
+14-feature-flags-and-tiers.md
+Feature Flags and Tiers
+Package: spatie/laravel-feature-flags.
+
+Tiers:
+
+Free: 5 active auctions, standard visibility.
+
+Premium: 50+ active auctions, "Featured" badges, lower commission.
+
+Storefront: Custom subdomains for large regional sellers.
+
+16-growth-engagement-strategy.md
+Growth & Engagement
+SEO: Dynamic meta tags for every auction item.
+
+Referral System: Small commission discount for referring new verified sellers.
+
+Engagement: "Ending Soon" push notifications.
+
+Trust: Verified badge for sellers who have completed 50+ successful transactions.
+
+18-ui-design-guidelines.md
+UI/UX Guidelines
+Theme: Clean, whitespace-heavy, "Trust-Blue" primary colors.
+
+Accessibility: WCAG compliant (high contrast for older users common in regional collector circles).
+
+Mobile-First: 70% of traffic expected from mobile; all auction cards must be thumb-friendly.
+
+Would you like me to expand on the BiddingService logic specifically, or perhaps generate a Docker Compose configuration for this stack?
