@@ -1,0 +1,328 @@
+# ===================================
+# AUKCIJSKA PLATFORMA - PRODUCTION
+# ===================================
+# Docker Compose for production deployment
+# Usage: docker compose -f docker-compose.prod.yml up -d
+#
+# IMPORTANT: Before running:
+# 1. Set all environment variables in .env.production
+# 2. Generate APP_KEY: php artisan key:generate
+# 3. Set up SSL certificates
+# 4. Configure backup strategy
+
+services:
+
+  # --------------------------------
+  # Laravel Application (PHP-FPM)
+  # --------------------------------
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        - USER_ID=1000
+        - GROUP_ID=1000
+    container_name: aukcije_app
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./.env:/var/www/html/.env:ro
+    networks:
+      - aukcije_network
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "php", "artisan", "about", "--ansi"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --------------------------------
+  # Nginx Web Server (Production)
+  # --------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: aukcije_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./storage/app/public:/var/www/html/storage/app/public:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - aukcije_network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --------------------------------
+  # PostgreSQL Database (Production)
+  # --------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: aukcije_postgres
+    restart: always
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    networks:
+      - aukcije_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------
+  # Redis (Production)
+  # --------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: aukcije_redis
+    restart: always
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    networks:
+      - aukcije_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD:-}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------
+  # Meilisearch (Production)
+  # --------------------------------
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: aukcije_meilisearch
+    restart: always
+    expose:
+      - "7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY}
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+    networks:
+      - aukcije_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --------------------------------
+  # Laravel Reverb (WebSocket)
+  # --------------------------------
+  reverb:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: aukcije_reverb
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html:cached
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    expose:
+      - "8080"
+    networks:
+      - aukcije_network
+    depends_on:
+      - app
+      - redis
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # --------------------------------
+  # Laravel Horizon (Queue Worker)
+  # --------------------------------
+  horizon:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: aukcije_horizon
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html:cached
+    command: php artisan horizon
+    networks:
+      - aukcije_network
+    depends_on:
+      - app
+      - redis
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # --------------------------------
+  # Laravel Scheduler
+  # --------------------------------
+  scheduler:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: aukcije_scheduler
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html:cached
+    command: php artisan schedule:work
+    networks:
+      - aukcije_network
+    depends_on:
+      - app
+      - postgres
+      - redis
+
+  # --------------------------------
+  # Prometheus (Monitoring)
+  # --------------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: aukcije_prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - aukcije_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+
+  # --------------------------------
+  # Grafana (Dashboards)
+  # --------------------------------
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: aukcije_grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://monitoring.${APP_URL}
+    networks:
+      - aukcije_network
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # --------------------------------
+  # pgBackup (Database Backup)
+  # --------------------------------
+  pg_backup:
+    image: prodrigestivill/postgres-backup-local:16
+    container_name: aukcije_pg_backup
+    restart: always
+    volumes:
+      - ./backups/postgres:/backups
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+    networks:
+      - aukcije_network
+    depends_on:
+      - postgres
+
+networks:
+  aukcije_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  meilisearch_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

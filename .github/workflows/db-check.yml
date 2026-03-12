@@ -1,0 +1,122 @@
+# ===================================
+# AUKCIJSKA PLATFORMA - DB CHECK WORKFLOW
+# ===================================
+# Validates database migrations
+# Runs on every PR to main
+
+name: DB Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'database/migrations/**'
+
+jobs:
+  # --------------------------------
+  # Migration Validation
+  # --------------------------------
+  validate:
+    name: Validate Migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aukcije_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, gd, intl, pdo_pgsql, zip
+          tools: composer:v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: php-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run Migrations
+        run: php artisan migrate --force
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+
+      - name: Rollback All Migrations
+        run: php artisan migrate:rollback --step=100
+
+      - name: Re-run Migrations
+        run: php artisan migrate --force
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+
+      - name: Check Migration Status
+        run: php artisan migrate:status
+
+  # --------------------------------
+  # Schema Consistency Check
+  # --------------------------------
+  schema:
+    name: Schema Consistency
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aukcije_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, gd, intl, pdo_pgsql, zip
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run Migrations
+        run: php artisan migrate --force
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+
+      - name: Export Schema
+        run: php artisan schema:dump --database=pgsql
+
+      - name: Verify Schema File
+        run: test -f database/schema/pgsql-default.sql

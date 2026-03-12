@@ -1,0 +1,84 @@
+# ===================================
+# AUKCIJSKA PLATFORMA - PROMETHEUS CONFIG
+# ===================================
+# Prometheus scraping configuration
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'aukcije-platform'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Rule files (optional)
+# rule_files:
+#   - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Laravel application metrics (via prometheus-php exporter)
+  - job_name: 'laravel_app'
+    static_configs:
+      - targets: ['app:9000']
+        labels:
+          service: 'laravel'
+    metrics_path: '/metrics'
+
+  # Nginx metrics (via nginx-prometheus-exporter)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+        labels:
+          service: 'nginx'
+    metrics_path: '/metrics'
+
+  # PostgreSQL metrics (via postgres-exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+        labels:
+          service: 'postgres'
+    # Requires postgres-exporter sidecar
+
+  # Redis metrics (via redis-exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+        labels:
+          service: 'redis'
+    # Requires redis-exporter sidecar
+
+  # Meilisearch health check
+  - job_name: 'meilisearch'
+    static_configs:
+      - targets: ['meilisearch:7700']
+        labels:
+          service: 'meilisearch'
+    metrics_path: '/health'
+
+  # Reverb WebSocket server
+  - job_name: 'reverb'
+    static_configs:
+      - targets: ['reverb:8080']
+        labels:
+          service: 'reverb'
+
+  # Node exporter (system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+        labels:
+          service: 'node'

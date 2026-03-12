@@ -1,0 +1,295 @@
+# ===================================
+# AUKCIJSKA PLATFORMA - CI WORKFLOW
+# ===================================
+# Runs on every pull request
+# - PHP/JS linting
+# - Static analysis (PHPStan)
+# - Unit + Feature tests
+# - Vue component tests
+# - Build verification
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  APP_NAME: Aukcije
+  APP_ENV: testing
+  APP_KEY: base64:test123456789012345678901234567890=
+  APP_DEBUG: false
+  APP_URL: http://localhost
+
+  DB_CONNECTION: pgsql
+  DB_HOST: 127.0.0.1
+  DB_PORT: 5432
+  DB_DATABASE: aukcije_test
+  DB_USERNAME: postgres
+  DB_PASSWORD: postgres
+
+  REDIS_HOST: 127.0.0.1
+  REDIS_PORT: 6379
+
+  MEILISEARCH_HOST: http://localhost:7700
+  MEILISEARCH_KEY: test_master_key
+
+  REVERB_SERVER_HOST: localhost
+  REVERB_SERVER_PORT: 8080
+
+jobs:
+  # --------------------------------
+  # Static Analysis
+  # --------------------------------
+  static:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, gd, intl, pdo_pgsql, zip, xdebug
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: php-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            php-${{ hashFiles('composer.lock') }}
+            php-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: PHP Lint (Pint)
+        run: vendor/bin/pint --test
+
+      - name: PHPStan (Level 6)
+        run: vendor/bin/phpstan analyse --level=6 --no-progress
+
+      - name: ESLint
+        run: npm run lint
+
+  # --------------------------------
+  # Unit + Feature Tests
+  # --------------------------------
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: static
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aukcije_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      meilisearch:
+        image: getmeili/meilisearch:v1.6
+        env:
+          MEILI_MASTER_KEY: test_master_key
+          MEILI_ENV: testing
+        options: >-
+          --health-cmd "wget --no-verbose --tries=1 --spider http://localhost:7700/health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 7700:7700
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, gd, intl, pdo_pgsql, zip, xdebug
+          coverage: xdebug
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: php-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            php-${{ hashFiles('composer.lock') }}
+            php-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Run Tests (Parallel)
+        run: php artisan test --parallel --coverage --min=80
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
+          MEILISEARCH_HOST: http://127.0.0.1:${{ job.services.meilisearch.ports['7700'] }}
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/clover.xml
+          flags: unittests
+          name: codecov-aukcije
+          fail_ci_if_error: false
+
+  # --------------------------------
+  # Vue Component Tests
+  # --------------------------------
+  vue-tests:
+    name: Vue Tests
+    runs-on: ubuntu-latest
+    needs: static
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vue Tests
+        run: npx vitest run --coverage
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/vitest-coverage.xml
+          flags: vue-tests
+          fail_ci_if_error: false
+
+  # --------------------------------
+  # Build Verification
+  # --------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: static
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Verify build output
+        run: test -d public/build
+
+  # --------------------------------
+  # Database Migration Check
+  # --------------------------------
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    needs: static
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aukcije_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, gd, intl, pdo_pgsql, zip
+          tools: composer:v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: php-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run Migrations
+        run: php artisan migrate --force
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+
+      - name: Rollback Migrations
+        run: php artisan migrate:rollback --step=10

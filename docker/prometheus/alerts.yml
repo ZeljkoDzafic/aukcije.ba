@@ -1,0 +1,278 @@
+# Prometheus Alert Rules Configuration
+# Aukcije.ba Production Monitoring
+
+groups:
+  - name: aukcije_alerts
+    interval: 30s
+    rules:
+      # ============================================================================
+      # CRITICAL ALERTS (P0)
+      # ============================================================================
+
+      # Application Down
+      - alert: ApplicationDown
+        expr: up{job="laravel_app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Aukcije application is down"
+          description: "Application instance {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://aukcije.ba/docs/runbooks/application-down.md"
+
+      # Database Down
+      - alert: DatabaseDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "Database {{ $labels.job }} has been down for more than 1 minute"
+          runbook_url: "https://aukcije.ba/docs/runbooks/database-down.md"
+
+      # Redis Down
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://aukcije.ba/docs/runbooks/redis-down.md"
+
+      # Payment Failure Spike
+      - alert: PaymentFailureSpike
+        expr: rate(payment_failed_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          team: payments
+        annotations:
+          summary: "High payment failure rate detected"
+          description: "Payment failure rate is {{ $value }} failures per second"
+          runbook_url: "https://aukcije.ba/docs/runbooks/payment-failures.md"
+
+      # Bidding Engine Down
+      - alert: BiddingEngineDown
+        expr: bidding_engine_health == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Bidding engine is not responding"
+          description: "Bidding engine health check failed on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/bidding-engine-down.md"
+
+      # ============================================================================
+      # HIGH PRIORITY ALERTS (P1)
+      # ============================================================================
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: high
+          team: backend
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/high-error-rate.md"
+
+      # High Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: high
+          team: backend
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/high-response-time.md"
+
+      # Queue Backlog
+      - alert: QueueBacklog
+        expr: horizon_queue_jobs > 1000
+        for: 5m
+        labels:
+          severity: high
+          team: backend
+        annotations:
+          summary: "Large queue backlog detected"
+          description: "Queue {{ $labels.queue }} has {{ $value }} pending jobs"
+          runbook_url: "https://aukcije.ba/docs/runbooks/queue-backlog.md"
+
+      # Database Connections High
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: high
+          team: database
+        annotations:
+          summary: "Database connections near limit"
+          description: "Database is using {{ $value | humanizePercentage }} of max connections"
+          runbook_url: "https://aukcije.ba/docs/runbooks/db-connections-high.md"
+
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 10m
+        labels:
+          severity: high
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.mountpoint }}"
+          description: "Disk space is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/disk-space-low.md"
+
+      # Memory Usage High
+      - alert: MemoryUsageHigh
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 10m
+        labels:
+          severity: high
+          team: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/memory-high.md"
+
+      # ============================================================================
+      # MEDIUM PRIORITY ALERTS (P2)
+      # ============================================================================
+
+      # CPU Usage High
+      - alert: CPUUsageHigh
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 15m
+        labels:
+          severity: medium
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/cpu-high.md"
+
+      # WebSocket Connections High
+      - alert: WebSocketConnectionsHigh
+        expr: websocket_connections > 5000
+        for: 10m
+        labels:
+          severity: medium
+          team: backend
+        annotations:
+          summary: "High WebSocket connection count"
+          description: "{{ $value }} active WebSocket connections on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/websocket-high.md"
+
+      # Failed Login Attempts
+      - alert: FailedLoginAttempts
+        expr: rate(login_failed_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: medium
+          team: security
+        annotations:
+          summary: "High number of failed login attempts"
+          description: "{{ $value }} failed login attempts per second"
+          runbook_url: "https://aukcije.ba/docs/runbooks/failed-logins.md"
+
+      # SSL Certificate Expiring Soon
+      - alert: SSLCertificateExpiring
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: medium
+          team: infrastructure
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate expires in {{ $value | humanizeDuration }} on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/ssl-expiring.md"
+
+      # ============================================================================
+      # LOW PRIORITY ALERTS (P3)
+      # ============================================================================
+
+      # Disk Space Moderate
+      - alert: DiskSpaceModerate
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        for: 1h
+        labels:
+          severity: low
+          team: infrastructure
+        annotations:
+          summary: "Disk space getting low on {{ $labels.mountpoint }}"
+          description: "Disk space is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/disk-space-moderate.md"
+
+      # High Bid Rate
+      - alert: HighBidRate
+        expr: rate(bids_placed_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: low
+          team: backend
+        annotations:
+          summary: "Unusually high bid rate"
+          description: "{{ $value }} bids per second on {{ $labels.instance }}"
+          runbook_url: "https://aukcije.ba/docs/runbooks/high-bid-rate.md"
+
+      # Open Disputes High
+      - alert: OpenDisputesHigh
+        expr: disputes_open_count > 50
+        for: 1h
+        labels:
+          severity: low
+          team: support
+        annotations:
+          summary: "High number of open disputes"
+          description: "{{ $value }} disputes currently open"
+          runbook_url: "https://aukcije.ba/docs/runbooks/disputes-high.md"
+
+      # ============================================================================
+      # BUSINESS METRICS ALERTS
+      # ============================================================================
+
+      # No Auctions Ending
+      - alert: NoAuctionsEnding
+        expr: rate(auctions_ended_total[30m]) == 0
+        for: 1h
+        labels:
+          severity: low
+          team: backend
+        annotations:
+          summary: "No auctions ending normally"
+          description: "No auctions have ended in the last hour"
+          runbook_url: "https://aukcije.ba/docs/runbooks/no-auctions-ending.md"
+
+      # Revenue Anomaly
+      - alert: RevenueAnomaly
+        expr: abs(rate(revenue_total[1h]) - avg_over_time(rate(revenue_total[1h])[24h:1h])) / avg_over_time(rate(revenue_total[1h])[24h:1h]) > 0.5
+        for: 2h
+        labels:
+          severity: medium
+          team: business
+        annotations:
+          summary: "Revenue anomaly detected"
+          description: "Revenue is {{ $value | humanizePercentage }} different from 24h average"
+          runbook_url: "https://aukcije.ba/docs/runbooks/revenue-anomaly.md"
+
+      # User Registration Drop
+      - alert: UserRegistrationDrop
+        expr: rate(user_registrations_total[1h]) < avg_over_time(rate(user_registrations_total[1h])[7d:1h]) * 0.5
+        for: 4h
+        labels:
+          severity: low
+          team: business
+        annotations:
+          summary: "User registrations dropped significantly"
+          description: "Registration rate is less than 50% of 7-day average"
+          runbook_url: "https://aukcije.ba/docs/runbooks/registration-drop.md"

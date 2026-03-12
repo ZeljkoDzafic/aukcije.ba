@@ -1,0 +1,13 @@
+parameters:
+    level: 6
+    paths:
+        - app/
+        - config/
+        - routes/
+    excludePaths:
+        - tests/
+        - vendor/
+        - bootstrap/cache/*
+        - storage/*
+    reportMissingTypeHints: true
+    checkGenericClassInNonGenericObjectType: false
