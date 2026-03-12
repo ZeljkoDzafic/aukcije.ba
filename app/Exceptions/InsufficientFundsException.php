@@ -9,7 +9,7 @@ class InsufficientFundsException extends RuntimeException
     public function __construct(float $required, float $available)
     {
         parent::__construct(
-            "Nedovoljno sredstava. Potrebno: {$required} BAM, dostupno: {$available} BAM."
+            "Insufficient balance. Required: {$required} BAM, available: {$available} BAM."
         );
     }
 }

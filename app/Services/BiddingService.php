@@ -20,9 +20,12 @@ use Carbon\Carbon;
 
 class BiddingService
 {
-    public function __construct(
-        protected BidIncrementService $incrementService,
-    ) {}
+    protected BidIncrementService $incrementService;
+
+    public function __construct(?BidIncrementService $incrementService = null)
+    {
+        $this->incrementService = $incrementService ?? app(BidIncrementService::class);
+    }
 
     /**
      * Place a bid on an auction.

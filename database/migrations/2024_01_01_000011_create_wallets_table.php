@@ -15,7 +15,9 @@ return new class extends Migration
             $table->decimal('balance', 12, 2)->default(0);
             $table->decimal('escrow_balance', 12, 2)->default(0);
             $table->string('currency', 3)->default('BAM');
-            $table->boolean('is_frozen')->default(false);
+            $table->boolean('frozen')->default(false);
+            $table->timestamp('frozen_at')->nullable();
+            $table->text('frozen_reason')->nullable();
             $table->timestamps();
         });
     }

@@ -25,7 +25,9 @@ return new class extends Migration
             $table->timestampTz('resolved_at')->nullable();
         });
 
-        DB::statement("ALTER TABLE disputes ADD CONSTRAINT disputes_status_check CHECK (status IN ('open', 'in_review', 'resolved', 'closed'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE disputes ADD CONSTRAINT disputes_status_check CHECK (status IN ('open', 'in_review', 'resolved', 'closed'))");
+        }
     }
 
     public function down(): void

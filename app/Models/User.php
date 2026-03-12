@@ -310,12 +310,16 @@ class User extends Authenticatable
      */
     public function getTier(): array
     {
+        if ($this->subscription?->tier && config('tiers.tiers.'.$this->subscription->tier)) {
+            return config('tiers.tiers.'.$this->subscription->tier);
+        }
+
         if ($this->hasRole('verified_seller')) {
-            return config('tiers.tiers.storefront', ['name' => 'storefront', 'auction_limit' => -1, 'commission_rate' => 5]);
+            return config('tiers.tiers.premium', ['name' => 'premium', 'auction_limit' => 20, 'commission_rate' => 8]);
         }
 
         if ($this->hasRole('seller')) {
-            return config('tiers.tiers.premium', ['name' => 'premium', 'auction_limit' => 20, 'commission_rate' => 8]);
+            return config('tiers.tiers.free', ['name' => 'free', 'auction_limit' => 5, 'commission_rate' => 10]);
         }
 
         return config('tiers.tiers.free', ['name' => 'free', 'auction_limit' => 3, 'commission_rate' => 10]);

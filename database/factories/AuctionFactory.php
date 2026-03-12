@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\AuctionStatus;
 use App\Enums\AuctionType;
 use App\Models\Auction;
+use App\Models\Category;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +18,7 @@ class AuctionFactory extends Factory
     {
         return [
             'seller_id' => User::factory()->seller(),
-            'category_id' => null,
+            'category_id' => Category::factory(),
             'title' => fake()->sentence(4),
             'description' => fake()->paragraph(),
             'start_price' => fake()->randomFloat(2, 10, 500),
@@ -25,9 +26,10 @@ class AuctionFactory extends Factory
             'buy_now_price' => fake()->randomFloat(2, 100, 2000),
             'reserve_price' => null,
             'type' => fake()->randomElement([AuctionType::Standard, AuctionType::BuyNow]),
-            'condition' => fake()->randomElement(['new', 'used', 'refurbished']),
+            'condition' => fake()->randomElement(['new', 'like_new', 'used']),
             'status' => AuctionStatus::Draft,
             'duration_days' => 7,
+            'starts_at' => now(),
             'ends_at' => now()->addDays(7),
             'started_at' => null,
             'ended_at' => null,
@@ -40,6 +42,13 @@ class AuctionFactory extends Factory
             'last_bid_at' => null,
             'is_featured' => false,
             'featured_until' => null,
+            'shipping_available' => true,
+            'shipping_cost' => null,
+            'shipping_info' => 'Dostava prema dogovoru',
+            'location_city' => fake()->city(),
+            'location_country' => 'BA',
+            'location' => fake()->city(),
+            'slug' => fake()->unique()->slug(),
         ];
     }
 

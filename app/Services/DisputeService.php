@@ -7,7 +7,12 @@ use Illuminate\Support\Facades\{DB, Storage};
 
 class DisputeService
 {
-    public function __construct(protected EscrowService $escrowService) {}
+    protected EscrowService $escrowService;
+
+    public function __construct(?EscrowService $escrowService = null)
+    {
+        $this->escrowService = $escrowService ?? app(EscrowService::class);
+    }
 
     public function openDispute(Order $order, User $opener, string $reason, string $description): Dispute
     {

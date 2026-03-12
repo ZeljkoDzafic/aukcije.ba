@@ -16,15 +16,65 @@ class WalletService
         );
     }
 
-    public function getBalance(User $user): array
+    public function getBalance(User $user): float
+    {
+        return (float) $this->getWallet($user)->balance;
+    }
+
+    public function getBalanceSummary(User $user): array
     {
         $wallet = $this->getWallet($user);
+
         return [
-            'available' => $wallet->balance,
-            'escrow'    => $wallet->escrow_balance,
-            'total'     => $wallet->balance + $wallet->escrow_balance,
+            'available' => (float) $wallet->balance,
+            'escrow'    => (float) $wallet->escrow_balance,
+            'total'     => (float) $wallet->balance + (float) $wallet->escrow_balance,
             'currency'  => 'BAM',
         ];
+    }
+
+    public function getTotalBalance(User $user): float
+    {
+        $wallet = $this->getWallet($user);
+
+        return (float) $wallet->balance + (float) $wallet->escrow_balance;
+    }
+
+    public function hasSufficientBalance(User $user, float $amount): bool
+    {
+        return $this->getBalance($user) >= $amount;
+    }
+
+    public function getTransactions(User $user)
+    {
+        return $this->getWallet($user)
+            ->transactions()
+            ->latest('created_at')
+            ->get();
+    }
+
+    public function freezeWallet(User $user, string $reason): Wallet
+    {
+        $wallet = $this->getWallet($user);
+        $wallet->update([
+            'frozen' => true,
+            'frozen_at' => now(),
+            'frozen_reason' => $reason,
+        ]);
+
+        return $wallet->fresh();
+    }
+
+    public function unfreezeWallet(User $user): Wallet
+    {
+        $wallet = $this->getWallet($user);
+        $wallet->update([
+            'frozen' => false,
+            'frozen_at' => null,
+            'frozen_reason' => null,
+        ]);
+
+        return $wallet->fresh();
     }
 
     public function deposit(User $user, float $amount, string $gateway, ?string $referenceId = null): WalletTransaction

@@ -13,7 +13,7 @@ class WalletController extends Controller
 
     public function balance(Request $request): JsonResponse
     {
-        $data = $this->walletService->getBalance($request->user());
+        $data = $this->walletService->getBalanceSummary($request->user());
 
         return response()->json(array_merge(['success' => true], $data, [
             'data' => $data,

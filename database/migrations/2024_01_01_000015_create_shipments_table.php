@@ -22,7 +22,9 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
         });
 
-        DB::statement("ALTER TABLE shipments ADD CONSTRAINT shipments_courier_check CHECK (courier IN ('euroexpress', 'postexpress', 'overseas', 'bh_posta', 'other'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipments ADD CONSTRAINT shipments_courier_check CHECK (courier IN ('euroexpress', 'postexpress', 'overseas', 'bh_posta', 'other'))");
+        }
     }
 
     public function down(): void

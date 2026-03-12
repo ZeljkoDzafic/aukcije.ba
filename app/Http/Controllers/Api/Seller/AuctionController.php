@@ -18,7 +18,7 @@ class AuctionController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
-            'category_id' => ['nullable', 'string'],
+            'category_id' => ['nullable'],
             'start_price' => ['required', 'numeric', 'min:0.01'],
             'reserve_price' => ['nullable', 'numeric', 'min:0'],
             'buy_now_price' => ['nullable', 'numeric', 'min:0'],
@@ -55,7 +55,7 @@ class AuctionController extends Controller
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
-            'category_id' => ['nullable', 'string'],
+            'category_id' => ['nullable'],
             'start_price' => ['sometimes', 'numeric', 'min:0.01'],
             'reserve_price' => ['nullable', 'numeric', 'min:0'],
             'buy_now_price' => ['nullable', 'numeric', 'min:0'],

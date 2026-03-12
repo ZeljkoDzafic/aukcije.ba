@@ -8,6 +8,6 @@ class WalletFrozenException extends RuntimeException
 {
     public function __construct()
     {
-        parent::__construct('Vaš novčanik je zamrznut. Kontaktirajte podršku.');
+        parent::__construct('Wallet is frozen');
     }
 }

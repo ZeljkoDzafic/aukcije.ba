@@ -40,6 +40,9 @@ class BidController extends Controller
 
             return response()->json([
                 'success' => true,
+                'id' => $bid->id,
+                'amount' => (float) $bid->amount,
+                'user_id' => $bid->user_id,
                 'data' => [
                     'bid_id' => $bid->id,
                     'current_price' => (float) $auction->current_price,

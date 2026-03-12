@@ -20,7 +20,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE seller_subscriptions ADD CONSTRAINT seller_subscriptions_tier_check CHECK (tier IN ('free', 'premium', 'storefront'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE seller_subscriptions ADD CONSTRAINT seller_subscriptions_tier_check CHECK (tier IN ('free', 'premium', 'storefront'))");
+        }
     }
 
     public function down(): void

@@ -8,7 +8,12 @@ use Illuminate\Support\Facades\DB;
 
 class EscrowService
 {
-    public function __construct(protected WalletService $walletService) {}
+    protected WalletService $walletService;
+
+    public function __construct(?WalletService $walletService = null)
+    {
+        $this->walletService = $walletService ?? app(WalletService::class);
+    }
 
     /**
      * Freeze buyer funds when they win an auction.

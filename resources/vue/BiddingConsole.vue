@@ -151,12 +151,15 @@ onMounted(() => {
 
     if (props.userId) {
         privateChannel = userChannel(props.userId);
-        privateChannel.listen('OutbidNotification', (event) => {
-            outbidMessage.value = event.message ?? 'Nadlicitirani ste na ovoj aukciji.';
-        });
-        privateChannel.listen('AuctionWon', (event) => {
-            feedbackMessage.value = event.message ?? 'Čestitamo, vodeći ste bidder.';
-            triggerConfetti();
+        privateChannel.notification((notification) => {
+            if (notification.type === 'outbid') {
+                outbidMessage.value = notification.message ?? 'Nadlicitirani ste na ovoj aukciji.';
+            }
+
+            if (notification.type === 'auction_won') {
+                feedbackMessage.value = notification.message ?? 'Čestitamo, dobili ste aukciju.';
+                triggerConfetti();
+            }
         });
     }
 });
@@ -165,8 +168,7 @@ onBeforeUnmount(() => {
     stopAuctionUpdates?.();
 
     if (privateChannel) {
-        privateChannel.stopListening('OutbidNotification');
-        privateChannel.stopListening('AuctionWon');
+        privateChannel.stopListening('.Illuminate\\Notifications\\Events\\BroadcastNotificationCreated');
     }
 
     window.clearTimeout(confettiTimeout);

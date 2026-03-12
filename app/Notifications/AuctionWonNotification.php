@@ -3,11 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Auction;
-use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class AuctionWonNotification extends Notification implements ShouldQueue
@@ -22,11 +21,11 @@ class AuctionWonNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         $channels = ['database', 'broadcast', 'mail'];
-        
+
         if ($notifiable->prefersSmsNotification()) {
             $channels[] = 'sms';
         }
-        
+
         return $channels;
     }
 
@@ -44,21 +43,20 @@ class AuctionWonNotification extends Notification implements ShouldQueue
             ->line('1. Otiđite na "Moje narudžbe"')
             ->line('2. Izvršite plaćanje u roku od 3 dana')
             ->line('3. Nakon potvrde dostave, sredstva se oslobađaju prodavcu')
-            ->action('Plati odmah', route('orders.show', ['order' => $this->auction->order?->id]))
+            ->action('Idi na narudžbe', route('orders.index'))
             ->salutation('Čestitamo još jednom! Tim Aukcije.ba');
     }
 
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return (new BroadcastMessage)
-            ->content('🎉 Čestitamo! Dobili ste aukciju: ' . $this->auction->title)
-            ->level('success')
-            ->data([
-                'auction_id' => $this->auction->id,
-                'auction_title' => $this->auction->title,
-                'final_price' => $this->finalPrice,
-                'order_id' => $this->auction->order?->id,
-            ]);
+        return new BroadcastMessage([
+            'type' => 'auction_won',
+            'message' => 'Čestitamo! Dobili ste aukciju: '.$this->auction->title,
+            'auction_id' => $this->auction->id,
+            'auction_title' => $this->auction->title,
+            'final_price' => $this->finalPrice,
+            'order_id' => $this->auction->order?->id,
+        ]);
     }
 
     public function toArray(object $notifiable): array

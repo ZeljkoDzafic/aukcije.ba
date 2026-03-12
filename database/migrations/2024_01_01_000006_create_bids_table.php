@@ -16,8 +16,10 @@ return new class extends Migration
             $table->uuid('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->decimal('amount', 12, 2);
+            $table->boolean('is_winning')->default(false);
             $table->boolean('is_proxy')->default(false);
             $table->boolean('is_auto')->default(false);
+            $table->decimal('max_proxy_amount', 12, 2)->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->timestamp('created_at')->useCurrent();
         });

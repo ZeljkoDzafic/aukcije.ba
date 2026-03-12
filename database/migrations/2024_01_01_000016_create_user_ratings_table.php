@@ -25,8 +25,10 @@ return new class extends Migration
             $table->unique(['order_id', 'rater_id']);
         });
 
-        DB::statement('ALTER TABLE user_ratings ADD CONSTRAINT user_ratings_score_check CHECK (score BETWEEN 1 AND 5)');
-        DB::statement("ALTER TABLE user_ratings ADD CONSTRAINT user_ratings_type_check CHECK (type IN ('buyer', 'seller'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE user_ratings ADD CONSTRAINT user_ratings_score_check CHECK (score BETWEEN 1 AND 5)');
+            DB::statement("ALTER TABLE user_ratings ADD CONSTRAINT user_ratings_type_check CHECK (type IN ('buyer', 'seller'))");
+        }
     }
 
     public function down(): void

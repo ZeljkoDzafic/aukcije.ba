@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Auction;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -19,7 +20,7 @@ class OutbidNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -40,6 +41,12 @@ class OutbidNotification extends Notification implements ShouldQueue
             'auction_id'    => $this->auction->id,
             'auction_title' => $this->auction->title,
             'new_amount'    => $this->newAmount,
+            'message'       => "Nadlicitirani ste na aukciji {$this->auction->title}.",
         ];
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage($this->toArray($notifiable));
     }
 }

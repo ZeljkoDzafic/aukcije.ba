@@ -22,8 +22,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_gateway_check CHECK (gateway IN ('stripe', 'paypal', 'monri', 'corvuspay', 'wallet'))");
-        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK (status IN ('pending', 'completed', 'failed', 'refunded'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_gateway_check CHECK (gateway IN ('stripe', 'paypal', 'monri', 'corvuspay', 'wallet'))");
+            DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK (status IN ('pending', 'completed', 'failed', 'refunded'))");
+        }
     }
 
     public function down(): void

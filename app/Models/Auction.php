@@ -95,7 +95,6 @@ class Auction extends Model
         'views_count' => 'integer',
         'watchers_count' => 'integer',
         'type' => AuctionType::class,
-        'status' => AuctionStatus::class,
     ];
 
     // -------------------------------------------------------------------------
@@ -255,7 +254,7 @@ class Auction extends Model
      */
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('status', AuctionStatus::Active)
+        return $query->where('status', AuctionStatus::Active->value)
             ->where('ends_at', '>', now());
     }
 
@@ -310,28 +309,28 @@ class Auction extends Model
 
     public function isActive(): bool
     {
-        return $this->status === AuctionStatus::Active && $this->ends_at > now();
+        return $this->status === AuctionStatus::Active->value && $this->ends_at > now();
     }
 
     public function isFinished(): bool
     {
-        return $this->status === AuctionStatus::Finished
-            || ($this->status === AuctionStatus::Active && $this->ends_at <= now());
+        return $this->status === AuctionStatus::Finished->value
+            || ($this->status === AuctionStatus::Active->value && $this->ends_at <= now());
     }
 
     public function isSold(): bool
     {
-        return $this->status === AuctionStatus::Sold;
+        return $this->status === AuctionStatus::Sold->value;
     }
 
     public function isCancelled(): bool
     {
-        return $this->status === AuctionStatus::Cancelled;
+        return $this->status === AuctionStatus::Cancelled->value;
     }
 
     public function isDraft(): bool
     {
-        return $this->status === AuctionStatus::Draft;
+        return $this->status === AuctionStatus::Draft->value;
     }
 
     /**

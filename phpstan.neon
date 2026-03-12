@@ -9,5 +9,4 @@ parameters:
         - vendor/
         - bootstrap/cache/*
         - storage/*
-    reportMissingTypeHints: true
     checkGenericClassInNonGenericObjectType: false

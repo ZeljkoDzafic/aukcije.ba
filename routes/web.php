@@ -13,6 +13,62 @@ Route::get('/', function () {
     return view('pages.home');
 })->name('home');
 
+Route::get('/health', function () {
+    $checks = [
+        'app' => true,
+        'database' => true,
+        'cache' => true,
+    ];
+
+    try {
+        \Illuminate\Support\Facades\DB::select('select 1');
+    } catch (\Throwable) {
+        $checks['database'] = false;
+    }
+
+    try {
+        \Illuminate\Support\Facades\Cache::put('healthcheck', true, 5);
+    } catch (\Throwable) {
+        $checks['cache'] = false;
+    }
+
+    $healthy = ! in_array(false, $checks, true);
+
+    return response()->json([
+        'status' => $healthy ? 'healthy' : 'degraded',
+        'checks' => $checks,
+        'timestamp' => now()->toIso8601String(),
+    ], $healthy ? 200 : 503);
+})->name('health');
+
+Route::middleware(['auth', 'role:admin|moderator|super_admin'])->get('/health/detailed', function () {
+    $checks = [
+        'database' => true,
+        'cache' => true,
+        'queue_default' => config('queue.default'),
+        'broadcast_default' => config('broadcasting.default'),
+        'scout_driver' => config('scout.driver'),
+    ];
+
+    try {
+        \Illuminate\Support\Facades\DB::select('select 1');
+    } catch (\Throwable) {
+        $checks['database'] = false;
+    }
+
+    try {
+        \Illuminate\Support\Facades\Cache::put('healthcheck_detailed', true, 5);
+    } catch (\Throwable) {
+        $checks['cache'] = false;
+    }
+
+    return response()->json([
+        'status' => ! in_array(false, $checks, true) ? 'healthy' : 'degraded',
+        'checks' => $checks,
+        'timestamp' => now()->toIso8601String(),
+    ]);
+})->name('health.detailed');
+
 Route::get('/robots.txt', function () {
     return response("User-agent: *\nAllow: /\nSitemap: ".url('/sitemap.xml')."\n", 200, [
         'Content-Type' => 'text/plain; charset=UTF-8',

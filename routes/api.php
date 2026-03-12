@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
+    Route::get('/health', function () {
+        return response()->json([
+            'status' => 'healthy',
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    });
+
     /*
     |--------------------------------------------------------------------------
     | Public API Routes
@@ -53,7 +60,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
 
         // Bidding
-        Route::post('/auctions/{auction}/bid', [App\Http\Controllers\Api\BidController::class, 'place']);
+        Route::post('/auctions/{auction}/bid', [App\Http\Controllers\Api\BidController::class, 'place'])->middleware('throttle.bids');
         Route::get('/auctions/{auction}/bids', [App\Http\Controllers\Api\BidController::class, 'index']);
 
         // Watchlist
@@ -89,7 +96,7 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware(['auth:sanctum', 'role:seller,verified_seller'])->prefix('seller')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:seller|verified_seller'])->prefix('seller')->group(function () {
 
         // Create Auction
         Route::post('/auctions', [App\Http\Controllers\Api\Seller\AuctionController::class, 'store']);

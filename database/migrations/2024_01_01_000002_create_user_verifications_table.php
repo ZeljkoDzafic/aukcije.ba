@@ -23,8 +23,10 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
         });
 
-        DB::statement("ALTER TABLE user_verifications ADD CONSTRAINT user_verifications_type_check CHECK (type IN ('phone_sms', 'id_document', 'address_proof'))");
-        DB::statement("ALTER TABLE user_verifications ADD CONSTRAINT user_verifications_status_check CHECK (status IN ('pending', 'approved', 'rejected'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE user_verifications ADD CONSTRAINT user_verifications_type_check CHECK (type IN ('phone_sms', 'id_document', 'address_proof'))");
+            DB::statement("ALTER TABLE user_verifications ADD CONSTRAINT user_verifications_status_check CHECK (status IN ('pending', 'approved', 'rejected'))");
+        }
     }
 
     public function down(): void

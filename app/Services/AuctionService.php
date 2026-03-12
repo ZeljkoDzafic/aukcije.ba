@@ -6,6 +6,7 @@ use App\Enums\AuctionStatus;
 use App\Events\AuctionEnded;
 use App\Models\Auction;
 use App\Models\Bid;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,12 @@ use Illuminate\Support\Facades\Schema;
 
 class AuctionService
 {
-    public function __construct(protected BiddingService $biddingService) {}
+    protected BiddingService $biddingService;
+
+    public function __construct(?BiddingService $biddingService = null)
+    {
+        $this->biddingService = $biddingService ?? app(BiddingService::class);
+    }
 
     /**
      * Create a new auction in draft status.
@@ -51,6 +57,14 @@ class AuctionService
                 'status'             => AuctionStatus::Draft->value,
                 'bids_count'         => 0,
             ];
+
+            if (! empty($payload['category_id'])) {
+                $categoryExists = Category::query()->whereKey((string) $payload['category_id'])->exists();
+
+                if (! $categoryExists) {
+                    $payload['category_id'] = null;
+                }
+            }
 
             $payload = collect($payload)
                 ->filter(fn ($value, $column) => Schema::hasColumn('auctions', $column))

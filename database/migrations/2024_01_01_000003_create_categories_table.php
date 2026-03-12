@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('icon', 50)->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
         });
 
         Schema::table('categories', function (Blueprint $table) {
