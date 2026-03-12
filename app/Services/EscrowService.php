@@ -19,15 +19,16 @@ class EscrowService
      * Freeze buyer funds when they win an auction.
      * Deducts from wallet balance and records escrow hold.
      */
-    public function holdFunds(Order $order): void
+    public function holdFunds(Order $order): bool
     {
-        DB::transaction(function () use ($order) {
+        try {
+            DB::transaction(function () use ($order) {
             $wallet = $this->walletService->getWallet($order->buyer);
 
-            $total = $order->amount + ($order->shipping_cost ?? 0);
+            $total = (float) ($order->total_amount ?? $order->amount ?? 0);
 
             if ($wallet->balance < $total) {
-                throw new InsufficientFundsException($total, $wallet->balance);
+                throw new InsufficientFundsException($total, (float) $wallet->balance);
             }
 
             // Deduct from available balance and add to escrow_balance
@@ -36,6 +37,7 @@ class EscrowService
 
             WalletTransaction::create([
                 'wallet_id'      => $wallet->id,
+                'user_id'        => $order->buyer_id,
                 'type'           => 'escrow_hold',
                 'amount'         => -$total,
                 'balance_after'  => $wallet->fresh()->balance,
@@ -43,20 +45,30 @@ class EscrowService
                 'reference_id'   => $order->id,
                 'description'    => "Escrow hold za narudžbu #{$order->id}",
             ]);
-        });
+            });
+        } catch (InsufficientFundsException) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * Release escrow funds to seller (minus commission).
      */
-    public function releaseFunds(Order $order): void
+    public function releaseFunds(Order $order): bool
     {
-        DB::transaction(function () use ($order) {
-            $buyerWallet  = $this->walletService->getWallet($order->buyer);
+        $buyerWallet = $this->walletService->getWallet($order->buyer);
+        $total = (float) ($order->total_amount ?? $order->amount ?? 0);
+
+        if ($buyerWallet->escrow_balance < $total || $total <= 0) {
+            return false;
+        }
+
+        DB::transaction(function () use ($order, $buyerWallet, $total) {
             $sellerWallet = $this->walletService->getWallet($order->seller);
 
-            $total      = $order->amount;
-            $commission = $order->commission;
+            $commission = (float) ($order->commission_amount ?? $order->commission ?? ($total * $order->seller->getCommissionRate()));
             $sellerNet  = $total - $commission;
 
             // Release from escrow
@@ -64,6 +76,7 @@ class EscrowService
 
             WalletTransaction::create([
                 'wallet_id'      => $buyerWallet->id,
+                'user_id'        => $order->buyer_id,
                 'type'           => 'escrow_release',
                 'amount'         => -$total,
                 'balance_after'  => $buyerWallet->fresh()->balance,
@@ -77,6 +90,7 @@ class EscrowService
 
             WalletTransaction::create([
                 'wallet_id'      => $sellerWallet->id,
+                'user_id'        => $order->seller_id,
                 'type'           => 'escrow_release',
                 'amount'         => $sellerNet,
                 'balance_after'  => $sellerWallet->fresh()->balance,
@@ -88,6 +102,7 @@ class EscrowService
             // Record commission deduction
             WalletTransaction::create([
                 'wallet_id'      => $sellerWallet->id,
+                'user_id'        => $order->seller_id,
                 'type'           => 'commission',
                 'amount'         => -$commission,
                 'balance_after'  => $sellerWallet->fresh()->balance,
@@ -95,13 +110,16 @@ class EscrowService
                 'reference_id'   => $order->id,
                 'description'    => "Platforma komisija ({$commission} BAM)",
             ]);
+            $order->update(['status' => 'completed']);
         });
+
+        return true;
     }
 
     /**
      * Refund buyer (full or partial).
      */
-    public function refundBuyer(Order $order, float $amount): void
+    public function refundBuyer(Order $order, float $amount): bool
     {
         DB::transaction(function () use ($order, $amount) {
             $buyerWallet = $this->walletService->getWallet($order->buyer);
@@ -111,6 +129,7 @@ class EscrowService
 
             WalletTransaction::create([
                 'wallet_id'      => $buyerWallet->id,
+                'user_id'        => $order->buyer_id,
                 'type'           => 'refund',
                 'amount'         => $amount,
                 'balance_after'  => $buyerWallet->fresh()->balance,
@@ -119,6 +138,8 @@ class EscrowService
                 'description'    => "Refund za narudžbu #{$order->id}",
             ]);
         });
+
+        return true;
     }
 
     /**
@@ -130,7 +151,7 @@ class EscrowService
         $releaseDays = config('escrow.auto_release_days', 14);
 
         $orders = \App\Models\Order::where('status', 'delivered')
-            ->where('updated_at', '<=', now()->subDays($releaseDays))
+            ->where('delivered_at', '<=', now()->subDays($releaseDays))
             ->whereDoesntHave('dispute', fn ($q) => $q->whereIn('status', ['open', 'in_review']))
             ->get();
 
