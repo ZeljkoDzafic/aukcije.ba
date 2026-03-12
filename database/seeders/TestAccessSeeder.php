@@ -10,6 +10,7 @@ use App\Models\UserVerification;
 use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class TestAccessSeeder extends Seeder
 {
@@ -118,16 +119,32 @@ class TestAccessSeeder extends Seeder
 
             $user->syncRoles([$definition['role']]);
 
+            $profilePayload = [
+                'full_name' => $definition['name'],
+                'city' => $definition['city'],
+                'country' => 'BiH',
+                'phone' => $definition['phone'],
+            ];
+
+            if (Schema::hasColumn('user_profiles', 'preferred_language')) {
+                $profilePayload['preferred_language'] = 'bs';
+            }
+
+            if (Schema::hasColumn('user_profiles', 'language')) {
+                $profilePayload['language'] = 'bs';
+            }
+
+            if (Schema::hasColumn('user_profiles', 'currency')) {
+                $profilePayload['currency'] = 'BAM';
+            }
+
+            if (Schema::hasColumn('user_profiles', 'timezone')) {
+                $profilePayload['timezone'] = 'Europe/Sarajevo';
+            }
+
             UserProfile::query()->updateOrCreate(
                 ['user_id' => $user->id],
-                [
-                    'full_name' => $definition['name'],
-                    'city' => $definition['city'],
-                    'country' => 'BiH',
-                    'language' => 'bs',
-                    'currency' => 'BAM',
-                    'timezone' => 'Europe/Sarajevo',
-                ]
+                $profilePayload
             );
 
             Wallet::query()->updateOrCreate(
