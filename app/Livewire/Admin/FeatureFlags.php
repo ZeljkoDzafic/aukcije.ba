@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
 use App\Models\FeatureFlag;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -17,6 +21,7 @@ class FeatureFlags extends Component
 
     public string $feedback = '';
 
+    /** @var list<array{id: int, name: string, description: string, is_active: bool, group: string}> */
     public array $fallbackFlags = [
         ['id' => 1, 'name' => 'proxy_bidding', 'description' => 'Proxy bidding UI i workflow', 'is_active' => true, 'group' => 'Bidding'],
         ['id' => 2, 'name' => 'wallet_topups', 'description' => 'Dopuna walleta putem gatewaya', 'is_active' => true, 'group' => 'Payments'],
@@ -86,6 +91,9 @@ class FeatureFlags extends Component
         $this->feedback = 'Demo feature flag status je ažuriran.';
     }
 
+    /**
+     * @return mixed
+     */
     public function getGroupedFlagsProperty()
     {
         $flags = collect($this->fallbackFlags);
@@ -94,7 +102,7 @@ class FeatureFlags extends Component
             $databaseFlags = FeatureFlag::query()
                 ->orderBy('name')
                 ->get()
-                ->map(fn (FeatureFlag $flag) => [
+                ->map(fn (FeatureFlag $flag): array => [
                     'id' => $flag->id,
                     'name' => $flag->name,
                     'description' => $flag->description,
@@ -110,7 +118,7 @@ class FeatureFlags extends Component
         return $flags->groupBy('group');
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin.feature-flags');
     }

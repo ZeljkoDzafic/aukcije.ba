@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Gateways;
 
 use Exception;
@@ -7,7 +9,9 @@ use Exception;
 class StripeGateway implements PaymentGatewayInterface
 {
     protected string $apiKey;
+
     protected string $webhookSecret;
+
     protected string $currency;
 
     public function __construct()
@@ -19,66 +23,24 @@ class StripeGateway implements PaymentGatewayInterface
 
     public function processPayment(float $amount, array $data): array
     {
-        try {
-            // In production, use Stripe SDK:
-            // \Stripe\Stripe::setApiKey($this->apiKey);
-            
-            // $session = \Stripe\Checkout\Session::create([
-            //     'payment_method_types' => ['card'],
-            //     'line_items' => [[
-            //         'price_data' => [
-            //             'currency' => $this->currency,
-            //             'product_data' => ['name' => $data['description'] ?? 'Aukcije.ba Payment'],
-            //             'unit_amount' => (int) ($amount * 100),
-            //         ],
-            //         'quantity' => 1,
-            //     ]],
-            //     'mode' => 'payment',
-            //     'success_url' => $data['success_url'],
-            //     'cancel_url' => $data['cancel_url'],
-            //     'client_reference_id' => $data['order_id'] ?? null,
-            // ]);
-
-            // For now, return mock response
-            return [
-                'success' => true,
-                'transaction_id' => 'stripe_' . uniqid(),
-                'gateway' => 'stripe',
-                'status' => 'pending',
-                'redirect_url' => 'https://checkout.stripe.com/c/pay/cs_test_' . uniqid(),
-                'client_secret' => 'pi_' . uniqid() . '_secret_' . uniqid(),
-            ];
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Payment failed: ' . $e->getMessage(),
-                'gateway' => 'stripe',
-            ];
-        }
+        return [
+            'success' => true,
+            'transaction_id' => 'stripe_'.uniqid(),
+            'gateway' => 'stripe',
+            'status' => 'pending',
+            'redirect_url' => 'https://checkout.stripe.com/c/pay/cs_test_'.uniqid(),
+            'client_secret' => 'pi_'.uniqid().'_secret_'.uniqid(),
+        ];
     }
 
     public function refund(string $transactionId, ?float $amount = null): array
     {
-        try {
-            // In production, use Stripe SDK:
-            // $refund = \Stripe\Refund::create([
-            //     'payment_intent' => $transactionId,
-            //     'amount' => $amount ? (int) ($amount * 100) : null,
-            // ]);
-
-            return [
-                'success' => true,
-                'refund_id' => 're_' . uniqid(),
-                'gateway' => 'stripe',
-                'status' => 'pending',
-            ];
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Refund failed: ' . $e->getMessage(),
-                'gateway' => 'stripe',
-            ];
-        }
+        return [
+            'success' => true,
+            'refund_id' => 're_'.uniqid(),
+            'gateway' => 'stripe',
+            'status' => 'pending',
+        ];
     }
 
     public function verifyWebhook(string $payload, string $signature): bool
@@ -96,7 +58,7 @@ class StripeGateway implements PaymentGatewayInterface
         // }
 
         // Mock verification
-        return !empty($signature);
+        return ! empty($signature);
     }
 
     public function getPaymentStatus(string $transactionId): string
@@ -112,13 +74,16 @@ class StripeGateway implements PaymentGatewayInterface
 
     public function isAvailable(): bool
     {
-        return config('payment.stripe.enabled', true) 
-            && !empty($this->apiKey)
+        return config('payment.stripe.enabled', true)
+            && ! empty($this->apiKey)
             && $this->apiKey !== 'sk_test_YourStripeTestKey';
     }
 
     /**
      * Get supported payment methods
+     */
+    /**
+     * @return list<string>
      */
     public function getPaymentMethods(): array
     {
@@ -127,6 +92,10 @@ class StripeGateway implements PaymentGatewayInterface
 
     /**
      * Get Stripe checkout configuration
+     */
+    /**
+     * @param array<string, mixed> $orderData
+     * @return array<string, mixed>
      */
     public function getCheckoutConfig(array $orderData): array
     {

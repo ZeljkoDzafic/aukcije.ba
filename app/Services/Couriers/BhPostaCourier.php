@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Couriers;
 
 use Exception;
@@ -7,8 +9,12 @@ use Exception;
 class BhPostaCourier implements CourierInterface
 {
     protected string $apiKey;
+
     protected string $apiSecret;
+
     protected string $apiUrl;
+
+    /** @var array<string, mixed> */
     protected array $sender;
 
     public function __construct()
@@ -47,8 +53,8 @@ class BhPostaCourier implements CourierInterface
             ];
 
             // Mock response
-            $waybillNumber = 'BP' . date('Ymd') . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
-            $trackingNumber = 'BA' . str_pad(rand(100000000, 999999999), 9, '0', STR_PAD_LEFT);
+            $waybillNumber = 'BP'.date('Ymd').str_pad((string) rand(1, 99999), 5, '0', STR_PAD_LEFT);
+            $trackingNumber = 'BA'.str_pad((string) rand(100000000, 999999999), 9, '0', STR_PAD_LEFT);
 
             return [
                 'success' => true,
@@ -62,7 +68,7 @@ class BhPostaCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to create waybill: ' . $e->getMessage(),
+                'error' => 'Failed to create waybill: '.$e->getMessage(),
                 'courier' => 'bhposta',
             ];
         }
@@ -96,7 +102,7 @@ class BhPostaCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to get tracking info: ' . $e->getMessage(),
+                'error' => 'Failed to get tracking info: '.$e->getMessage(),
                 'courier' => 'bhposta',
             ];
         }
@@ -108,9 +114,9 @@ class BhPostaCourier implements CourierInterface
             $pricing = config('shipping.bhposta.pricing', []);
             $basePrice = $pricing['base_price'] ?? 4.00;
             $perKg = $pricing['per_kg'] ?? 0.90;
-            
+
             $price = $basePrice + ($weightKg * $perKg);
-            
+
             return [
                 'success' => true,
                 'courier' => 'bhposta',
@@ -123,7 +129,7 @@ class BhPostaCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to estimate shipping: ' . $e->getMessage(),
+                'error' => 'Failed to estimate shipping: '.$e->getMessage(),
                 'courier' => 'bhposta',
             ];
         }
@@ -131,20 +137,12 @@ class BhPostaCourier implements CourierInterface
 
     public function cancelShipment(string $waybillNumber): array
     {
-        try {
-            return [
-                'success' => true,
-                'waybill_number' => $waybillNumber,
-                'status' => 'cancelled',
-                'courier' => 'bhposta',
-            ];
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to cancel shipment: ' . $e->getMessage(),
-                'courier' => 'bhposta',
-            ];
-        }
+        return [
+            'success' => true,
+            'waybill_number' => $waybillNumber,
+            'status' => 'cancelled',
+            'courier' => 'bhposta',
+        ];
     }
 
     public function getName(): string
@@ -155,11 +153,11 @@ class BhPostaCourier implements CourierInterface
     public function isAvailable(): bool
     {
         return config('shipping.bhposta.enabled', true)
-            && !empty($this->apiKey);
+            && ! empty($this->apiKey);
     }
 
     protected function getTrackingUrl(string $trackingNumber): string
     {
-        return 'https://track.bhposta.ba/' . $trackingNumber;
+        return 'https://track.bhposta.ba/'.$trackingNumber;
     }
 }

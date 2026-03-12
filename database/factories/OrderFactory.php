@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
-use App\Models\Order;
 use App\Models\Auction;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
+ * @extends Factory<Order>
  */
 class OrderFactory extends Factory
 {
@@ -16,7 +18,7 @@ class OrderFactory extends Factory
     {
         $buyer = User::factory()->buyer();
         $seller = User::factory()->seller();
-        
+
         $total = fake()->randomFloat(2, 50, 1000);
         $commission = round($total * 0.08, 2);
 

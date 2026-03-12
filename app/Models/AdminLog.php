@@ -1,18 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $admin_id
+ * @property array<string, mixed>|null $metadata
+ */
 class AdminLog extends Model
 {
     use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -20,7 +29,7 @@ class AdminLog extends Model
     ];
 
     protected $casts = [
-        'metadata'   => 'array',
+        'metadata' => 'array',
         'created_at' => 'datetime',
     ];
 
@@ -30,5 +39,11 @@ class AdminLog extends Model
         static::creating(fn ($m) => $m->created_at = now());
     }
 
-    public function admin(): BelongsTo { return $this->belongsTo(User::class, 'admin_id'); }
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
 }

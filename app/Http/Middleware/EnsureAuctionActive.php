@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use App\Models\Auction;
@@ -16,6 +19,7 @@ class EnsureAuctionActive
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Aukcija nije aktivna.'], 422);
             }
+
             return redirect()->back()->with('error', 'Aukcija nije aktivna.');
         }
 

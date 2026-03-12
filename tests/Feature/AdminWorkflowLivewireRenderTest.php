@@ -1,10 +1,12 @@
 <?php
 
-use App\Livewire\Admin\AuctionModeration;
+declare(strict_types=1);
+
 use App\Livewire\Admin\AuctionDetailManager;
+use App\Livewire\Admin\AuctionModeration;
 use App\Livewire\Admin\DisputeResolution;
-use App\Livewire\Admin\UserProfileManager;
 use App\Livewire\Admin\UserDirectory;
+use App\Livewire\Admin\UserProfileManager;
 use Livewire\Livewire;
 
 it('renders admin user directory livewire component', function () {

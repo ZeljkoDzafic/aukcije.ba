@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Gateways;
 
 use Exception;
@@ -8,9 +10,13 @@ use Illuminate\Support\Facades\Http;
 class CorvusPayGateway implements PaymentGatewayInterface
 {
     protected string $storeId;
+
     protected string $secretKey;
+
     protected string $webhookSecret;
+
     protected string $currency;
+
     protected string $apiUrl;
 
     public function __construct()
@@ -55,7 +61,7 @@ class CorvusPayGateway implements PaymentGatewayInterface
 
             return [
                 'success' => true,
-                'transaction_id' => 'corvus_' . $orderId,
+                'transaction_id' => 'corvus_'.$orderId,
                 'gateway' => 'corvuspay',
                 'status' => 'pending',
                 'redirect_url' => $this->apiUrl,
@@ -65,7 +71,7 @@ class CorvusPayGateway implements PaymentGatewayInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Payment failed: ' . $e->getMessage(),
+                'error' => 'Payment failed: '.$e->getMessage(),
                 'gateway' => 'corvuspay',
             ];
         }
@@ -85,14 +91,14 @@ class CorvusPayGateway implements PaymentGatewayInterface
 
             return [
                 'success' => true,
-                'refund_id' => 'corvus_refund_' . uniqid(),
+                'refund_id' => 'corvus_refund_'.uniqid(),
                 'gateway' => 'corvuspay',
                 'status' => 'pending',
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Refund failed: ' . $e->getMessage(),
+                'error' => 'Refund failed: '.$e->getMessage(),
                 'gateway' => 'corvuspay',
             ];
         }
@@ -101,8 +107,8 @@ class CorvusPayGateway implements PaymentGatewayInterface
     public function verifyWebhook(string $payload, string $signature): bool
     {
         $data = json_decode($payload, true);
-        
-        if (!$data) {
+
+        if (! $data) {
             return false;
         }
 
@@ -128,27 +134,34 @@ class CorvusPayGateway implements PaymentGatewayInterface
     public function isAvailable(): bool
     {
         return config('payment.corvuspay.enabled', true)
-            && !empty($this->storeId)
+            && ! empty($this->storeId)
             && $this->storeId !== 'test_store_id';
     }
 
     /**
      * Generate CorvusPay-compatible signature
      */
+    /**
+     * @param array<string, int|string|null> $data
+     */
     protected function generateSignature(array $data): string
     {
         $stringToSign = implode('|', array_values($data));
-        return hash('sha256', $stringToSign . $this->secretKey);
+
+        return hash('sha256', $stringToSign.$this->secretKey);
     }
 
     /**
      * Get installment options
      */
+    /**
+     * @return list<array{installments: int, amount_per_installment: int, total_amount: int}>
+     */
     public function getInstallmentOptions(int $amountInCents): array
     {
         $config = config('payment.corvuspay.installments', ['enabled' => false]);
-        
-        if (!$config['enabled']) {
+
+        if (! $config['enabled']) {
             return [];
         }
 

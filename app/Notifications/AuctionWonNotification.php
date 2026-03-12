@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Models\Auction;
@@ -18,6 +20,9 @@ class AuctionWonNotification extends Notification implements ShouldQueue
         public float $finalPrice
     ) {}
 
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         $channels = ['database', 'broadcast', 'mail'];
@@ -32,12 +37,12 @@ class AuctionWonNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('🎉 Čestitamo! Dobili ste aukciju: ' . $this->auction->title)
-            ->greeting('Čestitamo ' . $notifiable->name . '!')
+            ->subject('🎉 Čestitamo! Dobili ste aukciju: '.$this->auction->title)
+            ->greeting('Čestitamo '.$notifiable->name.'!')
             ->line('Pobijedili ste na aukciji!')
-            ->line('**Aukcija:** ' . $this->auction->title)
-            ->line('**Finalna cijena:** ' . number_format($this->finalPrice, 2) . ' KM')
-            ->line('**Prodavac:** ' . $this->auction->seller->name)
+            ->line('**Aukcija:** '.$this->auction->title)
+            ->line('**Finalna cijena:** '.number_format($this->finalPrice, 2).' KM')
+            ->line('**Prodavac:** '.$this->auction->seller->name)
             ->line('')
             ->line('Sljedeći koraci:')
             ->line('1. Otiđite na "Moje narudžbe"')
@@ -59,13 +64,16 @@ class AuctionWonNotification extends Notification implements ShouldQueue
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return [
             'type' => 'auction_won',
             'auction_id' => $this->auction->id,
             'auction_title' => $this->auction->title,
-            'auction_image' => $this->auction->primary_image?->url,
+            'auction_image' => $this->auction->primaryImage?->url,
             'final_price' => $this->finalPrice,
             'order_id' => $this->auction->order?->id,
         ];

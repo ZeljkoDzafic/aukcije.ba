@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -18,13 +21,13 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set(
             'Content-Security-Policy',
-            "default-src 'self'; " .
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; " .
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
-            "font-src 'self' https://fonts.gstatic.com; " .
-            "img-src 'self' data: https:; " .
-            "connect-src 'self' wss: https://api.stripe.com; " .
-            "frame-src https://js.stripe.com;"
+            "default-src 'self'; ".
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; ".
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ".
+            "font-src 'self' https://fonts.gstatic.com; ".
+            "img-src 'self' data: https:; ".
+            "connect-src 'self' wss: https://api.stripe.com; ".
+            'frame-src https://js.stripe.com;'
         );
 
         return $response;

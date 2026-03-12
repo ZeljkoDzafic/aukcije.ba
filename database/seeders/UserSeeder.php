@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
@@ -14,9 +16,9 @@ class UserSeeder extends Seeder
     {
         // 1 Super Admin
         $admin = User::create([
-            'name'              => 'Admin Aukcije',
-            'email'             => 'admin@aukcije.ba',
-            'password'          => Hash::make('password'),
+            'name' => 'Admin Aukcije',
+            'email' => 'admin@aukcije.ba',
+            'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
         UserProfile::create(['user_id' => $admin->id, 'full_name' => 'Admin Aukcije', 'city' => 'Sarajevo']);
@@ -26,9 +28,9 @@ class UserSeeder extends Seeder
         // 2 Moderators
         foreach (['Moderator Jedan', 'Moderator Dva'] as $i => $name) {
             $mod = User::create([
-                'name'              => $name,
-                'email'             => "moderator{$i}@aukcije.ba",
-                'password'          => Hash::make('password'),
+                'name' => $name,
+                'email' => "moderator{$i}@aukcije.ba",
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]);
             UserProfile::create(['user_id' => $mod->id, 'full_name' => $name, 'city' => 'Mostar']);
@@ -47,9 +49,9 @@ class UserSeeder extends Seeder
 
         foreach ($sellers as $s) {
             $user = User::create([
-                'name'              => $s['name'],
-                'email'             => $s['email'],
-                'password'          => Hash::make('password'),
+                'name' => $s['name'],
+                'email' => $s['email'],
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]);
             UserProfile::create(['user_id' => $user->id, 'full_name' => $s['name'], 'city' => $s['city']]);
@@ -67,15 +69,15 @@ class UserSeeder extends Seeder
             ['name' => 'Sara Povoljnica', 'email' => 'sara@buyer.ba',   'city' => 'Sarajevo'],
             ['name' => 'Kemal Bider',     'email' => 'kemal@buyer.ba',  'city' => 'Travnik'],
             ['name' => 'Dina Aukcionar',  'email' => 'dina@buyer.ba',   'city' => 'Brčko'],
-            ['name' => 'Tarik Entuzijast','email' => 'tarik@buyer.ba',  'city' => 'Sarajevo'],
+            ['name' => 'Tarik Entuzijast', 'email' => 'tarik@buyer.ba',  'city' => 'Sarajevo'],
             ['name' => 'Nela Bargain',    'email' => 'nela@buyer.ba',   'city' => 'Bihać'],
         ];
 
         foreach ($buyers as $b) {
             $user = User::create([
-                'name'              => $b['name'],
-                'email'             => $b['email'],
-                'password'          => Hash::make('password'),
+                'name' => $b['name'],
+                'email' => $b['email'],
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]);
             UserProfile::create(['user_id' => $user->id, 'full_name' => $b['name'], 'city' => $b['city']]);

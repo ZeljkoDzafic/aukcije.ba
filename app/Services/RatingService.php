@@ -1,7 +1,12 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Services;
 
-use App\Models\{Order, User, UserRating};
+use App\Models\Order;
+use App\Models\User;
+use App\Models\UserRating;
 use Illuminate\Support\Facades\Cache;
 
 class RatingService
@@ -12,7 +17,7 @@ class RatingService
             return false;
         }
 
-        return !UserRating::where('order_id', $order->id)
+        return ! UserRating::where('order_id', $order->id)
             ->where('rater_id', $rater->id)
             ->exists();
     }
@@ -57,7 +62,7 @@ class RatingService
             }
 
             $avgRating = (float) $ratings->avg('score');
-            $completedCount = \App\Models\Order::where(function ($q) use ($user) {
+            $completedCount = Order::where(function ($q) use ($user) {
                 $q->where('buyer_id', $user->id)->orWhere('seller_id', $user->id);
             })->where('status', 'completed')->count();
 

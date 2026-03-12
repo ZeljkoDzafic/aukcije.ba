@@ -1,18 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $waybill_number
+ * @property string|null $tracking_url
+ * @property string|null $status_label
+ * @property string $status
+ * @property string $courier
+ * @property array<int, array{status: string, description: string, location?: string|null, timestamp: string}>|null $tracking_events
+ */
 class Shipment extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -43,6 +58,9 @@ class Shipment extends Model
         'cancelled_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Order, $this>
+     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
@@ -53,7 +71,7 @@ class Shipment extends Model
      */
     public function getCourierNameAttribute(): string
     {
-        return match($this->courier) {
+        return match ($this->courier) {
             'euroexpress' => 'EuroExpress',
             'postexpress' => 'PostExpress',
             'bhposta' => 'BH Pošta',
@@ -64,9 +82,12 @@ class Shipment extends Model
     /**
      * Get status label
      */
+    /**
+     * @return array{label: string, color: string}
+     */
     public function getStatusBadgeAttribute(): array
     {
-        return match($this->status) {
+        return match ($this->status) {
             'label_created' => ['label' => 'Tovarni list kreiran', 'color' => 'info'],
             'picked_up' => ['label' => 'Preuzeto', 'color' => 'info'],
             'in_transit' => ['label' => 'U tranzitu', 'color' => 'warning'],
@@ -106,19 +127,26 @@ class Shipment extends Model
     /**
      * Get latest tracking event
      */
+    /**
+     * @return array{status: string, description: string, location?: string|null, timestamp: string}|null
+     */
     public function getLatestEventAttribute(): ?array
     {
         $events = $this->tracking_events ?? [];
-        return !empty($events) ? reset($events) : null;
+
+        return ! empty($events) ? reset($events) : null;
     }
 
     /**
      * Get tracking timeline for display
      */
+    /**
+     * @return list<array{status: string, label: string, location: string|null, timestamp: string, completed: bool}>
+     */
     public function getTrackingTimelineAttribute(): array
     {
         $events = $this->tracking_events ?? [];
-        
+
         $timeline = [];
         $statusOrder = [
             'label_created' => 1,

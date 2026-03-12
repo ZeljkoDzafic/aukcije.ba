@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
-use App\Models\UserRating;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\UserRating;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\UserRating>
+ * @extends Factory<UserRating>
  */
 class UserRatingFactory extends Factory
 {

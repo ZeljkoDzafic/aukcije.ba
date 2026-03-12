@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Livewire\Admin\FeatureFlags;
 use App\Models\FeatureFlag;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Livewire\Livewire;
 
 it('renders admin feature flags livewire component', function () {

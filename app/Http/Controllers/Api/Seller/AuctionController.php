@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\Seller;
 
 use App\Http\Controllers\Controller;
@@ -38,7 +40,7 @@ class AuctionController extends Controller
             return response()->json([
                 'id' => $auction->id,
                 'title' => $auction->title,
-                'status' => $auction->status instanceof \BackedEnum ? $auction->status->value : (string) $auction->status,
+                'status' => (string) $auction->status,
             ], 201);
         } catch (\RuntimeException $exception) {
             return response()->json([
@@ -73,7 +75,15 @@ class AuctionController extends Controller
             $validated['ends_at'] = now()->addDays((int) $validated['duration_days']);
         }
 
-        $auction->update(collect($validated)->filter(fn ($value, $column) => Schema::hasColumn('auctions', $column))->all());
+        $updatePayload = [];
+
+        foreach ($validated as $column => $value) {
+            if (Schema::hasColumn('auctions', $column)) {
+                $updatePayload[$column] = $value;
+            }
+        }
+
+        $auction->update($updatePayload);
 
         return response()->json([
             'success' => true,
@@ -96,7 +106,7 @@ class AuctionController extends Controller
         return response()->json([
             'success' => true,
             'auction_id' => $auction->id,
-            'status' => $auction->fresh()->status instanceof \BackedEnum ? $auction->fresh()->status->value : (string) $auction->fresh()->status,
+            'status' => (string) $auction->fresh()->status,
         ]);
     }
 }

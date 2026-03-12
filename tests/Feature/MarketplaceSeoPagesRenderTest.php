@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 it('renders marketplace seo pages with expected metadata', function () {
     $this->withoutVite();
 

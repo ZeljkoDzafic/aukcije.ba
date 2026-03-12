@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events;
 
 use App\Models\Auction;
@@ -12,7 +14,9 @@ use Illuminate\Queue\SerializesModels;
 
 class AuctionEnded implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public function __construct(
         public readonly Auction $auction,
@@ -24,17 +28,23 @@ class AuctionEnded implements ShouldBroadcast
         return new Channel("auction.{$this->auction->id}");
     }
 
-    public function broadcastAs(): string { return 'AuctionEnded'; }
+    public function broadcastAs(): string
+    {
+        return 'AuctionEnded';
+    }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [
-            'auction_id'  => $this->auction->id,
-            'status'      => $this->auction->status,
+            'auction_id' => $this->auction->id,
+            'status' => $this->auction->status,
             'final_price' => $this->auction->current_price,
-            'ends_at'     => $this->auction->ends_at,
-            'winner'      => $this->winningBid ? [
-                'id'   => $this->winningBid->user_id,
+            'ends_at' => $this->auction->ends_at,
+            'winner' => $this->winningBid ? [
+                'id' => $this->winningBid->user_id,
                 'name' => $this->winningBid->user?->name,
             ] : null,
         ];

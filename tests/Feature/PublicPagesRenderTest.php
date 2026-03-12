@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 it('renders the main public pages', function () {
     $this->withoutVite();
 

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -12,8 +15,9 @@ class SetLocale
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param Request $request
+     * @param Closure $next
+     *
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
@@ -25,7 +29,7 @@ class SetLocale
         App::setLocale($locale);
 
         // Set locale for Carbon (dates)
-        \Carbon\Carbon::setLocale($locale);
+        Carbon::setLocale($locale);
 
         // Share locale with all views
         view()->share('currentLocale', $locale);
@@ -51,6 +55,7 @@ class SetLocale
             $locale = $request->get('lang');
             if ($this->isSupported($locale)) {
                 Session::put('locale', $locale);
+
                 return $locale;
             }
         }
@@ -68,6 +73,7 @@ class SetLocale
             $locale = $request->cookie('locale');
             if ($this->isSupported($locale)) {
                 Session::put('locale', $locale);
+
                 return $locale;
             }
         }
@@ -76,6 +82,7 @@ class SetLocale
         $browserLocale = $request->getPreferredLanguage($this->getSupportedLocales());
         if ($browserLocale && $this->isSupported($browserLocale)) {
             Session::put('locale', $browserLocale);
+
             return $browserLocale;
         }
 
@@ -93,29 +100,43 @@ class SetLocale
 
     /**
      * Get supported locales
+     *
+     * @return list<string>
      */
     protected function getSupportedLocales(): array
     {
+        /** @var array<string, array<string, mixed>> $locales */
         $locales = config('localization.locales', []);
-        return array_keys(array_filter($locales, fn($l) => $l['enabled'] ?? true));
+
+        return array_keys(array_filter($locales, fn ($l) => $l['enabled'] ?? true));
     }
 
     /**
      * Get available locales for views
+     *
+     * @return list<array{code: string, name: mixed, native: mixed, script: mixed, flag: mixed, direction: mixed}>
      */
     protected function getAvailableLocales(): array
     {
-        return collect(config('localization.locales', []))
-            ->filter(fn($l) => $l['enabled'] ?? true)
-            ->map(fn($config, $code) => [
+        /** @var array<string, array<string, mixed>> $locales */
+        $locales = config('localization.locales', []);
+        $available = [];
+
+        foreach ($locales as $code => $config) {
+            if (($config['enabled'] ?? true) !== true) {
+                continue;
+            }
+
+            $available[] = [
                 'code' => $code,
-                'name' => $config['name'],
-                'native' => $config['native'],
-                'script' => $config['script'],
-                'flag' => $config['flag'],
-                'direction' => $config['direction'],
-            ])
-            ->values()
-            ->toArray();
+                'name' => $config['name'] ?? $code,
+                'native' => $config['native'] ?? $code,
+                'script' => $config['script'] ?? 'latin',
+                'flag' => $config['flag'] ?? '🌐',
+                'direction' => $config['direction'] ?? 'ltr',
+            ];
+        }
+
+        return $available;
     }
 }

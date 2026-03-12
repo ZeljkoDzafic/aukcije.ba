@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Escrow Configuration
- * 
+ *
  * Settings for the escrow/payment protection system including:
  * - Payment deadlines
  * - Auto-release timelines

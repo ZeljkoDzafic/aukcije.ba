@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Seller Tier Configuration
- * 
+ *
  * Defines seller subscription tiers, limits, and benefits.
- * 
+ *
  * Tiers:
  * - Free: Basic tier with limited auctions
  * - Premium: Mid-tier with more auctions and lower commission
@@ -35,17 +37,17 @@ return [
             'price' => 0,
             'currency' => 'BAM',
             'billing_period' => 'monthly',
-            
+
             // Limits
             'auction_limit' => 5,
             'auction_duration_max' => 7, // Max days per auction
             'images_per_auction' => 5,
             'featured_auctions' => 0, // Can't feature auctions
             'bulk_upload' => false,
-            
+
             // Commission
             'commission_rate' => 8, // 8%
-            
+
             // Features
             'features' => [
                 'basic_analytics' => true,
@@ -60,7 +62,7 @@ return [
                 'advanced_analytics' => false,
                 'dedicated_account_manager' => false,
             ],
-            
+
             // Visibility
             'badge' => null,
             'badge_color' => 'gray',
@@ -72,17 +74,17 @@ return [
             'price' => 29,
             'currency' => 'BAM',
             'billing_period' => 'monthly',
-            
+
             // Limits
             'auction_limit' => 50,
             'auction_duration_max' => 14,
             'images_per_auction' => 10,
             'featured_auctions' => 3, // Can feature up to 3 auctions at once
             'bulk_upload' => true,
-            
+
             // Commission
             'commission_rate' => 5, // 5%
-            
+
             // Features
             'features' => [
                 'basic_analytics' => true,
@@ -97,7 +99,7 @@ return [
                 'advanced_analytics' => true,
                 'dedicated_account_manager' => false,
             ],
-            
+
             // Visibility
             'badge' => 'Premium',
             'badge_color' => 'blue',
@@ -109,17 +111,17 @@ return [
             'price' => 99,
             'currency' => 'BAM',
             'billing_period' => 'monthly',
-            
+
             // Limits
             'auction_limit' => -1, // Unlimited (-1 = no limit)
             'auction_duration_max' => 30,
             'images_per_auction' => 20,
             'featured_auctions' => -1, // Unlimited featured
             'bulk_upload' => true,
-            
+
             // Commission
             'commission_rate' => 3, // 3%
-            
+
             // Features
             'features' => [
                 'basic_analytics' => true,
@@ -134,7 +136,7 @@ return [
                 'advanced_analytics' => true,
                 'dedicated_account_manager' => true,
             ],
-            
+
             // Visibility
             'badge' => 'Verified Store',
             'badge_color' => 'gold',

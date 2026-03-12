@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
+use App\Models\AdminLog;
 use App\Models\User;
-use Livewire\Component;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
 
 class UserDirectory extends Component
 {
@@ -19,10 +24,11 @@ class UserDirectory extends Component
 
     public string $tier = '';
 
+    /** @var list<array{id: string, name: string, role: string, kyc: string, tier: string}> */
     public array $users = [
-        ['id' => 1, 'name' => 'Amar Hadžić', 'role' => 'seller', 'kyc' => '3', 'tier' => 'premium'],
-        ['id' => 2, 'name' => 'Lana R.', 'role' => 'buyer', 'kyc' => '1', 'tier' => '-'],
-        ['id' => 3, 'name' => 'Admin Demo', 'role' => 'moderator', 'kyc' => '3', 'tier' => '-'],
+        ['id' => '1', 'name' => 'Amar Hadžić', 'role' => 'seller', 'kyc' => '3', 'tier' => 'premium'],
+        ['id' => '2', 'name' => 'Lana R.', 'role' => 'buyer', 'kyc' => '1', 'tier' => '-'],
+        ['id' => '3', 'name' => 'Admin Demo', 'role' => 'moderator', 'kyc' => '3', 'tier' => '-'],
     ];
 
     public function moderate(int $userId, string $action): void
@@ -46,7 +52,7 @@ class UserDirectory extends Component
                 }
 
                 if (Schema::hasTable('admin_logs')) {
-                    \App\Models\AdminLog::query()->create([
+                    AdminLog::query()->create([
                         'admin_id' => Auth::id(),
                         'action' => $action,
                         'target_type' => 'user',
@@ -64,7 +70,10 @@ class UserDirectory extends Component
         $this->statusMessage = $user ? "Akcija '{$action}' pripremljena za korisnika {$user['name']}." : '';
     }
 
-    public function getFilteredUsersProperty()
+    /**
+     * @return Collection<int, array{id: string, name: string, role: string, kyc: string, tier: string}>
+     */
+    public function getFilteredUsersProperty(): Collection
     {
         $users = collect($this->users);
 
@@ -73,12 +82,12 @@ class UserDirectory extends Component
                 ->when($this->search !== '', fn ($query) => $query->where('name', 'like', '%'.$this->search.'%'))
                 ->limit(20)
                 ->get()
-                ->map(function (User $user) {
+                ->map(function (User $user): array {
                     $role = method_exists($user, 'getRoleNames') ? ($user->getRoleNames()->first() ?? 'buyer') : 'buyer';
                     $isSeller = method_exists($user, 'hasRole') && ($user->hasRole('seller') || $user->hasRole('verified_seller'));
 
                     return [
-                        'id' => $user->id,
+                        'id' => (string) $user->id,
                         'name' => $user->name,
                         'role' => $role,
                         'kyc' => (string) $user->kycLevel(),
@@ -99,7 +108,7 @@ class UserDirectory extends Component
             ->values();
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin.user-directory');
     }

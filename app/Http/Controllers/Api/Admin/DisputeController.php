@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dispute;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class DisputeController extends Controller
 {
@@ -34,15 +37,15 @@ class DisputeController extends Controller
             'resolution' => $validated['resolution'],
         ];
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('disputes', 'resolved_by')) {
+        if (Schema::hasColumn('disputes', 'resolved_by')) {
             $payload['resolved_by'] = $request->user()->id;
         }
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('disputes', 'resolved_by_id')) {
+        if (Schema::hasColumn('disputes', 'resolved_by_id')) {
             $payload['resolved_by_id'] = $request->user()->id;
         }
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('disputes', 'resolved_at')) {
+        if (Schema::hasColumn('disputes', 'resolved_at')) {
             $payload['resolved_at'] = now();
         }
 

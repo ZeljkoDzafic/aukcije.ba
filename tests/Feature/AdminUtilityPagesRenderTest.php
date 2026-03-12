@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 it('renders upgraded admin utility and wallet pages', function () {
     $this->withoutVite();
 

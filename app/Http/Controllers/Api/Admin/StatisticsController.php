@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
@@ -35,7 +37,7 @@ class StatisticsController extends Controller
             ],
         ];
 
-        if ($request->string('format') === 'csv') {
+        if ((string) $request->query('format') === 'csv') {
             return response()->streamDownload(function () use ($data) {
                 $handle = fopen('php://output', 'w');
                 fputcsv($handle, ['section', 'metric', 'value']);

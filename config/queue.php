@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -95,7 +97,7 @@ return [
             'production' => ['aukcije.ba', 'www.aukcije.ba'],
             'local' => ['localhost', 'aukcije.test'],
         ],
-        
+
         'environments' => [
             'production' => [
                 'supervisor-1' => [

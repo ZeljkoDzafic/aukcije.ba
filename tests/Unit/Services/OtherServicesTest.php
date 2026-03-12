@@ -9,15 +9,15 @@
 
 declare(strict_types=1);
 
-use App\Models\User;
 use App\Models\Auction;
-use App\Models\Order;
 use App\Models\Dispute;
+use App\Models\Order;
+use App\Models\User;
 use App\Models\UserRating;
 use App\Services\AuctionService;
+use App\Services\DisputeService;
 use App\Services\KycService;
 use App\Services\RatingService;
-use App\Services\DisputeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -29,7 +29,7 @@ uses(RefreshDatabase::class);
 describe('AuctionService', function () {
 
     beforeEach(function () {
-        $this->auctionService = new AuctionService();
+        $this->auctionService = new AuctionService;
     });
 
     it('creates auction successfully', function () {
@@ -88,7 +88,7 @@ describe('AuctionService', function () {
         ]);
 
         $this->auctionService->cancelAuction($auction);
-    })->throws(\Exception::class);
+    })->throws(Exception::class);
 
     it('can transition status correctly', function () {
         $auction = Auction::factory()->draft()->create();
@@ -121,7 +121,7 @@ describe('AuctionService', function () {
 describe('KycService', function () {
 
     beforeEach(function () {
-        $this->kycService = new KycService();
+        $this->kycService = new KycService;
     });
 
     it('sends SMS OTP', function () {
@@ -139,7 +139,7 @@ describe('KycService', function () {
 
         // Get the OTP from cache/storage (mocked)
         $otp = '123456'; // In real implementation, this would be retrieved
-        
+
         $result = $this->kycService->verifySmsOtp($user, $otp);
 
         expect($result)->toBeTrue();
@@ -187,7 +187,7 @@ describe('KycService', function () {
 describe('RatingService', function () {
 
     beforeEach(function () {
-        $this->ratingService = new RatingService();
+        $this->ratingService = new RatingService;
     });
 
     it('creates rating successfully', function () {
@@ -207,7 +207,7 @@ describe('RatingService', function () {
 
     it('calculates trust score correctly', function () {
         $user = User::factory()->create(['trust_score' => 0]);
-        
+
         // Create 5 ratings with score 5
         for ($i = 0; $i < 5; $i++) {
             UserRating::factory()->create([
@@ -263,7 +263,7 @@ describe('RatingService', function () {
 describe('DisputeService', function () {
 
     beforeEach(function () {
-        $this->disputeService = new DisputeService();
+        $this->disputeService = new DisputeService;
     });
 
     it('opens dispute successfully', function () {

@@ -1,15 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserProfile extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     /**
      * The primary key.
@@ -64,6 +69,9 @@ class UserProfile extends Model
 
     /**
      * Get the user that owns this profile.
+     */
+    /**
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {

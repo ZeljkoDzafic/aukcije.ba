@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
 use App\Models\Auction;
 use App\Models\Dispute;
 use App\Models\Order;
 use App\Models\User;
-use Livewire\Component;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
 
 class StatisticsOverview extends Component
 {
@@ -15,6 +18,7 @@ class StatisticsOverview extends Component
 
     public string $range = '30';
 
+    /** @var array<string, string> */
     public array $cards = [
         'users' => '+18% rast',
         'auctions' => '1.240 aktivnih',
@@ -22,6 +26,7 @@ class StatisticsOverview extends Component
         'trust' => '97.8%',
     ];
 
+    /** @var array<string, string> */
     public array $tabSummaries = [
         'users' => 'Registracije +18%, churn 4.2%',
         'auctions' => '1.240 aktivnih, prosjek 14.2 bida',
@@ -29,6 +34,7 @@ class StatisticsOverview extends Component
         'trust' => 'Dispute rate 1.8%, avg rating 4.8',
     ];
 
+    /** @var array<string, list<int>> */
     public array $chartSeries = [
         'users' => [32, 41, 48, 52, 61, 68],
         'auctions' => [14, 18, 16, 21, 27, 24],
@@ -36,7 +42,7 @@ class StatisticsOverview extends Component
         'trust' => [97, 98, 96, 99, 98, 99],
     ];
 
-    public function render()
+    public function render(): View
     {
         if (Schema::hasTable('users') && Schema::hasTable('auctions') && Schema::hasTable('orders')) {
             $userCount = User::query()->count();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 enum AuctionStatus: string
@@ -13,14 +15,14 @@ enum AuctionStatus: string
     public function canTransitionTo(self $new): bool
     {
         $transitions = [
-            self::Draft => [self::Active, self::Cancelled],
-            self::Active => [self::Finished, self::Sold, self::Cancelled],
-            self::Finished => [self::Sold],
-            self::Sold => [],
-            self::Cancelled => [],
+            self::Draft->value => [self::Active, self::Cancelled],
+            self::Active->value => [self::Finished, self::Sold, self::Cancelled],
+            self::Finished->value => [self::Sold],
+            self::Sold->value => [],
+            self::Cancelled->value => [],
         ];
 
-        return in_array($new, $transitions[$this] ?? []);
+        return in_array($new, $transitions[$this->value], true);
     }
 
     public function isEditable(): bool

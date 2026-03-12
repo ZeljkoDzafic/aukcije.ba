@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
 use App\Models\Auction;
 use App\Models\Category;
-use Livewire\Component;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
 
 class AuctionSearch extends Component
 {
@@ -17,15 +20,17 @@ class AuctionSearch extends Component
 
     public string $sort = 'ending_soon';
 
+    /** @var array<string, string> */
     public array $categoryOptions = [];
 
+    /** @var list<array<string, mixed>> */
     public array $auctions = [
         ['id' => 'demo-1', 'title' => 'Samsung Galaxy S24 Ultra', 'category' => 'Elektronika', 'price' => 1250.00, 'bids' => 14, 'watchers' => 32, 'location' => 'Sarajevo', 'time' => '2d 04h'],
         ['id' => 'demo-2', 'title' => 'Sony WH-1000XM5', 'category' => 'Audio', 'price' => 480.00, 'bids' => 11, 'watchers' => 17, 'location' => 'Banja Luka', 'time' => '5h 12m'],
         ['id' => 'demo-3', 'title' => 'Vintage Leica M3', 'category' => 'Foto oprema', 'price' => 2750.00, 'bids' => 19, 'watchers' => 44, 'location' => 'Tuzla', 'time' => '1d 18h'],
     ];
 
-    public function render()
+    public function render(): View
     {
         $results = collect($this->auctions);
 

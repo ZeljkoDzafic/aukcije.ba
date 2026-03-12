@@ -1,22 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Enums\AuctionStatus;
+use App\Events\AuctionExtended;
+use App\Events\BidPlaced;
+use App\Exceptions\AuctionNotActiveException;
+use App\Exceptions\BidTooLowException;
+use App\Exceptions\CannotBidOwnAuctionException;
 use App\Models\Auction;
 use App\Models\AuctionExtension;
 use App\Models\Bid;
 use App\Models\ProxyBid;
 use App\Models\User;
-use App\Enums\AuctionStatus;
-use App\Events\BidPlaced;
-use App\Events\AuctionExtended;
-use App\Exceptions\BidTooLowException;
-use App\Exceptions\AuctionNotActiveException;
-use App\Exceptions\CannotBidOwnAuctionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class BiddingService
 {
@@ -125,7 +126,7 @@ class BiddingService
         }
 
         if ($auction->seller_id === $user->id) {
-            throw new CannotBidOwnAuctionException('Ne možeš licitirati na vlastitoj aukciji.');
+            throw new CannotBidOwnAuctionException;
         }
 
         $minimum = $this->incrementService->getMinimumBid($auction->current_price);
@@ -163,6 +164,9 @@ class BiddingService
         return $proxyBid->fresh();
     }
 
+    /**
+     * @return array{success: bool, error?: string, order_id?: string}
+     */
     public function buyNow(Auction $auction, User $user): array
     {
         if (! $auction->buy_now_price) {
@@ -203,7 +207,7 @@ class BiddingService
     public function processProxyBids(Auction $auction, Bid $winningBid): void
     {
         $maxIterations = 50;
-        $iteration     = 0;
+        $iteration = 0;
 
         while ($iteration < $maxIterations) {
             $iteration++;
@@ -300,11 +304,11 @@ class BiddingService
             $newEndsAt = $baseEndAt->copy()->addMinutes($extensionMinutes * $extensionCount);
 
             AuctionExtension::create([
-                'auction_id'          => $auction->id,
+                'auction_id' => $auction->id,
                 'triggered_by_bid_id' => $bid->id,
-                'old_end_at'          => $currentEndsAt,
-                'new_end_at'          => $newEndsAt,
-                'extension_minutes'   => $extensionMinutes,
+                'old_end_at' => $currentEndsAt,
+                'new_end_at' => $newEndsAt,
+                'extension_minutes' => $extensionMinutes,
             ]);
 
             $auction->update([

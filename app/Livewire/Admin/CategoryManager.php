@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
 use App\Models\Category;
-use Livewire\Component;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
 
 class CategoryManager extends Component
 {
@@ -20,6 +23,7 @@ class CategoryManager extends Component
 
     public string $statusMessage = '';
 
+    /** @var list<array{name: string, count: int, status: string, children: list<string>}> */
     public array $categories = [
         [
             'name' => 'Elektronika',
@@ -106,7 +110,7 @@ class CategoryManager extends Component
         $this->statusMessage = "Redoslijed kategorije '{$category->name}' je ažuriran.";
     }
 
-    public function render()
+    public function render(): View
     {
         if (Schema::hasTable('categories')) {
             $databaseCategories = Category::query()
@@ -114,12 +118,12 @@ class CategoryManager extends Component
                 ->whereNull('parent_id')
                 ->limit(10)
                 ->get()
-                ->map(function (Category $category) {
+                ->map(function (Category $category): array {
                     return [
                         'name' => $category->name,
-                        'count' => $category->auctions_count,
+                        'count' => (int) $category->auctions_count,
                         'status' => $category->is_active ? 'Aktivna' : 'Neaktivna',
-                        'children' => $category->children()->limit(5)->get()->map(fn ($child) => "{$child->name} · {$child->auctions()->count()} aukcija")->all(),
+                        'children' => $category->children()->limit(5)->get()->map(fn (Category $child): string => "{$child->name} · {$child->auctions()->count()} aukcija")->values()->all(),
                     ];
                 });
 

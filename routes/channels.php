@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Auction;
+use App\Models\Dispute;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -45,26 +49,26 @@ Broadcast::channel('user.{userId}', function ($user, $userId) {
 
 // Order participants channel
 Broadcast::channel('order.{orderId}', function ($user, $orderId) {
-    $order = \App\Models\Order::find($orderId);
-    
-    if (!$order) {
+    $order = Order::find($orderId);
+
+    if (! $order) {
         return false;
     }
-    
+
     // Buyer or seller can listen to order updates
     return $user->id === $order->buyer_id || $user->id === $order->seller_id;
 });
 
 // Dispute channel
 Broadcast::channel('dispute.{disputeId}', function ($user, $disputeId) {
-    $dispute = \App\Models\Dispute::find($disputeId);
-    
-    if (!$dispute) {
+    $dispute = Dispute::find($disputeId);
+
+    if (! $dispute) {
         return false;
     }
-    
+
     // Parties involved in dispute + moderators/admins
-    return $user->id === $dispute->order->buyer_id 
+    return $user->id === $dispute->order->buyer_id
         || $user->id === $dispute->order->seller_id
         || $user->hasRole(['admin', 'moderator']);
 });
@@ -78,11 +82,11 @@ Broadcast::channel('dispute.{disputeId}', function ($user, $disputeId) {
 // Active bidders on an auction
 Broadcast::channel('auction.{auctionId}.bidders', function ($user, $auctionId) {
     $auction = Auction::find($auctionId);
-    
-    if (!$auction || !$auction->isActive()) {
+
+    if (! $auction || ! $auction->isActive()) {
         return false;
     }
-    
+
     // Return user data for presence channel
     return [
         'id' => $user->id,

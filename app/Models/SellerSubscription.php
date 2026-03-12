@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -11,7 +13,9 @@ class SellerSubscription extends Model
     use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -20,17 +24,26 @@ class SellerSubscription extends Model
 
     protected $casts = [
         'starts_at' => 'datetime',
-        'ends_at'   => 'datetime',
-        'is_trial'  => 'boolean',
+        'ends_at' => 'datetime',
+        'is_trial' => 'boolean',
     ];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function getIsActiveAttribute(): bool
     {
         return $this->ends_at === null || $this->ends_at->isFuture();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getTierConfigAttribute(): array
     {
         return config("tiers.tiers.{$this->tier}", config('tiers.tiers.free'));

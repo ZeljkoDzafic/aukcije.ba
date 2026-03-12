@@ -1,6 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Http\Controllers\Admin\FeatureFlagController;
+use App\Models\Auction;
+use App\Models\Category;
+use App\Models\Order;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,14 +30,14 @@ Route::get('/health', function () {
     ];
 
     try {
-        \Illuminate\Support\Facades\DB::select('select 1');
-    } catch (\Throwable) {
+        DB::select('select 1');
+    } catch (Throwable) {
         $checks['database'] = false;
     }
 
     try {
-        \Illuminate\Support\Facades\Cache::put('healthcheck', true, 5);
-    } catch (\Throwable) {
+        Cache::put('healthcheck', true, 5);
+    } catch (Throwable) {
         $checks['cache'] = false;
     }
 
@@ -51,14 +60,14 @@ Route::middleware(['auth', 'role:admin|moderator|super_admin'])->get('/health/de
     ];
 
     try {
-        \Illuminate\Support\Facades\DB::select('select 1');
-    } catch (\Throwable) {
+        DB::select('select 1');
+    } catch (Throwable) {
         $checks['database'] = false;
     }
 
     try {
-        \Illuminate\Support\Facades\Cache::put('healthcheck_detailed', true, 5);
-    } catch (\Throwable) {
+        Cache::put('healthcheck_detailed', true, 5);
+    } catch (Throwable) {
         $checks['cache'] = false;
     }
 
@@ -85,10 +94,10 @@ Route::get('/sitemap.xml', function () {
         route('register'),
     ];
 
-    if (\Illuminate\Support\Facades\Schema::hasTable('categories')) {
+    if (Schema::hasTable('categories')) {
         $urls = array_merge(
             $urls,
-            \App\Models\Category::query()
+            Category::query()
                 ->whereNotNull('slug')
                 ->limit(100)
                 ->pluck('slug')
@@ -97,10 +106,10 @@ Route::get('/sitemap.xml', function () {
         );
     }
 
-    if (\Illuminate\Support\Facades\Schema::hasTable('auctions')) {
+    if (Schema::hasTable('auctions')) {
         $urls = array_merge(
             $urls,
-            \App\Models\Auction::query()
+            Auction::query()
                 ->where('status', 'active')
                 ->limit(200)
                 ->pluck('id')
@@ -148,8 +157,8 @@ Route::get('/aukcije/{auction}', function () {
 
     $auctionRecord = null;
 
-    if (\Illuminate\Support\Facades\Schema::hasTable('auctions')) {
-        $auctionRecord = \App\Models\Auction::query()
+    if (Schema::hasTable('auctions')) {
+        $auctionRecord = Auction::query()
             ->with(['category', 'seller', 'bids.user', 'images'])
             ->find(request()->route('auction'));
     }
@@ -183,15 +192,15 @@ Route::get('/aukcije/{auction}', function () {
 
     $relatedAuctions = collect();
 
-    if ($auctionRecord?->category_id && \Illuminate\Support\Facades\Schema::hasTable('auctions')) {
-        $relatedAuctions = \App\Models\Auction::query()
+    if ($auctionRecord?->category_id && Schema::hasTable('auctions')) {
+        $relatedAuctions = Auction::query()
             ->with('category')
             ->where('category_id', $auctionRecord->category_id)
             ->whereKeyNot($auctionRecord->id)
             ->where('status', 'active')
             ->limit(4)
             ->get()
-            ->map(fn (\App\Models\Auction $item) => [
+            ->map(fn (Auction $item) => [
                 'id' => $item->id,
                 'title' => $item->title,
                 'category' => $item->category?->name ?? 'Bez kategorije',
@@ -226,8 +235,8 @@ Route::get('/kategorije', function () {
 Route::get('/kategorije/{category}', function () {
     $slug = (string) request()->route('category');
 
-    $categoryRecord = \Illuminate\Support\Facades\Schema::hasTable('categories')
-        ? \App\Models\Category::query()->where('slug', $slug)->withCount('auctions')->first()
+    $categoryRecord = Schema::hasTable('categories')
+        ? Category::query()->where('slug', $slug)->withCount('auctions')->first()
         : null;
 
     $category = (object) [
@@ -243,14 +252,14 @@ Route::get('/kategorije/{category}', function () {
         ['id' => 3, 'title' => 'Nintendo Switch OLED', 'category' => $category->name, 'price' => 410.00, 'bids' => 8, 'watchers' => 29, 'location' => 'Zenica', 'time' => '9h 48m'],
     ]);
 
-    if ($categoryRecord && \Illuminate\Support\Facades\Schema::hasTable('auctions')) {
-        $databaseAuctions = \App\Models\Auction::query()
+    if ($categoryRecord && Schema::hasTable('auctions')) {
+        $databaseAuctions = Auction::query()
             ->with('category')
             ->where('category_id', $categoryRecord->id)
             ->where('status', 'active')
             ->limit(6)
             ->get()
-            ->map(fn (\App\Models\Auction $item) => [
+            ->map(fn (Auction $item) => [
                 'id' => $item->id,
                 'title' => $item->title,
                 'category' => $item->category?->name ?? $category->name,
@@ -374,8 +383,8 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
 
     // Orders
     Route::get('/narudzbe/export', function () {
-        $orders = \Illuminate\Support\Facades\Schema::hasTable('orders')
-            ? \App\Models\Order::query()->where('seller_id', auth()->id())->latest()->get()
+        $orders = Schema::hasTable('orders')
+            ? Order::query()->where('seller_id', auth()->id())->latest()->get()
             : collect();
 
         return response()->streamDownload(function () use ($orders) {
@@ -401,13 +410,13 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
             ['id' => 879, 'title' => 'Gramofon Technics', 'buyer' => 'Lana R.', 'amount' => '980,00 BAM', 'status' => 'pending_payment'],
         ]);
 
-        if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            $databaseOrders = \App\Models\Order::query()
+        if (Schema::hasTable('orders')) {
+            $databaseOrders = Order::query()
                 ->with(['buyer', 'auction'])
                 ->where('seller_id', auth()->id())
                 ->latest()
                 ->get()
-                ->map(fn (\App\Models\Order $order) => [
+                ->map(fn (Order $order) => [
                     'id' => $order->id,
                     'title' => $order->auction?->title ?? 'Aukcija',
                     'buyer' => $order->buyer?->name ?? 'Kupac',
@@ -424,8 +433,8 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
     })->name('orders.index');
 
     Route::get('/narudzbe/{order}', function () {
-        $orderRecord = \Illuminate\Support\Facades\Schema::hasTable('orders')
-            ? \App\Models\Order::query()->with(['buyer', 'auction', 'shipment'])->find(request()->route('order'))
+        $orderRecord = Schema::hasTable('orders')
+            ? Order::query()->with(['buyer', 'auction', 'shipment'])->find(request()->route('order'))
             : null;
 
         $order = (object) [
@@ -435,7 +444,7 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
             'buyer_name' => $orderRecord?->buyer?->name ?? 'Jasmin K.',
             'buyer_email' => $orderRecord?->buyer?->email ?? 'jasmin@example.test',
             'buyer_phone' => $orderRecord?->buyer?->phone ?? '+387 61 111 222',
-            'shipping_address' => is_array($orderRecord?->shipping_address) ? implode(', ', $orderRecord->shipping_address) : ($orderRecord?->shipping_address ?? 'Zmaja od Bosne 14, Sarajevo'),
+            'shipping_address' => is_array($orderRecord?->shipping_address) ? implode(', ', $orderRecord->shipping_address) : ($orderRecord?->shipping_address ?: 'Zmaja od Bosne 14, Sarajevo'),
             'shipping_note' => $orderRecord?->shipping_method ?? 'Brza pošta, isporuka 1-2 dana',
             'amount' => number_format((float) ($orderRecord?->total_amount ?? $orderRecord?->amount ?? 2140), 2, ',', '.').' BAM',
             'commission' => number_format((float) ($orderRecord?->commission_amount ?? $orderRecord?->commission ?? 107), 2, ',', '.').' BAM',
@@ -460,10 +469,10 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
 */
 
 Route::prefix('admin')->middleware(['auth', 'role:super_admin|moderator'])->group(function () {
-    Route::get('/feature-flags', [App\Http\Controllers\Admin\FeatureFlagController::class, 'index'])->name('admin.feature-flags.index');
-    Route::post('/feature-flags', [App\Http\Controllers\Admin\FeatureFlagController::class, 'store'])->name('admin.feature-flags.store');
-    Route::patch('/feature-flags/{flag}/toggle', [App\Http\Controllers\Admin\FeatureFlagController::class, 'toggle'])->name('admin.feature-flags.toggle');
-    Route::delete('/feature-flags/{flag}', [App\Http\Controllers\Admin\FeatureFlagController::class, 'destroy'])->name('admin.feature-flags.destroy');
+    Route::get('/feature-flags', [FeatureFlagController::class, 'index'])->name('admin.feature-flags.index');
+    Route::post('/feature-flags', [FeatureFlagController::class, 'store'])->name('admin.feature-flags.store');
+    Route::patch('/feature-flags/{flag}/toggle', [FeatureFlagController::class, 'toggle'])->name('admin.feature-flags.toggle');
+    Route::delete('/feature-flags/{flag}', [FeatureFlagController::class, 'destroy'])->name('admin.feature-flags.destroy');
 });
 
 Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admin.')->group(function () {

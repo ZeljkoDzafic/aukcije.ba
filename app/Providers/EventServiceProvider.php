@@ -1,11 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Events\AuctionEnded;
-use App\Events\AuctionWon;
 use App\Events\BidPlaced;
-use App\Events\OrderCreated;
 use App\Listeners\BroadcastBidUpdate;
 use App\Listeners\NotifyWatchers;
 use App\Listeners\SendOutbidNotification;

@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,9 +14,13 @@ class AuctionNotification extends Model
     use HasUuids;
 
     protected $table = 'notifications_custom';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -21,8 +28,8 @@ class AuctionNotification extends Model
     ];
 
     protected $casts = [
-        'data'       => 'array',
-        'read_at'    => 'datetime',
+        'data' => 'array',
+        'read_at' => 'datetime',
         'created_at' => 'datetime',
     ];
 
@@ -32,8 +39,29 @@ class AuctionNotification extends Model
         static::creating(fn ($m) => $m->created_at = now());
     }
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    public function scopeUnread($query)    { return $query->whereNull('read_at'); }
-    public function scopeForUser($query, $userId) { return $query->where('user_id', $userId); }
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeUnread(Builder $query): Builder
+    {
+        return $query->whereNull('read_at');
+    }
+
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeForUser(Builder $query, string $userId): Builder
+    {
+        return $query->where('user_id', $userId);
+    }
 }

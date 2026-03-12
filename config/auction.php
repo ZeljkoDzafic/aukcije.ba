@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Auction Configuration
- * 
+ *
  * Core settings for the auction engine including:
  * - Anti-sniping rules
  * - Auction duration options
@@ -250,7 +252,7 @@ return [
     |
     */
 
-    'search_index' => env('MEILISEARCH_PREFIX', 'aukcije_') . 'auctions',
+    'search_index' => env('MEILISEARCH_PREFIX', 'aukcije_').'auctions',
 
     'search_min_chars' => 2, // Minimum characters before search triggers
 

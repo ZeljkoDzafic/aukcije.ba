@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Auction;
@@ -26,7 +28,7 @@ class NotificationService
      */
     public function sendOutbidNotification(User $user, Auction $auction, Bid $outbidBid, Bid $newLeadingBid): void
     {
-        $user->notify(new OutbidNotification($auction, $outbidBid, $newLeadingBid));
+        $user->notify(new OutbidNotification($auction, (float) $newLeadingBid->amount));
     }
 
     /**
@@ -42,10 +44,7 @@ class NotificationService
      */
     public function sendAuctionEndedNotification(User $seller, Auction $auction): void
     {
-        $winnerName = $auction->winner?->name;
-        $finalPrice = $auction->current_price;
-        
-        $seller->notify(new AuctionEndedNotification($auction, $winnerName, $finalPrice));
+        $seller->notify(new AuctionEndedNotification($auction));
     }
 
     /**
@@ -98,6 +97,8 @@ class NotificationService
 
     /**
      * Broadcast real-time update to auction watchers
+     *
+     * @param array<string, mixed> $data
      */
     public function broadcastToAuctionWatchers(Auction $auction, string $event, array $data): void
     {
@@ -107,8 +108,10 @@ class NotificationService
 
     /**
      * Send bulk notifications to multiple users
+     *
+     * @param iterable<User> $users
      */
-    public function sendBulkNotification(array $users, object $notification): void
+    public function sendBulkNotification(iterable $users, object $notification): void
     {
         foreach ($users as $user) {
             $user->notify($notification);

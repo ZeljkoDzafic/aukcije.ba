@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\AuctionStatus;
 use App\Enums\AuctionType;
+use App\Services\BidIncrementService;
 use App\Support\TestingCarbon;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,9 +20,47 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
 
+/**
+ * @property string $id
+ * @property string $seller_id
+ * @property string|null $category_id
+ * @property string $title
+ * @property string|null $description
+ * @property float $start_price
+ * @property float $current_price
+ * @property float|null $buy_now_price
+ * @property float|null $reserve_price
+ * @property string|\App\Enums\AuctionStatus $status
+ * @property string|null $condition
+ * @property Carbon|null $ends_at
+ * @property Carbon|null $last_bid_at
+ * @property int $bids_count
+ * @property int $watchers_count
+ * @property User|null $seller
+ * @property Category|null $category
+ * @property User|null $winner
+ * @property \Illuminate\Database\Eloquent\Collection<int, Bid> $bids
+ * @property \Illuminate\Database\Eloquent\Collection<int, AuctionImage> $images
+ * @property-read AuctionImage|null $primary_image
+ * @property-read Bid|null $winning_bid
+ * @property-read float $minimum_bid
+ * @property-read string $time_remaining
+ *
+ * @method static Builder<self> query()
+ * @method static Builder<self> active()
+ * @method static Builder<self> endingSoon(int $hours = 24)
+ * @method static Builder<self> featured()
+ * @method static Builder<self> inCategory(string $categoryId)
+ * @method static Builder<self> withBids()
+ * @method static Builder<self> search(string $term)
+ */
 class Auction extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes, Searchable;
+    /** @use HasFactory<\Database\Factories\AuctionFactory> */
+    use HasFactory;
+    use HasUuids;
+    use Searchable;
+    use SoftDeletes;
 
     /**
      * The primary key.
@@ -107,6 +148,9 @@ class Auction extends Model
     /**
      * Get the seller (User) who created the auction.
      */
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
@@ -114,6 +158,9 @@ class Auction extends Model
 
     /**
      * Get the category this auction belongs to.
+     */
+    /**
+     * @return BelongsTo<Category, $this>
      */
     public function category(): BelongsTo
     {
@@ -123,6 +170,9 @@ class Auction extends Model
     /**
      * Get the auction winner.
      */
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function winner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'winner_id');
@@ -130,6 +180,9 @@ class Auction extends Model
 
     /**
      * Get all bids placed on this auction.
+     */
+    /**
+     * @return HasMany<Bid, $this>
      */
     public function bids(): HasMany
     {
@@ -139,6 +192,9 @@ class Auction extends Model
     /**
      * Get all proxy bids for this auction.
      */
+    /**
+     * @return HasMany<ProxyBid, $this>
+     */
     public function proxyBids(): HasMany
     {
         return $this->hasMany(ProxyBid::class);
@@ -146,6 +202,9 @@ class Auction extends Model
 
     /**
      * Get all images for this auction.
+     */
+    /**
+     * @return HasMany<AuctionImage, $this>
      */
     public function images(): HasMany
     {
@@ -155,6 +214,9 @@ class Auction extends Model
     /**
      * Get all user watchers for this auction (pivot).
      */
+    /**
+     * @return HasMany<AuctionWatcher, $this>
+     */
     public function watchers(): HasMany
     {
         return $this->hasMany(AuctionWatcher::class);
@@ -162,6 +224,9 @@ class Auction extends Model
 
     /**
      * Get users watching this auction (many-to-many via pivot).
+     */
+    /**
+     * @return BelongsToMany<User, $this>
      */
     public function watchingUsers(): BelongsToMany
     {
@@ -171,6 +236,9 @@ class Auction extends Model
     /**
      * Get all time extensions for this auction.
      */
+    /**
+     * @return HasMany<AuctionExtension, $this>
+     */
     public function extensions(): HasMany
     {
         return $this->hasMany(AuctionExtension::class);
@@ -179,6 +247,9 @@ class Auction extends Model
     /**
      * Get the order associated with this auction (after it closes).
      */
+    /**
+     * @return HasOne<Order, $this>
+     */
     public function order(): HasOne
     {
         return $this->hasOne(Order::class);
@@ -186,6 +257,9 @@ class Auction extends Model
 
     /**
      * Get the primary (first) image for this auction.
+     */
+    /**
+     * @return HasOne<AuctionImage, $this>
      */
     public function primaryImage(): HasOne
     {
@@ -203,7 +277,7 @@ class Auction extends Model
     {
         $now = now();
 
-        if (!$this->ends_at || $this->ends_at <= $now) {
+        if (! $this->ends_at || $this->ends_at <= $now) {
             return 'Završeno';
         }
 
@@ -225,7 +299,7 @@ class Auction extends Model
      */
     public function getMinimumBidAttribute(): float
     {
-        return app(\App\Services\BidIncrementService::class)->getMinimumBid($this->current_price);
+        return app(BidIncrementService::class)->getMinimumBid($this->current_price);
     }
 
     /**
@@ -233,7 +307,7 @@ class Auction extends Model
      */
     public function getIsEndingSoonAttribute(): bool
     {
-        if (!$this->ends_at || $this->ends_at->isPast()) {
+        if (! $this->ends_at || $this->ends_at->isPast()) {
             return false;
         }
 
@@ -255,6 +329,10 @@ class Auction extends Model
     /**
      * Scope: only active auctions.
      */
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', AuctionStatus::Active->value)
@@ -263,6 +341,10 @@ class Auction extends Model
 
     /**
      * Scope: auctions ending within a given number of hours (default 24).
+     */
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
      */
     public function scopeEndingSoon(Builder $query, int $hours = 24): Builder
     {
@@ -273,6 +355,10 @@ class Auction extends Model
     /**
      * Scope: only featured auctions.
      */
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
     public function scopeFeatured(Builder $query): Builder
     {
         return $query->where('is_featured', true)
@@ -282,6 +368,10 @@ class Auction extends Model
     /**
      * Scope: auctions in a specific category.
      */
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
     public function scopeInCategory(Builder $query, string $categoryId): Builder
     {
         return $query->where('category_id', $categoryId);
@@ -290,6 +380,10 @@ class Auction extends Model
     /**
      * Scope: auctions that have at least one bid.
      */
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
     public function scopeWithBids(Builder $query): Builder
     {
         return $query->where('bids_count', '>', 0);
@@ -297,6 +391,10 @@ class Auction extends Model
 
     /**
      * Scope: full-text search by title / description.
+     */
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
      */
     public function scopeSearch(Builder $query, string $term): Builder
     {
@@ -350,6 +448,9 @@ class Auction extends Model
 
     /**
      * Get the indexable data array for the model.
+     */
+    /**
+     * @return array<string, mixed>
      */
     public function toSearchableArray(): array
     {

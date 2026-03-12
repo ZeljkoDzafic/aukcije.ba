@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
 use App\Models\AdminLog;
 use App\Models\Auction;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -44,7 +47,7 @@ class AuctionDetailManager extends Component
         $this->statusMessage = "Moderation akcija '{$action}' je evidentirana za aukciju {$auction->title}.";
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin.auction-detail-manager', [
             'auction' => $this->getAuction(),

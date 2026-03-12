@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class ThrottleBids
@@ -15,26 +16,26 @@ class ThrottleBids
      *
      * Rate limit bidding endpoints to prevent bid flooding.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param Closure(Request): (Response) $next
      */
     public function handle(Request $request, Closure $next, int $maxAttempts = 10, int $decayMinutes = 1): Response
     {
         $limiter = app(RateLimiter::class);
-        
+
         $key = 'bid:'.$request->user()->id;
-        
+
         if ($limiter->tooManyAttempts($key, $maxAttempts)) {
             $retryAfter = $limiter->availableIn($key);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
-                    'error' => 'Previše pokušaja licitiranja. Pokušajte ponovo za ' . $retryAfter . ' sekundi.',
+                    'error' => 'Previše pokušaja licitiranja. Pokušajte ponovo za '.$retryAfter.' sekundi.',
                 ], 429);
             }
 
             return redirect()->back()
-                ->with('error', 'Previše pokušaja licitiranja. Pokušajte ponovo za ' . $retryAfter . ' sekundi.')
-                ->header('Retry-After', $retryAfter);
+                ->with('error', 'Previše pokušaja licitiranja. Pokušajte ponovo za '.$retryAfter.' sekundi.')
+                ->header('Retry-After', (string) $retryAfter);
         }
 
         $limiter->hit($key, $decayMinutes * 60);

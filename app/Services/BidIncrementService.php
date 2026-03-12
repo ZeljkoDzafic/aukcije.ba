@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 class BidIncrementService
@@ -12,6 +14,7 @@ class BidIncrementService
                 return (float) $increment;
             }
         }
+
         return 50.00; // fallback
     }
 

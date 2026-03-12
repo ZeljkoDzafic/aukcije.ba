@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use App\Services\WalletService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -58,14 +65,17 @@ class WalletManager extends Component
         }
     }
 
-    public function getWalletProperty()
+    public function getWalletProperty(): ?Wallet
     {
         return Auth::user()?->wallet;
     }
 
-    public function getTransactionsProperty()
+    /**
+     * @return Collection<int, WalletTransaction>|EloquentCollection<int, WalletTransaction>
+     */
+    public function getTransactionsProperty(): Collection|EloquentCollection
     {
-        $wallet = $this->wallet;
+        $wallet = $this->getWalletProperty();
 
         if (! $wallet) {
             return collect();
@@ -78,7 +88,7 @@ class WalletManager extends Component
             ->values();
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.wallet-manager');
     }

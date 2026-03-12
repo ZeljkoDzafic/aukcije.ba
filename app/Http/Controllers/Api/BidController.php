@@ -1,13 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\AuctionNotActiveException;
+use App\Exceptions\BidTooLowException;
+use App\Exceptions\CannotBidOwnAuctionException;
 use App\Http\Controllers\Controller;
-use App\Models\Bid;
 use App\Models\Auction;
+use App\Models\Bid;
 use App\Services\BiddingService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class BidController extends Controller
@@ -51,17 +56,17 @@ class BidController extends Controller
                 ],
                 'message' => 'Bid placed successfully',
             ]);
-        } catch (\App\Exceptions\BidTooLowException $e) {
+        } catch (BidTooLowException $e) {
             return response()->json([
                 'success' => false,
                 'error' => ['message' => $e->getMessage()],
             ], 400);
-        } catch (\App\Exceptions\AuctionNotActiveException $e) {
+        } catch (AuctionNotActiveException $e) {
             return response()->json([
                 'success' => false,
                 'error' => ['message' => $e->getMessage()],
             ], 410);
-        } catch (\App\Exceptions\CannotBidOwnAuctionException $e) {
+        } catch (CannotBidOwnAuctionException $e) {
             return response()->json([
                 'success' => false,
                 'error' => ['message' => $e->getMessage()],

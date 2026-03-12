@@ -1,18 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WalletTransaction extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     /**
@@ -50,11 +58,17 @@ class WalletTransaction extends Model
         'created_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Wallet, $this>
+     */
     public function wallet(): BelongsTo
     {
         return $this->belongsTo(Wallet::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -63,7 +77,11 @@ class WalletTransaction extends Model
     /**
      * Scope for deposits
      */
-    public function scopeDeposits($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeDeposits(Builder $query): Builder
     {
         return $query->where('type', 'deposit');
     }
@@ -71,7 +89,11 @@ class WalletTransaction extends Model
     /**
      * Scope for withdrawals
      */
-    public function scopeWithdrawals($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeWithdrawals(Builder $query): Builder
     {
         return $query->where('type', 'withdrawal');
     }
@@ -79,7 +101,11 @@ class WalletTransaction extends Model
     /**
      * Scope for payments
      */
-    public function scopePayments($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopePayments(Builder $query): Builder
     {
         return $query->where('type', 'payment');
     }
@@ -87,7 +113,11 @@ class WalletTransaction extends Model
     /**
      * Scope for refunds
      */
-    public function scopeRefunds($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeRefunds(Builder $query): Builder
     {
         return $query->where('type', 'refund');
     }
@@ -95,7 +125,11 @@ class WalletTransaction extends Model
     /**
      * Scope for escrow holds
      */
-    public function scopeEscrowHolds($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeEscrowHolds(Builder $query): Builder
     {
         return $query->where('type', 'escrow_hold');
     }
@@ -103,7 +137,11 @@ class WalletTransaction extends Model
     /**
      * Scope for escrow releases
      */
-    public function scopeEscrowReleases($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeEscrowReleases(Builder $query): Builder
     {
         return $query->where('type', 'escrow_release');
     }
@@ -113,7 +151,7 @@ class WalletTransaction extends Model
      */
     public function getTypeLabelAttribute(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'deposit' => 'Uplata',
             'withdrawal' => 'Isplata',
             'payment' => 'Plaćanje',
@@ -131,7 +169,7 @@ class WalletTransaction extends Model
      */
     public function getTypeIconAttribute(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'deposit' => '⬆️',
             'withdrawal' => '⬇️',
             'payment' => '💳',

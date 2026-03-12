@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events;
 
 use App\Models\Auction;
@@ -12,7 +14,9 @@ use Illuminate\Queue\SerializesModels;
 
 class BidPlaced implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public function __construct(
         public readonly Auction $auction,
@@ -29,20 +33,23 @@ class BidPlaced implements ShouldBroadcast
         return 'BidPlaced';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [
-            'auction_id'    => $this->auction->id,
+            'auction_id' => $this->auction->id,
             'current_price' => $this->auction->current_price,
-            'bids_count'    => $this->auction->bids_count,
+            'bids_count' => $this->auction->bids_count,
             'bid' => [
-                'id'         => $this->bid->id,
-                'amount'     => $this->bid->amount,
-                'is_proxy'   => $this->bid->is_proxy,
+                'id' => $this->bid->id,
+                'amount' => $this->bid->amount,
+                'is_proxy' => $this->bid->is_proxy,
                 'created_at' => $this->bid->created_at,
             ],
             'bidder' => [
-                'id'   => $this->bid->user_id,
+                'id' => $this->bid->user_id,
                 'name' => $this->bid->user?->name,
             ],
         ];

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -9,12 +11,40 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property string $id
+ * @property string $auction_id
+ * @property string $buyer_id
+ * @property string $seller_id
+ * @property string $status
+ * @property string|null $payment_status
+ * @property string|null $payment_gateway
+ * @property float $amount
+ * @property float $total_amount
+ * @property float $commission
+ * @property float $commission_amount
+ * @property float $seller_payout
+ * @property array<int|string, mixed>|null $shipping_address
+ * @property string|null $shipping_method
+ * @property string|null $shipping_city
+ * @property string|null $shipping_country
+ * @property Auction|null $auction
+ * @property User|null $buyer
+ * @property User|null $seller
+ * @property Shipment|null $shipment
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<self> query()
+ */
 class Order extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<\Database\Factories\OrderFactory> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -58,31 +88,49 @@ class Order extends Model
         'cancelled_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Auction, $this>
+     */
     public function auction(): BelongsTo
     {
         return $this->belongsTo(Auction::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
+    /**
+     * @return HasMany<Payment, $this>
+     */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
+    /**
+     * @return HasOne<Shipment, $this>
+     */
     public function shipment(): HasOne
     {
         return $this->hasOne(Shipment::class);
     }
 
+    /**
+     * @return HasOne<Dispute, $this>
+     */
     public function dispute(): HasOne
     {
         return $this->hasOne(Dispute::class);
@@ -90,6 +138,9 @@ class Order extends Model
 
     /**
      * Get the ratings associated with this order.
+     */
+    /**
+     * @return HasMany<UserRating, $this>
      */
     public function ratings(): HasMany
     {
@@ -99,9 +150,12 @@ class Order extends Model
     /**
      * Get order status badge
      */
+    /**
+     * @return array{label: string, color: string}
+     */
     public function getStatusBadgeAttribute(): array
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending_payment' => ['label' => 'Čeka plaćanje', 'color' => 'warning'],
             'paid' => ['label' => 'Plaćeno', 'color' => 'success'],
             'awaiting_shipment' => ['label' => 'Čeka slanje', 'color' => 'info'],
@@ -242,7 +296,7 @@ class Order extends Model
      */
     public function getDaysUntilPaymentDeadlineAttribute(): ?int
     {
-        if (!$this->payment_deadline_at) {
+        if (! $this->payment_deadline_at) {
             return null;
         }
 
@@ -254,7 +308,7 @@ class Order extends Model
      */
     public function getDaysSincePaymentAttribute(): ?int
     {
-        if (!$this->paid_at) {
+        if (! $this->paid_at) {
             return null;
         }
 

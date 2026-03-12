@@ -5,26 +5,26 @@
  * BIDDING SERVICE UNIT TESTS
  * ===================================
  * Tests for the core bidding engine
- * 
+ *
  * Coverage target: 100%
  */
 
 declare(strict_types=1);
 
+use App\Exceptions\AuctionNotActiveException;
+use App\Exceptions\BidTooLowException;
+use App\Exceptions\CannotBidOwnAuctionException;
 use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\ProxyBid;
 use App\Models\User;
 use App\Services\BiddingService;
-use App\Exceptions\BidTooLowException;
-use App\Exceptions\AuctionNotActiveException;
-use App\Exceptions\CannotBidOwnAuctionException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->biddingService = new BiddingService();
+    $this->biddingService = new BiddingService;
 });
 
 // ============================================================================
@@ -132,14 +132,14 @@ describe('BiddingService::placeBid', function () {
         $user = User::factory()->banned()->create();
 
         $this->biddingService->placeBid($auction, $user, 50);
-    })->throws(\Exception::class);
+    })->throws(Exception::class);
 
     it('rejects bid from user with unverified email', function () {
         $auction = Auction::factory()->active()->create();
         $user = User::factory()->unverified()->create();
 
         $this->biddingService->placeBid($auction, $user, 50);
-    })->throws(\Exception::class);
+    })->throws(Exception::class);
 
     // -------------------------------------------------------------------------
     // Bid Increment Tests
@@ -516,23 +516,23 @@ describe('Concurrent bidding', function () {
 
         // Simulate concurrent bids (in real scenario, Redis lock handles this)
         $results[] = $this->biddingService->placeBid($auction, $user1, 105);
-        
+
         // Refresh auction to get updated price
         $auction->refresh();
-        
+
         try {
             $results[] = $this->biddingService->placeBid($auction, $user2, 105);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Second bid might fail due to price change
             $results[] = $e;
         }
 
         // Count successful bids
-        $successfulBids = array_filter($results, fn($r) => $r instanceof Bid);
-        
+        $successfulBids = array_filter($results, fn ($r) => $r instanceof Bid);
+
         // At least one should succeed
         expect(count($successfulBids))->toBeGreaterThanOrEqual(1);
-        
+
         // Final price should reflect the winning bid
         expect($auction->fresh()->current_price)->toBeGreaterThanOrEqual(105.0);
     });
@@ -546,19 +546,19 @@ describe('Concurrent bidding', function () {
             $auction->refresh();
             try {
                 $bids[] = $this->biddingService->placeBid($auction, $user, $auction->current_price + 5);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $bids[] = null;
             }
         }
 
         // Filter successful bids
         $successfulBids = array_filter($bids);
-        
+
         // Should have at least one successful bid
         expect(count($successfulBids))->toBeGreaterThanOrEqual(1);
-        
+
         // All successful bids should have correct is_winning flag
-        $winningBids = array_filter($successfulBids, fn($b) => $b->is_winning);
+        $winningBids = array_filter($successfulBids, fn ($b) => $b->is_winning);
         expect(count($winningBids))->toBe(1);
     });
 });

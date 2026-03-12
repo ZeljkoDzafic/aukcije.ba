@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Couriers;
 
 use Exception;
@@ -7,8 +9,12 @@ use Exception;
 class PostExpressCourier implements CourierInterface
 {
     protected string $apiKey;
+
     protected string $apiSecret;
+
     protected string $apiUrl;
+
+    /** @var array<string, mixed> */
     protected array $sender;
 
     public function __construct()
@@ -55,8 +61,8 @@ class PostExpressCourier implements CourierInterface
             ];
 
             // In production, send request to PostExpress API
-            $waybillNumber = 'PE' . date('ymd') . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
-            $trackingNumber = 'HR' . str_pad(rand(100000000, 999999999), 9, '0', STR_PAD_LEFT);
+            $waybillNumber = 'PE'.date('ymd').str_pad((string) rand(1, 99999), 5, '0', STR_PAD_LEFT);
+            $trackingNumber = 'HR'.str_pad((string) rand(100000000, 999999999), 9, '0', STR_PAD_LEFT);
 
             return [
                 'success' => true,
@@ -70,7 +76,7 @@ class PostExpressCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to create waybill: ' . $e->getMessage(),
+                'error' => 'Failed to create waybill: '.$e->getMessage(),
                 'courier' => 'postexpress',
             ];
         }
@@ -105,7 +111,7 @@ class PostExpressCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to get tracking info: ' . $e->getMessage(),
+                'error' => 'Failed to get tracking info: '.$e->getMessage(),
                 'courier' => 'postexpress',
             ];
         }
@@ -117,9 +123,9 @@ class PostExpressCourier implements CourierInterface
             $pricing = config('shipping.postexpress.pricing', []);
             $basePrice = $pricing['base_price'] ?? 3.50;
             $perKg = $pricing['per_kg'] ?? 0.80;
-            
+
             $price = $basePrice + ($weightKg * $perKg);
-            
+
             return [
                 'success' => true,
                 'courier' => 'postexpress',
@@ -132,7 +138,7 @@ class PostExpressCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to estimate shipping: ' . $e->getMessage(),
+                'error' => 'Failed to estimate shipping: '.$e->getMessage(),
                 'courier' => 'postexpress',
             ];
         }
@@ -140,20 +146,12 @@ class PostExpressCourier implements CourierInterface
 
     public function cancelShipment(string $waybillNumber): array
     {
-        try {
-            return [
-                'success' => true,
-                'waybill_number' => $waybillNumber,
-                'status' => 'cancelled',
-                'courier' => 'postexpress',
-            ];
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to cancel shipment: ' . $e->getMessage(),
-                'courier' => 'postexpress',
-            ];
-        }
+        return [
+            'success' => true,
+            'waybill_number' => $waybillNumber,
+            'status' => 'cancelled',
+            'courier' => 'postexpress',
+        ];
     }
 
     public function getName(): string
@@ -164,11 +162,11 @@ class PostExpressCourier implements CourierInterface
     public function isAvailable(): bool
     {
         return config('shipping.postexpress.enabled', true)
-            && !empty($this->apiKey);
+            && ! empty($this->apiKey);
     }
 
     protected function getTrackingUrl(string $trackingNumber): string
     {
-        return 'https://track.postexpress.hr/' . $trackingNumber;
+        return 'https://track.postexpress.hr/'.$trackingNumber;
     }
 }

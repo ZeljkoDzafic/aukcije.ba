@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Shipping Configuration
- * 
+ *
  * Settings for courier integrations including:
  * - Courier API credentials
  * - Shipping zones and pricing
@@ -49,15 +51,15 @@ return [
 
     'euroexpress' => [
         'enabled' => env('FEATURE_EUROEXPRESS', true),
-        
+
         'api_key' => env('EUROEXPRESS_API_KEY'),
         'api_secret' => env('EUROEXPRESS_API_SECRET'),
-        
+
         // API endpoints
         'api_url' => 'https://api.euroexpress.ba/v1',
         'sandbox_url' => 'https://sandbox-api.euroexpress.ba/v1',
         'sandbox' => env('EUROEXPRESS_SANDBOX', true),
-        
+
         // Default sender info
         'sender' => [
             'name' => env('EUROEXPRESS_SENDER_NAME', 'Aukcije.ba'),
@@ -69,7 +71,7 @@ return [
             'phone' => env('EUROEXPRESS_SENDER_PHONE', '+387 33 000 000'),
             'email' => env('EUROEXPRESS_SENDER_EMAIL', 'info@aukcije.ba'),
         ],
-        
+
         // Services offered
         'services' => [
             'standard' => [
@@ -88,7 +90,7 @@ return [
                 'price_multiplier' => 1.5,
             ],
         ],
-        
+
         // Pricing (base rates in BAM)
         'pricing' => [
             'base_price' => 5.00,
@@ -97,14 +99,14 @@ return [
             'insurance_percentage' => 0.02, // 2% of declared value
             'cod_percentage' => 0.015, // 1.5% for cash on delivery
         ],
-        
+
         // Waybill settings
         'waybill' => [
             'format' => 'A6', // A6 or A4
             'print_copies' => 2, // Number of copies to print
             'auto_generate' => true, // Generate waybill when order marked as shipped
         ],
-        
+
         // Tracking webhook
         'webhook_secret' => env('EUROEXPRESS_WEBHOOK_SECRET'),
         'tracking_events' => [
@@ -128,15 +130,15 @@ return [
 
     'postexpress' => [
         'enabled' => env('FEATURE_POSTEXPRESS', true),
-        
+
         'api_key' => env('POSTEXPRESS_API_KEY'),
         'api_secret' => env('POSTEXPRESS_API_SECRET'),
-        
+
         // API endpoints
         'api_url' => 'https://api.postexpress.hr/v2',
         'sandbox_url' => 'https://sandbox-api.postexpress.hr/v2',
         'sandbox' => env('POSTEXPRESS_SANDBOX', true),
-        
+
         // Default sender info
         'sender' => [
             'name' => env('POSTEXPRESS_SENDER_NAME', 'Aukcije.ba'),
@@ -149,7 +151,7 @@ return [
             'email' => env('POSTEXPRESS_SENDER_EMAIL', 'info@aukcije.ba'),
             'oib' => env('POSTEXPRESS_SENDER_OIB', ''), // Croatian tax ID
         ],
-        
+
         // Services offered
         'services' => [
             'standard' => [
@@ -168,7 +170,7 @@ return [
                 'price_multiplier' => 1.4,
             ],
         ],
-        
+
         // Pricing (base rates in EUR)
         'pricing' => [
             'base_price' => 3.50,
@@ -177,14 +179,14 @@ return [
             'insurance_percentage' => 0.015,
             'cod_percentage' => 0.012,
         ],
-        
+
         // Waybill settings
         'waybill' => [
             'format' => 'A6',
             'print_copies' => 2,
             'auto_generate' => true,
         ],
-        
+
         // Tracking webhook
         'webhook_secret' => env('POSTEXPRESS_WEBHOOK_SECRET'),
         'tracking_events' => [
@@ -209,15 +211,15 @@ return [
 
     'bhposta' => [
         'enabled' => env('FEATURE_BHPOSTA', true),
-        
+
         'api_key' => env('BHPOSTA_API_KEY'),
         'api_secret' => env('BHPOSTA_API_SECRET'),
-        
+
         // API endpoints
         'api_url' => 'https://api.bhposta.ba/v1',
         'sandbox_url' => 'https://sandbox-api.bhposta.ba/v1',
         'sandbox' => env('BHPOSTA_SANDBOX', true),
-        
+
         // Default sender info
         'sender' => [
             'name' => env('BHPOSTA_SENDER_NAME', 'Aukcije.ba'),
@@ -229,7 +231,7 @@ return [
             'phone' => env('BHPOSTA_SENDER_PHONE', '+387 33 000 000'),
             'email' => env('BHPOSTA_SENDER_EMAIL', 'info@aukcije.ba'),
         ],
-        
+
         // Services offered
         'services' => [
             'standard' => [
@@ -248,7 +250,7 @@ return [
                 'price_multiplier' => 1.6,
             ],
         ],
-        
+
         // Pricing (base rates in BAM)
         'pricing' => [
             'base_price' => 4.00,
@@ -257,14 +259,14 @@ return [
             'insurance_percentage' => 0.02,
             'cod_percentage' => 0.015,
         ],
-        
+
         // Waybill settings
         'waybill' => [
             'format' => 'A6',
             'print_copies' => 2,
             'auto_generate' => true,
         ],
-        
+
         // Tracking webhook
         'webhook_secret' => env('BHPOSTA_WEBHOOK_SECRET'),
         'tracking_events' => [
@@ -380,13 +382,13 @@ return [
     'tracking' => [
         // Poll couriers for updates (if webhooks not available)
         'poll_interval_hours' => 6,
-        
+
         // Notify buyer on tracking updates
         'notify_on_update' => true,
-        
+
         // Tracking page URL format
         'tracking_url_template' => 'https://track.{courier}.ba/{tracking_number}',
-        
+
         // Store tracking history
         'store_history' => true,
         'history_retention_days' => 365,
@@ -405,19 +407,19 @@ return [
         // PDF generation settings
         'paper_size' => 'A6',
         'orientation' => 'landscape',
-        
+
         // Include QR code
         'include_qr_code' => true,
-        
+
         // Include barcode
         'include_barcode' => true,
-        
+
         // Auto-generate on order ship
         'auto_generate' => true,
-        
+
         // Email waybill to buyer
         'email_to_buyer' => true,
-        
+
         // Email waybill to seller
         'email_to_seller' => true,
     ],
@@ -434,13 +436,13 @@ return [
     'insurance' => [
         // Include insurance by default
         'default_enabled' => true,
-        
+
         // Maximum insured value
         'max_value' => 5000,
-        
+
         // Insurance rate (percentage of declared value)
         'rate' => 0.02, // 2%
-        
+
         // Minimum insurance cost
         'minimum_cost' => 1.00,
     ],
@@ -457,13 +459,13 @@ return [
     'cod' => [
         // Enable COD
         'enabled' => true,
-        
+
         // Maximum COD amount
         'max_amount' => 1000,
-        
+
         // COD fee (percentage)
         'fee_percentage' => 0.015, // 1.5%
-        
+
         // Minimum COD fee
         'minimum_fee' => 1.00,
     ],

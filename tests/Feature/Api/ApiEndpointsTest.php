@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 use App\Models\Auction;
 use App\Models\Bid;
+use App\Models\Category;
 use App\Models\User;
-use App\Models\Order;
 use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 
@@ -33,18 +34,18 @@ describe('Auction API', function () {
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    '*' => ['id', 'title', 'current_price', 'ends_at']
+                    '*' => ['id', 'title', 'current_price', 'ends_at'],
                 ],
-                'meta' => ['current_page', 'per_page', 'total']
+                'meta' => ['current_page', 'per_page', 'total'],
             ]);
     });
 
     it('filters auctions by category', function () {
-        $category = \App\Models\Category::factory()->create();
+        $category = Category::factory()->create();
         Auction::factory()->active()->count(5)->create(['category_id' => $category->id]);
         Auction::factory()->active()->count(5)->create(['category_id' => null]);
 
-        $response = $this->getJson('/api/v1/auctions?category_id=' . $category->id);
+        $response = $this->getJson('/api/v1/auctions?category_id='.$category->id);
 
         $response->assertStatus(200);
         expect(count($response->json('data')))->toBe(5);
@@ -259,7 +260,7 @@ describe('Wallet API', function () {
     it('returns transaction history', function () {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-        \App\Models\WalletTransaction::factory()->count(5)->create(['wallet_id' => $wallet->id]);
+        WalletTransaction::factory()->count(5)->create(['wallet_id' => $wallet->id]);
         Sanctum::actingAs($user);
 
         $response = $this->getJson('/api/v1/user/wallet/transactions');

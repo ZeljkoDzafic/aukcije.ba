@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -116,7 +118,7 @@ return [
         'kyc_status' => true,
         'payment_reminder' => true,
         'shipping_reminder' => true,
-        
+
         // SMS notifications (via Infobip/Twilio)
         'sms' => [
             'enabled' => env('SMS_DRIVER', 'log') !== 'log',
@@ -125,7 +127,7 @@ return [
             'item_shipped' => true,
             'payment_reminder' => false,
         ],
-        
+
         // Push notifications (via Firebase)
         'push' => [
             'enabled' => env('FIREBASE_PROJECT_ID') !== null,
@@ -154,11 +156,11 @@ return [
             'email_kyc_status' => true,
             'email_payment_reminder' => true,
             'email_shipping_reminder' => true,
-            
+
             'sms_outbid' => false,
             'sms_auction_won' => true,
             'sms_item_shipped' => true,
-            
+
             'push_outbid' => true,
             'push_auction_won' => true,
             'push_item_shipped' => true,

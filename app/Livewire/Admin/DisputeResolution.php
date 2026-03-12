@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
-use App\Models\DisputeMessage;
 use App\Models\Dispute;
+use App\Models\DisputeMessage;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -18,6 +21,7 @@ class DisputeResolution extends Component
 
     public string $message = '';
 
+    /** @var list<array{author: string, body: string}> */
     public array $messages = [
         ['author' => 'Kupac', 'body' => 'Opis nije odgovarao stvarnom stanju artikla.'],
         ['author' => 'Seller', 'body' => 'Spreman sam na djelimični refund.'],
@@ -82,7 +86,7 @@ class DisputeResolution extends Component
         $this->feedback = 'Admin poruka je dodana u komunikacijski log.';
     }
 
-    public function render()
+    public function render(): View
     {
         if ($this->disputeId && Schema::hasTable('dispute_messages')) {
             $databaseMessages = DisputeMessage::query()
@@ -90,9 +94,9 @@ class DisputeResolution extends Component
                 ->with('user')
                 ->latest()
                 ->get()
-                ->map(fn (DisputeMessage $message) => [
+                ->map(fn (DisputeMessage $message): array => [
                     'author' => $message->is_from_admin ? 'Admin' : ($message->user?->name ?? 'Korisnik'),
-                    'body' => $message->message,
+                    'body' => (string) $message->message,
                 ])
                 ->reverse()
                 ->values()

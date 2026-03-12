@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Gateways;
 
+use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
-use App\Models\User;
 use Exception;
 
 class WalletGateway implements PaymentGatewayInterface
@@ -16,8 +18,8 @@ class WalletGateway implements PaymentGatewayInterface
     {
         try {
             $user = $data['user'] ?? null;
-            
-            if (!$user) {
+
+            if (! $user) {
                 return [
                     'success' => false,
                     'error' => 'User not provided',
@@ -58,7 +60,7 @@ class WalletGateway implements PaymentGatewayInterface
 
             return [
                 'success' => true,
-                'transaction_id' => 'wallet_' . $transaction->id,
+                'transaction_id' => 'wallet_'.$transaction->id,
                 'gateway' => 'wallet',
                 'status' => 'success',
                 'balance_remaining' => $wallet->balance,
@@ -66,7 +68,7 @@ class WalletGateway implements PaymentGatewayInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Payment failed: ' . $e->getMessage(),
+                'error' => 'Payment failed: '.$e->getMessage(),
                 'gateway' => 'wallet',
             ];
         }
@@ -79,8 +81,8 @@ class WalletGateway implements PaymentGatewayInterface
     {
         try {
             $originalTransaction = WalletTransaction::find(str_replace('wallet_', '', $transactionId));
-            
-            if (!$originalTransaction) {
+
+            if (! $originalTransaction) {
                 return [
                     'success' => false,
                     'error' => 'Original transaction not found',
@@ -102,14 +104,14 @@ class WalletGateway implements PaymentGatewayInterface
                 'type' => 'refund',
                 'amount' => $refundAmount,
                 'balance_after' => $wallet->balance,
-                'description' => 'Refund for transaction #' . $transactionId,
+                'description' => 'Refund for transaction #'.$transactionId,
                 'reference_type' => 'refund',
                 'reference_id' => $originalTransaction->id,
             ]);
 
             return [
                 'success' => true,
-                'refund_id' => 'wallet_refund_' . $transaction->id,
+                'refund_id' => 'wallet_refund_'.$transaction->id,
                 'gateway' => 'wallet',
                 'status' => 'success',
                 'new_balance' => $wallet->balance,
@@ -117,7 +119,7 @@ class WalletGateway implements PaymentGatewayInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Refund failed: ' . $e->getMessage(),
+                'error' => 'Refund failed: '.$e->getMessage(),
                 'gateway' => 'wallet',
             ];
         }
@@ -132,8 +134,8 @@ class WalletGateway implements PaymentGatewayInterface
     public function getPaymentStatus(string $transactionId): string
     {
         $transaction = WalletTransaction::find(str_replace('wallet_', '', $transactionId));
-        
-        if (!$transaction) {
+
+        if (! $transaction) {
             return 'unknown';
         }
 
@@ -156,6 +158,7 @@ class WalletGateway implements PaymentGatewayInterface
     public function getBalance(User $user): float
     {
         $wallet = Wallet::where('user_id', $user->id)->first();
+
         return $wallet?->balance ?? 0;
     }
 
@@ -169,6 +172,9 @@ class WalletGateway implements PaymentGatewayInterface
 
     /**
      * Get payment limits
+     */
+    /**
+     * @return array{min_payment: int, max_payment: int, daily_limit: int}
      */
     public function getLimits(): array
     {

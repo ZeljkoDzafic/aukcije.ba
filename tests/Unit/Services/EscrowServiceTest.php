@@ -5,7 +5,7 @@
  * ESCROW SERVICE UNIT TESTS
  * ===================================
  * Tests for escrow and wallet functionality
- * 
+ *
  * Coverage target: 100%
  */
 
@@ -21,8 +21,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->escrowService = new EscrowService();
-    $this->walletService = new WalletService();
+    $this->escrowService = new EscrowService;
+    $this->walletService = new WalletService;
 });
 
 // ============================================================================
@@ -98,14 +98,14 @@ describe('WalletService', function () {
         Wallet::factory()->create(['user_id' => $user->id, 'balance' => 50]);
 
         $this->walletService->withdraw($user, 100);
-    })->throws(\Exception::class, 'Insufficient balance');
+    })->throws(Exception::class, 'Insufficient balance');
 
     it('fails withdrawal when wallet is frozen', function () {
         $user = User::factory()->create();
         Wallet::factory()->create(['user_id' => $user->id, 'balance' => 200, 'frozen' => true]);
 
         $this->walletService->withdraw($user, 50);
-    })->throws(\Exception::class, 'Wallet is frozen');
+    })->throws(Exception::class, 'Wallet is frozen');
 
     it('freezes wallet', function () {
         $user = User::factory()->create();
@@ -138,7 +138,7 @@ describe('WalletService', function () {
     it('returns transaction history', function () {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-        
+
         WalletTransaction::factory()->count(5)->create(['wallet_id' => $wallet->id]);
 
         $transactions = $this->walletService->getTransactions($user);
@@ -196,7 +196,7 @@ describe('EscrowService', function () {
         // Note: Current implementation doesn't check frozen status in holdFunds
         // This would need to be added for full coverage
         $result = $this->escrowService->holdFunds($order);
-        
+
         expect($result)->toBeTrue(); // Funds held even if frozen (may need adjustment)
     });
 
@@ -269,7 +269,7 @@ describe('EscrowService', function () {
     it('auto-releases after 14 days', function () {
         $buyer = User::factory()->create();
         $seller = User::factory()->create();
-        
+
         // Order delivered 15 days ago
         $order = Order::factory()->create([
             'buyer_id' => $buyer->id,

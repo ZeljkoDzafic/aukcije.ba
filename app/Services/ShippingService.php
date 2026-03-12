@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Order;
@@ -12,6 +14,7 @@ use Exception;
 
 class ShippingService
 {
+    /** @var array<string, CourierInterface> */
     protected array $couriers = [];
 
     public function __construct()
@@ -25,9 +28,9 @@ class ShippingService
     protected function initializeCouriers(): void
     {
         $this->couriers = [
-            'euroexpress' => new EuroExpressCourier(),
-            'postexpress' => new PostExpressCourier(),
-            'bhposta' => new BhPostaCourier(),
+            'euroexpress' => new EuroExpressCourier,
+            'postexpress' => new PostExpressCourier,
+            'bhposta' => new BhPostaCourier,
         ];
     }
 
@@ -42,10 +45,13 @@ class ShippingService
     /**
      * Get all available couriers
      */
+    /**
+     * @return array<string, array{name: string, services: array<string, mixed>}>
+     */
     public function getAvailableCouriers(): array
     {
         $available = [];
-        
+
         foreach ($this->couriers as $name => $courier) {
             if ($courier->isAvailable()) {
                 $available[$name] = [
@@ -60,6 +66,9 @@ class ShippingService
 
     /**
      * Get best courier for shipment (cheapest option)
+     */
+    /**
+     * @return array<string, mixed>|null
      */
     public function getBestCourier(string $fromCity, string $toCity, float $weightKg): ?array
     {
@@ -95,6 +104,9 @@ class ShippingService
     /**
      * Get shipping quotes from all available couriers
      */
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function getShippingQuotes(string $fromCity, string $toCity, float $weightKg): array
     {
         $quotes = [];
@@ -119,18 +131,22 @@ class ShippingService
     /**
      * Create waybill for order
      */
+    /**
+     * @param array<string, mixed> $shipmentData
+     * @return array<string, mixed>
+     */
     public function createWaybill(Order $order, string $courierName, array $shipmentData): array
     {
         $courier = $this->getCourier($courierName);
 
-        if (!$courier) {
+        if (! $courier) {
             return [
                 'success' => false,
                 'error' => 'Courier not found',
             ];
         }
 
-        if (!$courier->isAvailable()) {
+        if (! $courier->isAvailable()) {
             return [
                 'success' => false,
                 'error' => 'Courier is not available',
@@ -181,11 +197,14 @@ class ShippingService
     /**
      * Get tracking information for shipment
      */
+    /**
+     * @return array<string, mixed>
+     */
     public function trackShipment(Shipment $shipment): array
     {
         $courier = $this->getCourier($shipment->courier);
 
-        if (!$courier) {
+        if (! $courier) {
             return [
                 'success' => false,
                 'error' => 'Courier not found',
@@ -211,11 +230,14 @@ class ShippingService
     /**
      * Cancel shipment
      */
+    /**
+     * @return array<string, mixed>
+     */
     public function cancelShipment(Shipment $shipment): array
     {
         $courier = $this->getCourier($shipment->courier);
 
-        if (!$courier) {
+        if (! $courier) {
             return [
                 'success' => false,
                 'error' => 'Courier not found',
@@ -253,13 +275,16 @@ class ShippingService
     /**
      * Handle webhook from courier
      */
+    /**
+     * @param array<string, mixed> $data
+     */
     public function handleWebhook(string $courierName, array $data): void
     {
         $shipment = Shipment::where('courier', $courierName)
             ->where('tracking_number', $data['tracking_number'] ?? null)
             ->first();
 
-        if (!$shipment) {
+        if (! $shipment) {
             throw new Exception('Shipment not found');
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -12,7 +14,7 @@ class RedirectIfAuthenticated
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param Closure(Request): (Response) $next
      */
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
@@ -22,15 +24,15 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 // Redirect based on user role
                 $user = Auth::guard($guard)->user();
-                
+
                 if ($user->hasRole('admin') || $user->hasRole('moderator')) {
                     return redirect()->route('admin.dashboard');
                 }
-                
+
                 if ($user->hasRole('seller') || $user->hasRole('verified_seller')) {
                     return redirect()->route('seller.dashboard');
                 }
-                
+
                 return redirect()->route('dashboard');
             }
         }

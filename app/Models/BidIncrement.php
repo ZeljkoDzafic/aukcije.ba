@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,14 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 class BidIncrement extends Model
 {
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = ['price_from', 'price_to', 'increment'];
 
     protected $casts = [
         'price_from' => 'float',
-        'price_to'   => 'float',
-        'increment'  => 'float',
+        'price_to' => 'float',
+        'increment' => 'float',
     ];
 
     public static function getIncrement(float $currentPrice): float

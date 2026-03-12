@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Order;
@@ -14,6 +16,7 @@ use Exception;
 
 class PaymentService
 {
+    /** @var array<string, PaymentGatewayInterface> */
     protected array $gateways = [];
 
     public function __construct()
@@ -27,10 +30,10 @@ class PaymentService
     protected function initializeGateways(): void
     {
         $this->gateways = [
-            'stripe' => new StripeGateway(),
-            'monri' => new MonriGateway(),
-            'corvuspay' => new CorvusPayGateway(),
-            'wallet' => new WalletGateway(),
+            'stripe' => new StripeGateway,
+            'monri' => new MonriGateway,
+            'corvuspay' => new CorvusPayGateway,
+            'wallet' => new WalletGateway,
         ];
     }
 
@@ -45,6 +48,9 @@ class PaymentService
     /**
      * Get all available gateways
      */
+    /**
+     * @return array<string, array{name: string, display_name: string, icon: string, description: string, supported_cards: list<string>}>
+     */
     public function getAvailableGateways(?User $user = null): array
     {
         $available = [];
@@ -52,10 +58,10 @@ class PaymentService
 
         foreach ($enabled as $gatewayName) {
             $gateway = $this->getGateway($gatewayName);
-            
+
             if ($gateway && $gateway->isAvailable()) {
                 // Special check for wallet - only if user is authenticated
-                if ($gatewayName === 'wallet' && !$user) {
+                if ($gatewayName === 'wallet' && ! $user) {
                     continue;
                 }
 
@@ -82,18 +88,22 @@ class PaymentService
     /**
      * Process a payment
      */
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
     public function processPayment(Order $order, string $gatewayName, array $data): array
     {
         $gateway = $this->getGateway($gatewayName);
 
-        if (!$gateway) {
+        if (! $gateway) {
             return [
                 'success' => false,
                 'error' => 'Payment gateway not found',
             ];
         }
 
-        if (!$gateway->isAvailable()) {
+        if (! $gateway->isAvailable()) {
             return [
                 'success' => false,
                 'error' => 'Payment gateway is not available',
@@ -113,7 +123,7 @@ class PaymentService
         try {
             $result = $gateway->processPayment($order->total_amount, array_merge($data, [
                 'order_id' => $order->id,
-                'description' => 'Plaćanje narudžbe #' . $order->id,
+                'description' => 'Plaćanje narudžbe #'.$order->id,
             ]));
 
             if ($result['success']) {
@@ -151,6 +161,9 @@ class PaymentService
     /**
      * Process a refund
      */
+    /**
+     * @return array<string, mixed>
+     */
     public function refund(Payment $payment, ?float $amount = null): array
     {
         if ($payment->status !== 'success') {
@@ -162,7 +175,7 @@ class PaymentService
 
         $gateway = $this->getGateway($payment->gateway);
 
-        if (!$gateway) {
+        if (! $gateway) {
             return [
                 'success' => false,
                 'error' => 'Payment gateway not found',
@@ -212,7 +225,7 @@ class PaymentService
     {
         $gateway = $this->getGateway($gatewayName);
 
-        if (!$gateway) {
+        if (! $gateway) {
             return false;
         }
 
@@ -222,6 +235,9 @@ class PaymentService
     /**
      * Handle webhook event
      */
+    /**
+     * @param array<string, mixed> $data
+     */
     public function handleWebhook(string $gatewayName, array $data): void
     {
         // Find payment by transaction ID or order ID
@@ -229,13 +245,13 @@ class PaymentService
             ->orWhere('metadata->order_id', $data['order_id'] ?? null)
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             throw new Exception('Payment not found');
         }
 
         // Update payment status based on webhook data
         $status = $this->mapWebhookStatus($gatewayName, $data['status'] ?? '');
-        
+
         $payment->update([
             'status' => $status,
             'gateway_response' => $data,
@@ -252,7 +268,7 @@ class PaymentService
      */
     protected function mapWebhookStatus(string $gateway, string $status): string
     {
-        return match(strtolower($status)) {
+        return match (strtolower($status)) {
             'success', 'approved', 'completed', 'succeeded' => 'success',
             'pending', 'processing', 'waiting' => 'pending',
             'failed', 'declined', 'rejected', 'error' => 'failed',
@@ -266,7 +282,7 @@ class PaymentService
      */
     protected function getDisplayName(string $gateway): string
     {
-        return match($gateway) {
+        return match ($gateway) {
             'stripe' => 'Kartice (Stripe)',
             'monri' => 'BiH Kartice (Monri)',
             'corvuspay' => 'HR Kartice (CorvusPay)',
@@ -280,7 +296,7 @@ class PaymentService
      */
     protected function getIcon(string $gateway): string
     {
-        return match($gateway) {
+        return match ($gateway) {
             'stripe' => '💳',
             'monri' => '🇧🇦',
             'corvuspay' => '🇭🇷',
@@ -294,7 +310,7 @@ class PaymentService
      */
     protected function getDescription(string $gateway): string
     {
-        return match($gateway) {
+        return match ($gateway) {
             'stripe' => 'Visa, Mastercard, American Express',
             'monri' => 'Lokalne BiH kartice',
             'corvuspay' => 'Hrvatske kartice',
@@ -306,9 +322,12 @@ class PaymentService
     /**
      * Get supported cards for gateway
      */
+    /**
+     * @return list<string>
+     */
     protected function getSupportedCards(string $gateway): array
     {
-        return match($gateway) {
+        return match ($gateway) {
             'stripe' => ['visa', 'mastercard', 'amex', 'maestro'],
             'monri' => ['visa', 'mastercard', 'maestro', 'amex'],
             'corvuspay' => ['visa', 'mastercard', 'maestro', 'diners'],

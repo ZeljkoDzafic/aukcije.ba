@@ -1,19 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string|null $transaction_id
+ * @property array<string, mixed>|null $metadata
+ */
 class Payment extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -34,16 +45,25 @@ class Payment extends Model
         'gateway_response' => 'array',
     ];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Order, $this>
+     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
+    /**
+     * @return HasMany<PaymentRefund, $this>
+     */
     public function refunds(): HasMany
     {
         return $this->hasMany(PaymentRefund::class);

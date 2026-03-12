@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use App\Notifications\ResetPasswordNotification;
-use App\Notifications\VerifyEmailNotification;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -16,7 +16,12 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasUuids, Notifiable, HasRoles;
+    use HasApiTokens;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory;
+    use HasRoles;
+    use HasUuids;
+    use Notifiable;
 
     /**
      * The primary key type.
@@ -79,6 +84,9 @@ class User extends Authenticatable
     /**
      * Get the user's profile.
      */
+    /**
+     * @return HasOne<UserProfile, $this>
+     */
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
@@ -86,6 +94,9 @@ class User extends Authenticatable
 
     /**
      * Get all KYC verifications for the user.
+     */
+    /**
+     * @return HasMany<UserVerification, $this>
      */
     public function verifications(): HasMany
     {
@@ -95,6 +106,9 @@ class User extends Authenticatable
     /**
      * Get the user's wallet.
      */
+    /**
+     * @return HasOne<Wallet, $this>
+     */
     public function wallet(): HasOne
     {
         return $this->hasOne(Wallet::class);
@@ -102,6 +116,9 @@ class User extends Authenticatable
 
     /**
      * Get the user's auctions (as seller).
+     */
+    /**
+     * @return HasMany<Auction, $this>
      */
     public function auctions(): HasMany
     {
@@ -111,6 +128,9 @@ class User extends Authenticatable
     /**
      * Get the user's bids.
      */
+    /**
+     * @return HasMany<Bid, $this>
+     */
     public function bids(): HasMany
     {
         return $this->hasMany(Bid::class);
@@ -118,6 +138,9 @@ class User extends Authenticatable
 
     /**
      * Get the user's proxy bids.
+     */
+    /**
+     * @return HasMany<ProxyBid, $this>
      */
     public function proxyBids(): HasMany
     {
@@ -127,6 +150,9 @@ class User extends Authenticatable
     /**
      * Get ratings given by this user (as rater).
      */
+    /**
+     * @return HasMany<UserRating, $this>
+     */
     public function ratings(): HasMany
     {
         return $this->hasMany(UserRating::class, 'rater_id');
@@ -134,6 +160,9 @@ class User extends Authenticatable
 
     /**
      * Get ratings received by this user.
+     */
+    /**
+     * @return HasMany<UserRating, $this>
      */
     public function ratingsReceived(): HasMany
     {
@@ -143,6 +172,9 @@ class User extends Authenticatable
     /**
      * Get the user's orders as buyer.
      */
+    /**
+     * @return HasMany<Order, $this>
+     */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'buyer_id');
@@ -151,6 +183,9 @@ class User extends Authenticatable
     /**
      * Get the user's orders as seller.
      */
+    /**
+     * @return HasMany<Order, $this>
+     */
     public function soldOrders(): HasMany
     {
         return $this->hasMany(Order::class, 'seller_id');
@@ -158,6 +193,9 @@ class User extends Authenticatable
 
     /**
      * Get the user's watchlist (auctions being watched).
+     */
+    /**
+     * @return BelongsToMany<Auction, $this>
      */
     public function watchlist(): BelongsToMany
     {
@@ -168,6 +206,9 @@ class User extends Authenticatable
     /**
      * Get messages received by the user.
      */
+    /**
+     * @return HasMany<Message, $this>
+     */
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class, 'receiver_id');
@@ -176,6 +217,9 @@ class User extends Authenticatable
     /**
      * Get messages sent by the user.
      */
+    /**
+     * @return HasMany<Message, $this>
+     */
     public function sentMessages(): HasMany
     {
         return $this->hasMany(Message::class, 'sender_id');
@@ -183,6 +227,9 @@ class User extends Authenticatable
 
     /**
      * Get the user's active seller subscription.
+     */
+    /**
+     * @return HasOne<SellerSubscription, $this>
      */
     public function subscription(): HasOne
     {
@@ -284,11 +331,11 @@ class User extends Authenticatable
             return false;
         }
 
-        if (!$this->hasRole(['seller', 'verified_seller'])) {
+        if (! $this->hasRole(['seller', 'verified_seller'])) {
             return false;
         }
 
-        if (!$this->hasVerifiedEmail()) {
+        if (! $this->hasVerifiedEmail()) {
             return false;
         }
 
@@ -307,6 +354,9 @@ class User extends Authenticatable
 
     /**
      * Get the user's seller tier configuration array.
+     */
+    /**
+     * @return array<string, mixed>
      */
     public function getTier(): array
     {
@@ -412,6 +462,10 @@ class User extends Authenticatable
     /**
      * Scope: only active (non-banned) users.
      */
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     */
     public function scopeActive($query)
     {
         return $query->where('is_banned', false);
@@ -420,6 +474,10 @@ class User extends Authenticatable
     /**
      * Scope: only verified sellers.
      */
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     */
     public function scopeVerifiedSellers($query)
     {
         return $query->role('verified_seller');
@@ -427,6 +485,10 @@ class User extends Authenticatable
 
     /**
      * Scope: only users with verified email.
+     */
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
      */
     public function scopeVerifiedEmail($query)
     {

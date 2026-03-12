@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\Auction;
@@ -13,9 +15,13 @@ use Illuminate\Support\Facades\Log;
 
 class EndAuctionJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 60;
 
     public function __construct(public readonly Auction $auction) {}
@@ -24,7 +30,7 @@ class EndAuctionJob implements ShouldQueue
     {
         $fresh = $this->auction->fresh();
 
-        if (!$fresh || $fresh->status !== 'active') {
+        if (! $fresh || $fresh->status !== 'active') {
             return;
         }
 

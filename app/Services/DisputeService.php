@@ -1,9 +1,16 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Services;
 
-use App\Models\{Dispute, Order, User};
+use App\Models\Dispute;
+use App\Models\Order;
+use App\Models\User;
+use App\Notifications\DisputeNotification;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\{DB, Storage};
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DisputeService
 {
@@ -29,13 +36,16 @@ class DisputeService
 
             // Notify seller
             $order->seller?->notify(
-                new \App\Notifications\DisputeNotification($dispute, 'opened')
+                new DisputeNotification($dispute, 'opened')
             );
 
             return $dispute;
         });
     }
 
+    /**
+     * @param array<int, UploadedFile|string> $files
+     */
     public function addEvidence(Dispute $dispute, User $user, array $files): bool
     {
         $paths = [];
@@ -77,10 +87,10 @@ class DisputeService
 
             // Notify both parties
             $order->buyer?->notify(
-                new \App\Notifications\DisputeNotification($dispute, 'resolved')
+                new DisputeNotification($dispute, 'resolved')
             );
             $order->seller?->notify(
-                new \App\Notifications\DisputeNotification($dispute, 'resolved')
+                new DisputeNotification($dispute, 'resolved')
             );
         });
 

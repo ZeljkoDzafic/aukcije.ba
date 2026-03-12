@@ -1,19 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Wallet extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -32,11 +39,17 @@ class Wallet extends Model
         'frozen_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return HasMany<WalletTransaction, $this>
+     */
     public function transactions(): HasMany
     {
         return $this->hasMany(WalletTransaction::class);
@@ -62,12 +75,12 @@ class Wallet extends Model
 
     public function canWithdraw(): bool
     {
-        return !$this->frozen && $this->balance > 0;
+        return ! $this->frozen && $this->balance > 0;
     }
 
     public function canPay(float $amount): bool
     {
-        return !$this->frozen && $this->balance >= $amount;
+        return ! $this->frozen && $this->balance >= $amount;
     }
 
     /**
@@ -94,7 +107,7 @@ class Wallet extends Model
      */
     public function withdraw(float $amount, string $description = '', ?string $reference = null): WalletTransaction
     {
-        if (!$this->canPay($amount)) {
+        if (! $this->canPay($amount)) {
             throw new \Exception('Insufficient balance');
         }
 
@@ -117,7 +130,7 @@ class Wallet extends Model
      */
     public function holdForEscrow(float $amount): WalletTransaction
     {
-        if (!$this->canPay($amount)) {
+        if (! $this->canPay($amount)) {
             throw new \Exception('Insufficient balance');
         }
 

@@ -1,9 +1,14 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Exceptions\InsufficientFundsException;
 use App\Exceptions\WalletFrozenException;
-use App\Models\{User, Wallet, WalletTransaction};
+use App\Models\User;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
 
 class WalletService
@@ -21,15 +26,18 @@ class WalletService
         return (float) $this->getWallet($user)->balance;
     }
 
+    /**
+     * @return array{available: float, escrow: float, total: float, currency: string}
+     */
     public function getBalanceSummary(User $user): array
     {
         $wallet = $this->getWallet($user);
 
         return [
             'available' => (float) $wallet->balance,
-            'escrow'    => (float) $wallet->escrow_balance,
-            'total'     => (float) $wallet->balance + (float) $wallet->escrow_balance,
-            'currency'  => 'BAM',
+            'escrow' => (float) $wallet->escrow_balance,
+            'total' => (float) $wallet->balance + (float) $wallet->escrow_balance,
+            'currency' => 'BAM',
         ];
     }
 
@@ -45,7 +53,10 @@ class WalletService
         return $this->getBalance($user) >= $amount;
     }
 
-    public function getTransactions(User $user)
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, WalletTransaction>
+     */
+    public function getTransactions(User $user): \Illuminate\Database\Eloquent\Collection
     {
         return $this->getWallet($user)
             ->transactions()
@@ -83,20 +94,20 @@ class WalletService
             $wallet = $this->getWallet($user);
 
             if ($wallet->frozen) {
-                throw new WalletFrozenException();
+                throw new WalletFrozenException;
             }
 
             $wallet->increment('balance', $amount);
 
             return WalletTransaction::create([
-                'wallet_id'      => $wallet->id,
-                'user_id'        => $user->id,
-                'type'           => 'deposit',
-                'amount'         => $amount,
-                'balance_after'  => $wallet->fresh()->balance,
+                'wallet_id' => $wallet->id,
+                'user_id' => $user->id,
+                'type' => 'deposit',
+                'amount' => $amount,
+                'balance_after' => $wallet->fresh()->balance,
                 'reference_type' => 'payment',
-                'reference_id'   => $referenceId,
-                'description'    => "Uplata putem {$gateway}",
+                'reference_id' => $referenceId,
+                'description' => "Uplata putem {$gateway}",
             ]);
         });
     }
@@ -107,7 +118,7 @@ class WalletService
             $wallet = $this->getWallet($user);
 
             if ($wallet->frozen) {
-                throw new WalletFrozenException();
+                throw new WalletFrozenException;
             }
 
             if ($wallet->balance < $amount) {
@@ -117,12 +128,12 @@ class WalletService
             $wallet->decrement('balance', $amount);
 
             return WalletTransaction::create([
-                'wallet_id'      => $wallet->id,
-                'user_id'        => $user->id,
-                'type'           => 'withdrawal',
-                'amount'         => -$amount,
-                'balance_after'  => $wallet->fresh()->balance,
-                'description'    => 'Podizanje sredstava',
+                'wallet_id' => $wallet->id,
+                'user_id' => $user->id,
+                'type' => 'withdrawal',
+                'amount' => -$amount,
+                'balance_after' => $wallet->fresh()->balance,
+                'description' => 'Podizanje sredstava',
             ]);
         });
     }

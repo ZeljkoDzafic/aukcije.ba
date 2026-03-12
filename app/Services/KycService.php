@@ -1,9 +1,16 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Services;
 
-use App\Models\{User, UserVerification};
+use App\Models\User;
+use App\Models\UserVerification;
+use App\Notifications\KycStatusNotification;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\{Cache, Storage};
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class KycService
 {
@@ -26,12 +33,22 @@ class KycService
             ->pluck('type')
             ->toArray();
 
-        if (in_array('address_proof', $approved)) return 3;
-        if (in_array('id_document', $approved))   return 2;
-        if (in_array('phone_sms', $approved))      return 1;
+        if (in_array('address_proof', $approved)) {
+            return 3;
+        }
+        if (in_array('id_document', $approved)) {
+            return 2;
+        }
+        if (in_array('phone_sms', $approved)) {
+            return 1;
+        }
+
         return 0;
     }
 
+    /**
+     * @return array{success: bool, message: string, otp?: string}
+     */
     public function sendSmsOtp(User $user, string $phone): array
     {
         $rateLimitKey = "kyc_otp:{$user->id}";
@@ -52,7 +69,7 @@ class KycService
         $user->forceFill(['phone' => $phone])->save();
         $user->profile?->update(['phone' => $phone]);
 
-        \Illuminate\Support\Facades\Log::info("KYC OTP for user {$user->id}: {$otp}");
+        Log::info("KYC OTP for user {$user->id}: {$otp}");
 
         return [
             'success' => true,
@@ -65,7 +82,7 @@ class KycService
     {
         $stored = Cache::get("kyc_otp_code:{$user->id}");
 
-        if (!$stored || $stored !== $code) {
+        if (! $stored || $stored !== $code) {
             return false;
         }
 
@@ -98,14 +115,14 @@ class KycService
             ->firstOrFail();
 
         $verification->update([
-            'status'      => $status,
-            'notes'       => $notes,
+            'status' => $status,
+            'notes' => $notes,
             'reviewer_id' => $reviewer?->id,
             'verified_at' => $status === 'approved' ? now() : null,
         ]);
 
         // Notify user of status change
-        $user->notify(new \App\Notifications\KycStatusNotification($verification));
+        $user->notify(new KycStatusNotification($status, $notes, $this->getVerificationLevel($user)));
 
         return $verification;
     }

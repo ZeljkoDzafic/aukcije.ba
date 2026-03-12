@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Models\Auction;
+use App\Models\Order;
+use App\Models\User;
+use App\Models\WalletTransaction;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -9,14 +18,14 @@
 */
 
 uses(
-    Tests\TestCase::class,
+    TestCase::class,
 )->in('Feature');
 
 uses(
-    Tests\TestCase::class,
+    TestCase::class,
 )->in('Unit');
 
-class_alias(\App\Models\WalletTransaction::class, 'WalletTransaction');
+class_alias(WalletTransaction::class, 'WalletTransaction');
 
 /*
 |--------------------------------------------------------------------------
@@ -42,7 +51,8 @@ expect()->extend('toBePositiveNumber', function () {
 });
 
 expect()->extend('toBeDecimal', function ($places = 2) {
-    $regex = '/^\d+\.\d{' . $places . '}$/';
+    $regex = '/^\d+\.\d{'.$places.'}$/';
+
     return $this->toBeString()
         ->and(preg_match($regex, $this->value))->toBeTrue();
 });
@@ -55,40 +65,44 @@ expect()->extend('toBeDecimal', function ($places = 2) {
 | Global test helper functions
 */
 
-function createTestUser($role = 'buyer') {
-    return match($role) {
-        'buyer' => \App\Models\User::factory()->buyer()->create(),
-        'seller' => \App\Models\User::factory()->seller()->create(),
-        'admin' => \App\Models\User::factory()->admin()->create(),
-        default => \App\Models\User::factory()->create(),
+function createTestUser($role = 'buyer')
+{
+    return match ($role) {
+        'buyer' => User::factory()->buyer()->create(),
+        'seller' => User::factory()->seller()->create(),
+        'admin' => User::factory()->admin()->create(),
+        default => User::factory()->create(),
     };
 }
 
-function createTestAuction($status = 'active', $attributes = []) {
-    return match($status) {
-        'active' => \App\Models\Auction::factory()->active()->create($attributes),
-        'draft' => \App\Models\Auction::factory()->draft()->create($attributes),
-        'finished' => \App\Models\Auction::factory()->finished()->create($attributes),
-        'sold' => \App\Models\Auction::factory()->sold()->create($attributes),
-        default => \App\Models\Auction::factory()->create($attributes),
+function createTestAuction($status = 'active', $attributes = [])
+{
+    return match ($status) {
+        'active' => Auction::factory()->active()->create($attributes),
+        'draft' => Auction::factory()->draft()->create($attributes),
+        'finished' => Auction::factory()->finished()->create($attributes),
+        'sold' => Auction::factory()->sold()->create($attributes),
+        default => Auction::factory()->create($attributes),
     };
 }
 
-function createTestOrder($status = 'pending_payment', $attributes = []) {
-    return match($status) {
-        'pending_payment' => \App\Models\Order::factory()->pendingPayment()->create($attributes),
-        'paid' => \App\Models\Order::factory()->paid()->create($attributes),
-        'shipped' => \App\Models\Order::factory()->shipped()->create($attributes),
-        'delivered' => \App\Models\Order::factory()->delivered()->create($attributes),
-        'completed' => \App\Models\Order::factory()->completed()->create($attributes),
-        default => \App\Models\Order::factory()->create($attributes),
+function createTestOrder($status = 'pending_payment', $attributes = [])
+{
+    return match ($status) {
+        'pending_payment' => Order::factory()->pendingPayment()->create($attributes),
+        'paid' => Order::factory()->paid()->create($attributes),
+        'shipped' => Order::factory()->shipped()->create($attributes),
+        'delivered' => Order::factory()->delivered()->create($attributes),
+        'completed' => Order::factory()->completed()->create($attributes),
+        default => Order::factory()->create($attributes),
     };
 }
 
-function actingAsUser($user = null, $role = 'buyer') {
-    if (!$user) {
+function actingAsUser($user = null, $role = 'buyer')
+{
+    if (! $user) {
         $user = createTestUser($role);
     }
-    
-    return \Laravel\Sanctum\Sanctum::actingAs($user);
+
+    return Sanctum::actingAs($user);
 }

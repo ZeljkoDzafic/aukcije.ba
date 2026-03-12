@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -10,6 +12,10 @@ use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
+    /**
+     * @param  \App\Models\Wallet|null  $wallet
+     * @return array<string, mixed>|null
+     */
     protected function walletPayload($wallet): ?array
     {
         if (! $wallet) {

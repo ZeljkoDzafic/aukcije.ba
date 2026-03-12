@@ -1,0 +1,167 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use App\Models\UserProfile;
+use App\Models\UserVerification;
+use App\Models\Wallet;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class TestAccessSeeder extends Seeder
+{
+    private const PASSWORD = 'Test12345!';
+
+    public function run(): void
+    {
+        $users = [
+            [
+                'role' => 'super_admin',
+                'name' => 'Test Super Admin',
+                'email' => 'test.superadmin@aukcije.ba',
+                'city' => 'Sarajevo',
+                'wallet' => 0,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 3,
+                'phone' => '+38761111001',
+            ],
+            [
+                'role' => 'moderator',
+                'name' => 'Test Moderator',
+                'email' => 'test.moderator@aukcije.ba',
+                'city' => 'Mostar',
+                'wallet' => 0,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 2,
+                'phone' => '+38761111002',
+            ],
+            [
+                'role' => 'verified_seller',
+                'name' => 'Test Verified Seller',
+                'email' => 'test.verified-seller@aukcije.ba',
+                'city' => 'Banja Luka',
+                'wallet' => 1250,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 3,
+                'phone' => '+38761111003',
+            ],
+            [
+                'role' => 'seller',
+                'name' => 'Test Seller',
+                'email' => 'test.seller@aukcije.ba',
+                'city' => 'Tuzla',
+                'wallet' => 420,
+                'email_verified' => true,
+                'phone_verified' => false,
+                'kyc_level' => 2,
+                'phone' => '+38761111004',
+            ],
+            [
+                'role' => 'buyer',
+                'name' => 'Test Buyer',
+                'email' => 'test.buyer@aukcije.ba',
+                'city' => 'Zenica',
+                'wallet' => 780,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 1,
+                'phone' => '+38761111005',
+            ],
+            [
+                'role' => 'buyer',
+                'name' => 'Test Banned Buyer',
+                'email' => 'test.banned@aukcije.ba',
+                'city' => 'Bihać',
+                'wallet' => 150,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 1,
+                'phone' => '+38761111006',
+                'is_banned' => true,
+                'ban_reason' => 'Seeded banned user for moderation tests',
+            ],
+            [
+                'role' => 'buyer',
+                'name' => 'Test Unverified Buyer',
+                'email' => 'test.unverified@aukcije.ba',
+                'city' => 'Travnik',
+                'wallet' => 90,
+                'email_verified' => false,
+                'phone_verified' => false,
+                'kyc_level' => 0,
+                'phone' => '+38761111007',
+            ],
+        ];
+
+        foreach ($users as $definition) {
+            $user = User::query()->updateOrCreate(
+                ['email' => $definition['email']],
+                [
+                    'name' => $definition['name'],
+                    'password' => Hash::make(self::PASSWORD),
+                    'phone' => $definition['phone'],
+                    'email_verified_at' => $definition['email_verified'] ? now() : null,
+                    'phone_verified_at' => $definition['phone_verified'] ? now() : null,
+                    'kyc_level' => $definition['kyc_level'],
+                    'trust_score' => 4.8,
+                    'is_banned' => $definition['is_banned'] ?? false,
+                    'banned_at' => ($definition['is_banned'] ?? false) ? now() : null,
+                    'ban_reason' => $definition['ban_reason'] ?? null,
+                ]
+            );
+
+            $user->syncRoles([$definition['role']]);
+
+            UserProfile::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'full_name' => $definition['name'],
+                    'city' => $definition['city'],
+                    'country' => 'BiH',
+                    'language' => 'bs',
+                    'currency' => 'BAM',
+                    'timezone' => 'Europe/Sarajevo',
+                ]
+            );
+
+            Wallet::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'balance' => $definition['wallet'],
+                    'escrow_balance' => 0,
+                    'frozen' => false,
+                ]
+            );
+
+            if ($definition['kyc_level'] >= 1) {
+                UserVerification::query()->updateOrCreate(
+                    ['user_id' => $user->id, 'type' => 'phone_sms'],
+                    ['status' => 'approved', 'verified_at' => now()]
+                );
+            }
+
+            if ($definition['kyc_level'] >= 2) {
+                UserVerification::query()->updateOrCreate(
+                    ['user_id' => $user->id, 'type' => 'id_document'],
+                    ['status' => 'approved', 'verified_at' => now()]
+                );
+            }
+
+            if ($definition['kyc_level'] >= 3) {
+                UserVerification::query()->updateOrCreate(
+                    ['user_id' => $user->id, 'type' => 'address_proof'],
+                    ['status' => 'approved', 'verified_at' => now()]
+                );
+            }
+        }
+
+        $this->command?->info('TestAccessSeeder completed.');
+        $this->command?->line('Shared password for all test users: '.self::PASSWORD);
+    }
+}

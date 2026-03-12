@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Jobs\EndAuctionJob;
@@ -8,7 +10,8 @@ use Illuminate\Console\Command;
 
 class EndExpiredAuctions extends Command
 {
-    protected $signature   = 'auctions:end-expired';
+    protected $signature = 'auctions:end-expired';
+
     protected $description = 'End all active auctions that have expired';
 
     public function handle(): int

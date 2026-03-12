@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\AuctionStatus;
@@ -25,6 +27,7 @@ class AuctionService
     /**
      * Create a new auction in draft status.
      *
+     * @param array<string, mixed> $data
      * @throws \RuntimeException when the seller has reached their tier auction limit
      */
     public function createAuction(User $seller, array $data): Auction
@@ -40,22 +43,22 @@ class AuctionService
             }
 
             $payload = [
-                'seller_id'          => $seller->id,
-                'title'              => $data['title'],
-                'description'        => $data['description'] ?? null,
-                'category_id'        => $data['category_id'] ?? null,
-                'start_price'        => $data['start_price'],
-                'current_price'      => $data['start_price'],
-                'buy_now_price'      => $data['buy_now_price'] ?? null,
-                'reserve_price'      => $data['reserve_price'] ?? null,
-                'type'               => $data['type'] ?? 'standard',
-                'condition'          => in_array($data['condition'] ?? 'used', ['new', 'like_new', 'used', 'for_parts'], true) ? ($data['condition'] ?? 'used') : 'used',
-                'ends_at'            => now()->addDays($data['duration_days'] ?? 7),
-                'starts_at'          => now(),
-                'auto_extension'     => $data['auto_extension'] ?? true,
-                'extension_minutes'  => config('auction.extension_minutes', 3),
-                'status'             => AuctionStatus::Draft->value,
-                'bids_count'         => 0,
+                'seller_id' => $seller->id,
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'start_price' => $data['start_price'],
+                'current_price' => $data['start_price'],
+                'buy_now_price' => $data['buy_now_price'] ?? null,
+                'reserve_price' => $data['reserve_price'] ?? null,
+                'type' => $data['type'] ?? 'standard',
+                'condition' => in_array($data['condition'] ?? 'used', ['new', 'like_new', 'used', 'for_parts'], true) ? ($data['condition'] ?? 'used') : 'used',
+                'ends_at' => now()->addDays($data['duration_days'] ?? 7),
+                'starts_at' => now(),
+                'auto_extension' => $data['auto_extension'] ?? true,
+                'extension_minutes' => config('auction.extension_minutes', 3),
+                'status' => AuctionStatus::Draft->value,
+                'bids_count' => 0,
             ];
 
             if (! empty($payload['category_id'])) {
@@ -66,11 +69,15 @@ class AuctionService
                 }
             }
 
-            $payload = collect($payload)
-                ->filter(fn ($value, $column) => Schema::hasColumn('auctions', $column))
-                ->all();
+            $filteredPayload = [];
 
-            return Auction::create($payload);
+            foreach ($payload as $column => $value) {
+                if (Schema::hasColumn('auctions', $column)) {
+                    $filteredPayload[$column] = $value;
+                }
+            }
+
+            return Auction::create($filteredPayload);
         });
     }
 
@@ -81,8 +88,8 @@ class AuctionService
     {
         return DB::transaction(function () use ($auction) {
             $auction->update([
-                'status'     => AuctionStatus::Active->value,
-                'starts_at'  => $auction->starts_at ?? now(),
+                'status' => AuctionStatus::Active->value,
+                'starts_at' => $auction->starts_at ?? now(),
             ]);
 
             return $auction->fresh();
@@ -105,11 +112,12 @@ class AuctionService
             if (! $winningBid) {
                 // No bids at all
                 $auction->update([
-                    'status'    => AuctionStatus::Finished->value,
-                    'ended_at'  => now(),
+                    'status' => AuctionStatus::Finished->value,
+                    'ended_at' => now(),
                 ]);
 
                 AuctionEnded::dispatch($auction->fresh(), null);
+
                 return;
             }
 
@@ -119,21 +127,22 @@ class AuctionService
             if (! $reserveMet) {
                 // Reserve price not met
                 $auction->update([
-                    'status'    => AuctionStatus::Finished->value,
-                    'ended_at'  => now(),
+                    'status' => AuctionStatus::Finished->value,
+                    'ended_at' => now(),
                     'winner_id' => null,
                 ]);
 
                 Log::info("Auction {$auction->id} ended without meeting reserve price.");
                 AuctionEnded::dispatch($auction->fresh(), null);
+
                 return;
             }
 
             // Successful sale
             $auction->update([
-                'status'    => AuctionStatus::Sold->value,
+                'status' => AuctionStatus::Sold->value,
                 'winner_id' => $winningBid->user_id,
-                'ended_at'  => now(),
+                'ended_at' => now(),
             ]);
 
             $this->createOrder($auction, $winningBid->user);
@@ -166,15 +175,15 @@ class AuctionService
         $commissionRate = $auction->seller->getCommissionRate();
 
         $payload = [
-            'auction_id'            => $auction->id,
-            'buyer_id'              => $buyer->id,
-            'seller_id'             => $auction->seller_id,
-            'total_amount'          => $auction->current_price,
-            'commission_amount'     => $auction->current_price * $commissionRate,
-            'seller_payout'         => $auction->current_price * (1 - $commissionRate),
-            'status'                => 'pending_payment',
-            'payment_status'        => 'pending',
-            'payment_deadline_at'   => now()->addDays(config('escrow.payment_deadline_days', 3)),
+            'auction_id' => $auction->id,
+            'buyer_id' => $buyer->id,
+            'seller_id' => $auction->seller_id,
+            'total_amount' => $auction->current_price,
+            'commission_amount' => $auction->current_price * $commissionRate,
+            'seller_payout' => $auction->current_price * (1 - $commissionRate),
+            'status' => 'pending_payment',
+            'payment_status' => 'pending',
+            'payment_deadline_at' => now()->addDays(config('escrow.payment_deadline_days', 3)),
         ];
 
         if (Schema::hasColumn('orders', 'amount')) {
@@ -185,11 +194,15 @@ class AuctionService
             $payload['commission'] = $auction->current_price * $commissionRate;
         }
 
-        $payload = collect($payload)
-            ->filter(fn ($value, $column) => Schema::hasColumn('orders', $column))
-            ->all();
+        $filteredPayload = [];
 
-        return Order::create($payload);
+        foreach ($payload as $column => $value) {
+            if (Schema::hasColumn('orders', $column)) {
+                $filteredPayload[$column] = $value;
+            }
+        }
+
+        return Order::create($filteredPayload);
     }
 
     /**
@@ -206,10 +219,10 @@ class AuctionService
     public function canTransitionTo(Auction $auction, string $newStatus): bool
     {
         $transitions = config('auction.state_transitions', [
-            'draft'     => ['active', 'cancelled'],
-            'active'    => ['finished', 'sold', 'cancelled'],
-            'finished'  => ['sold'],
-            'sold'      => [],
+            'draft' => ['active', 'cancelled'],
+            'active' => ['finished', 'sold', 'cancelled'],
+            'finished' => ['sold'],
+            'sold' => [],
             'cancelled' => [],
         ]);
 

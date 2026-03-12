@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Category;
@@ -39,20 +41,20 @@ class CategorySeeder extends Seeder
 
         foreach ($categories as $sortOrder => $cat) {
             $parent = Category::create([
-                'name'       => $cat['name'],
-                'slug'       => Str::slug($cat['name']),
-                'icon'       => $cat['icon'],
+                'name' => $cat['name'],
+                'slug' => Str::slug($cat['name']),
+                'icon' => $cat['icon'],
                 'sort_order' => $sortOrder,
-                'is_active'  => true,
+                'is_active' => true,
             ]);
 
             foreach ($cat['children'] as $childOrder => $childName) {
                 Category::create([
-                    'parent_id'  => $parent->id,
-                    'name'       => $childName,
-                    'slug'       => Str::slug($childName),
+                    'parent_id' => $parent->id,
+                    'name' => $childName,
+                    'slug' => Str::slug($childName),
                     'sort_order' => $childOrder,
-                    'is_active'  => true,
+                    'is_active' => true,
                 ]);
             }
         }

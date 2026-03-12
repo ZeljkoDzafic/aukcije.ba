@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Seller;
 
 use App\Models\Auction;
 use App\Models\AuctionImage;
 use App\Models\Category;
 use App\Services\AuctionService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -20,6 +23,7 @@ class CreateAuctionWizard extends Component
 
     public int $step = 1;
 
+    /** @var list<string> */
     public array $steps = ['Osnovno', 'Slike', 'Cijena', 'Dostava', 'Pregled'];
 
     public string $title = '';
@@ -44,12 +48,15 @@ class CreateAuctionWizard extends Component
 
     public string $statusMessage = '';
 
+    /** @var array<string, string> */
     public array $categoryOptions = [];
 
     public string $newImageUrl = '';
 
+    /** @var list<string> */
     public array $imageUrls = [];
 
+    /** @var list<TemporaryUploadedFile> */
     public array $uploadedImages = [];
 
     public function mount(): void
@@ -149,7 +156,7 @@ class CreateAuctionWizard extends Component
         $this->uploadedImages = [];
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.seller.create-auction-wizard');
     }
@@ -203,7 +210,15 @@ class CreateAuctionWizard extends Component
                 'original_end_at' => now()->addDays(7),
             ]);
 
-            $auction->update(collect($updatePayload)->filter(fn ($value, $column) => Schema::hasColumn('auctions', $column))->all());
+            $filteredUpdatePayload = [];
+
+            foreach ($updatePayload as $column => $value) {
+                if (Schema::hasColumn('auctions', $column)) {
+                    $filteredUpdatePayload[$column] = $value;
+                }
+            }
+
+            $auction->update($filteredUpdatePayload);
         } else {
             try {
                 $auction = app(AuctionService::class)->createAuction(Auth::user(), $payload);
@@ -213,11 +228,20 @@ class CreateAuctionWizard extends Component
                 return;
             }
 
-            $auction->update(collect([
+            $shippingPayload = [
                 'shipping_available' => true,
                 'shipping_cost' => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
                 'location_city' => $this->location ?: null,
-            ])->filter(fn ($value, $column) => Schema::hasColumn('auctions', $column))->all());
+            ];
+            $filteredShippingPayload = [];
+
+            foreach ($shippingPayload as $column => $value) {
+                if (Schema::hasColumn('auctions', $column)) {
+                    $filteredShippingPayload[$column] = $value;
+                }
+            }
+
+            $auction->update($filteredShippingPayload);
             $this->auctionId = $auction->id;
         }
 

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Payment Configuration
- * 
+ *
  * Settings for payment gateway integrations including:
  * - Gateway credentials
  * - Supported currencies per gateway
@@ -69,20 +71,20 @@ return [
 
     'stripe' => [
         'enabled' => env('FEATURE_STRIPE', true),
-        
+
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
-        
+
         // API Version (use Stripe's latest stable version)
         'api_version' => '2023-10-16',
-        
+
         // Supported currencies
         'currencies' => ['EUR', 'USD', 'GBP'],
-        
+
         // Default currency
         'currency' => env('STRIPE_CURRENCY', 'EUR'),
-        
+
         // Payment method types
         'payment_methods' => [
             'card',
@@ -92,7 +94,7 @@ return [
             'eps',
             'ideal',
         ],
-        
+
         // Checkout settings
         'checkout' => [
             'success_url' => '/payment/success',
@@ -102,7 +104,7 @@ return [
             'billing_address' => 'required',
             'shipping_address' => 'required',
         ],
-        
+
         // Webhook events to listen for
         'webhook_events' => [
             'checkout.session.completed',
@@ -111,13 +113,13 @@ return [
             'charge.refunded',
             'charge.dispute.created',
         ],
-        
+
         // Statement descriptor (appears on customer's card statement)
         'statement_descriptor' => 'AUKCIJE.BA',
-        
+
         // Capture settings
         'capture' => 'automatic', // 'automatic' or 'manual' (for escrow)
-        
+
         // Retry settings for failed payments
         'retry_failed' => true,
         'max_retries' => 3,
@@ -137,21 +139,21 @@ return [
 
     'monri' => [
         'enabled' => env('FEATURE_MONRI', true),
-        
+
         'key' => env('MONRI_KEY'),
         'authenticity_token' => env('MONRI_AUTHENTICITY_TOKEN'),
         'webhook_secret' => env('MONRI_WEBHOOK_SECRET'),
-        
+
         // API endpoints
         'api_url' => 'https://ipgtest.monri.com', // Test
         'api_url_production' => 'https://ipg.monri.com',
-        
+
         // Supported currencies
         'currencies' => ['BAM', 'EUR'],
-        
+
         // Default currency
         'currency' => env('MONRI_CURRENCY', 'BAM'),
-        
+
         // Supported card types
         'card_types' => [
             'visa',
@@ -159,7 +161,7 @@ return [
             'maestro',
             'amex',
         ],
-        
+
         // Checkout settings
         'checkout' => [
             'success_url' => '/payment/success',
@@ -167,20 +169,20 @@ return [
             'language' => 'bs', // bs, hr, sr, en
             'display_mode' => 'popup', // popup, redirect, iframe
         ],
-        
+
         // Transaction settings
         'transaction_type' => 'sale', // 'sale' or 'authorize' (for escrow)
-        
+
         // Webhook events
         'webhook_events' => [
             'transaction_approved',
             'transaction_declined',
             'transaction_error',
         ],
-        
+
         // Statement descriptor
         'statement_descriptor' => 'AUKCIJE.BA',
-        
+
         // 3D Secure
         'three_d_secure' => 'optional', // required, optional, disabled
     ],
@@ -199,20 +201,20 @@ return [
 
     'corvuspay' => [
         'enabled' => env('FEATURE_CORVUSPAY', true),
-        
+
         'store_id' => env('CORVUSPAY_STORE_ID'),
         'secret_key' => env('CORVUSPAY_SECRET_KEY'),
         'webhook_secret' => env('CORVUSPAY_WEBHOOK_SECRET'),
-        
+
         // API endpoints
         'api_url' => 'https://cardpay.corvuspay.com/authorize',
-        
+
         // Supported currencies
         'currencies' => ['EUR', 'HRK'],
-        
+
         // Default currency
         'currency' => env('CORVUSPAY_CURRENCY', 'EUR'),
-        
+
         // Supported card types
         'card_types' => [
             'visa',
@@ -220,7 +222,7 @@ return [
             'maestro',
             'diners',
         ],
-        
+
         // Checkout settings
         'checkout' => [
             'success_url' => '/payment/success',
@@ -228,23 +230,23 @@ return [
             'language' => 'hr', // hr, en, de, it
             'display_mode' => 'redirect', // redirect, iframe, popup
         ],
-        
+
         // Transaction settings
         'transaction_type' => 'sale',
-        
+
         // Installment payments (common in Croatia)
         'installments' => [
             'enabled' => true,
             'max_installments' => 12,
         ],
-        
+
         // Webhook events
         'webhook_events' => [
             'payment_success',
             'payment_failure',
             'payment_cancel',
         ],
-        
+
         // 3D Secure
         'three_d_secure' => 'required',
     ],
@@ -261,13 +263,13 @@ return [
 
     'wallet' => [
         'enabled' => env('FEATURE_WALLET', true),
-        
+
         // Minimum balance required for wallet payment
         'min_balance' => 0,
-        
+
         // Allow partial wallet payments (combine with other gateways)
         'allow_partial' => true,
-        
+
         // Auto-top-up settings
         'auto_topup' => [
             'enabled' => false,
@@ -275,7 +277,7 @@ return [
             'amount' => 100,   // Top up by 100 BAM
             'gateway' => 'stripe', // Use this gateway for auto-topup
         ],
-        
+
         // Transaction limits
         'limits' => [
             'min_payment' => 1,
@@ -317,16 +319,16 @@ return [
     'refund' => [
         // Allow partial refunds
         'partial_refunds' => true,
-        
+
         // Refund to original payment method only
         'original_method_only' => true,
-        
+
         // Refund processing time (business days)
         'processing_days' => '5-10',
-        
+
         // Require reason for refund
         'require_reason' => true,
-        
+
         // Valid refund reasons
         'valid_reasons' => [
             'item_not_received',
@@ -414,10 +416,10 @@ return [
     'fraud' => [
         // Enable Stripe Radar
         'stripe_radar' => true,
-        
+
         // Enable Monri fraud detection
         'monri_fraud_detection' => true,
-        
+
         // Custom fraud rules
         'rules' => [
             'max_amount_per_transaction' => 5000,
@@ -425,7 +427,7 @@ return [
             'require_cvv' => true,
             'require_avs' => false, // Address verification (not common in Balkans)
         ],
-        
+
         // Block high-risk countries (optional)
         'blocked_countries' => [
             // Add ISO country codes if needed
@@ -444,15 +446,15 @@ return [
     'webhooks' => [
         // Path for webhook endpoints
         'path' => '/api/webhooks/payments',
-        
+
         // Signature verification
         'verify_signature' => true,
-        
+
         // Retry failed webhooks
         'retry_failed' => true,
         'max_retries' => 5,
         'retry_interval_minutes' => 5,
-        
+
         // Timeout for webhook processing
         'timeout_seconds' => 30,
     ],

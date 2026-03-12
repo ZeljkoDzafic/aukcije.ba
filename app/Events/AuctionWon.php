@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events;
 
 use App\Models\Auction;
@@ -9,7 +11,8 @@ use Illuminate\Queue\SerializesModels;
 
 class AuctionWon
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     public function __construct(
         public readonly User $winner,

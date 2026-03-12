@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -8,12 +10,13 @@ use Illuminate\Support\Facades\Cache;
 class FeatureFlag extends Model
 {
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = ['name', 'is_active', 'description', 'created_at'];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
     ];
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 it('renders new seller and admin detail pages', function () {
     $this->withoutVite();
 

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
 use App\Models\AdminLog;
 use App\Models\User;
 use App\Models\UserVerification;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -48,7 +51,7 @@ class UserProfileManager extends Component
         };
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin.user-profile-manager', [
             'user' => $this->getUser(),

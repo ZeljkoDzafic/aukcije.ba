@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +69,7 @@ return new class extends Migration
         }
 
         DB::statement("CREATE INDEX auctions_active_ends_at_idx ON auctions (ends_at) WHERE status = 'active'");
-        DB::statement("CREATE INDEX auctions_is_featured_idx ON auctions (is_featured) WHERE is_featured = true");
+        DB::statement('CREATE INDEX auctions_is_featured_idx ON auctions (is_featured) WHERE is_featured = true');
     }
 
     public function down(): void

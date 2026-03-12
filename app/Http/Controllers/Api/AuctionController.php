@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Auction;
 use App\Models\Category;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AuctionController extends Controller
 {
@@ -41,12 +43,12 @@ class AuctionController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', "%{$request->search}%")
-                  ->orWhere('description', 'like', "%{$request->search}%");
+                    ->orWhere('description', 'like', "%{$request->search}%");
             });
         }
 
         // Sort
-        $sortField = match($request->get('sort')) {
+        $sortField = match ($request->get('sort')) {
             'ending_soon' => 'ends_at',
             'price_low' => 'current_price',
             'price_high' => 'current_price',
@@ -54,9 +56,9 @@ class AuctionController extends Controller
             'most_bids' => 'bids_count',
             default => 'ends_at'
         };
-        
+
         $sortDirection = $request->get('sort') === 'price_high' ? 'desc' : 'asc';
-        
+
         $query->orderBy($sortField, $sortDirection);
 
         $auctions = $query->paginate(20);
@@ -78,7 +80,7 @@ class AuctionController extends Controller
     public function show(Auction $auction): JsonResponse
     {
         $auction->load(['seller', 'category', 'images', 'bids.user', 'winningBid']);
-        
+
         return response()->json([
             'data' => $auction,
         ]);

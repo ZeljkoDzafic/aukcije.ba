@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Models\Auction;
@@ -18,6 +20,9 @@ class OutbidNotification extends Notification implements ShouldQueue
         public readonly float $newAmount,
     ) {}
 
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['mail', 'database', 'broadcast'];
@@ -27,21 +32,24 @@ class OutbidNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject("Nadlicitiran/a si na: {$this->auction->title}")
-            ->greeting('Pozdrav ' . $notifiable->name . '!')
-            ->line("Neko je ponudio " . number_format($this->newAmount, 2) . " BAM na aukciji '{$this->auction->title}'.")
+            ->greeting('Pozdrav '.$notifiable->name.'!')
+            ->line('Neko je ponudio '.number_format($this->newAmount, 2)." BAM na aukciji '{$this->auction->title}'.")
             ->action('Vrati se i licitiraj', url("/aukcije/{$this->auction->id}"))
             ->line('Iskoristi proxy bid da automatski povećaš svoju ponudu!')
             ->salutation('Tim Aukcije.ba');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return [
-            'type'          => 'outbid',
-            'auction_id'    => $this->auction->id,
+            'type' => 'outbid',
+            'auction_id' => $this->auction->id,
             'auction_title' => $this->auction->title,
-            'new_amount'    => $this->newAmount,
-            'message'       => "Nadlicitirani ste na aukciji {$this->auction->title}.",
+            'new_amount' => $this->newAmount,
+            'message' => "Nadlicitirani ste na aukciji {$this->auction->title}.",
         ];
     }
 

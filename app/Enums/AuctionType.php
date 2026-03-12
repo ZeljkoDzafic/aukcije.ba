@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 enum AuctionType: string
@@ -10,7 +12,7 @@ enum AuctionType: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::Standard => 'Standardna aukcija',
             self::BuyNow => 'Kupi odmah',
             self::Dutch => 'Holandska aukcija',

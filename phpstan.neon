@@ -1,5 +1,9 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
 parameters:
     level: 6
+    treatPhpDocTypesAsCertain: false
     paths:
         - app/
         - config/
@@ -9,4 +13,3 @@ parameters:
         - vendor/
         - bootstrap/cache/*
         - storage/*
-    checkGenericClassInNonGenericObjectType: false

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -15,11 +17,11 @@ class HandleViewData
     public function handle(Request $request, Closure $next): Response
     {
         view()->share([
-            'appName'      => config('app.name'),
+            'appName' => config('app.name'),
             'featureFlags' => [
                 'proxyBidding' => config('auction.proxy_bidding_enabled'),
-                'antiSniping'  => config('auction.auto_extension_enabled'),
-                'escrow'       => config('escrow.enabled'),
+                'antiSniping' => config('auction.auto_extension_enabled'),
+                'escrow' => config('escrow.enabled'),
             ],
         ]);
 

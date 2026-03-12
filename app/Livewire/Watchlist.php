@@ -1,16 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
 use App\Models\Auction;
-use Livewire\Component;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
 
 class Watchlist extends Component
 {
     public string $filter = 'active';
 
+    /** @var list<array<string, mixed>> */
     public array $items = [
         ['id' => 'demo-1', 'title' => 'Rolex Datejust 36', 'category' => 'Satovi', 'price' => 5850.00, 'bids' => 31, 'watchers' => 74, 'location' => 'Sarajevo', 'time' => '6h 42m', 'state' => 'active'],
         ['id' => 'demo-2', 'title' => 'Sony A7 IV', 'category' => 'Foto oprema', 'price' => 2310.00, 'bids' => 14, 'watchers' => 19, 'location' => 'Tuzla', 'time' => '1d 03h', 'state' => 'active'],
@@ -26,7 +30,7 @@ class Watchlist extends Component
         $this->items = array_values(array_filter($this->items, fn (array $item) => (string) $item['id'] !== (string) $auctionId));
     }
 
-    public function render()
+    public function render(): View
     {
         $results = collect($this->items);
 

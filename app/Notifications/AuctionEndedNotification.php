@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Models\Auction;
@@ -16,6 +18,9 @@ class AuctionEndedNotification extends Notification implements ShouldQueue
         public readonly Auction $auction,
     ) {}
 
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['mail', 'database'];
@@ -30,28 +35,31 @@ class AuctionEndedNotification extends Notification implements ShouldQueue
 
         $mail = (new MailMessage)
             ->subject($subject)
-            ->greeting('Pozdrav ' . $notifiable->name . '!')
+            ->greeting('Pozdrav '.$notifiable->name.'!')
             ->line("Aukcija '{$auction->title}' je završila.");
 
         if ($auction->status === 'sold') {
-            $mail->line('Predmet je prodan za ' . number_format($auction->current_price, 2) . ' BAM.')
-                 ->action('Pogledaj aukciju', url("/aukcije/{$auction->id}"));
+            $mail->line('Predmet je prodan za '.number_format($auction->current_price, 2).' BAM.')
+                ->action('Pogledaj aukciju', url("/aukcije/{$auction->id}"));
         } else {
             $mail->line('Aukcija nije završila prodajom.')
-                 ->action('Pogledaj aukciju', url("/aukcije/{$auction->id}"));
+                ->action('Pogledaj aukciju', url("/aukcije/{$auction->id}"));
         }
 
         return $mail->salutation('Tim Aukcije.ba');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return [
-            'type'          => 'auction_ended',
-            'auction_id'    => $this->auction->id,
+            'type' => 'auction_ended',
+            'auction_id' => $this->auction->id,
             'auction_title' => $this->auction->title,
-            'status'        => $this->auction->status,
-            'final_price'   => $this->auction->current_price,
+            'status' => $this->auction->status,
+            'final_price' => $this->auction->current_price,
         ];
     }
 }

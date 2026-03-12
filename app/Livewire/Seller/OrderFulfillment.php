@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Seller;
 
 use App\Models\Order;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 
@@ -32,7 +35,7 @@ class OrderFulfillment extends Component
         $this->markedShipped = true;
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.seller.order-fulfillment');
     }

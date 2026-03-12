@@ -1,18 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $auction_id
+ * @property string|null $triggered_by_bid_id
+ */
 class AuctionExtension extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     /**
@@ -54,6 +65,9 @@ class AuctionExtension extends Model
     /**
      * Get the auction this extension belongs to.
      */
+    /**
+     * @return BelongsTo<Auction, $this>
+     */
     public function auction(): BelongsTo
     {
         return $this->belongsTo(Auction::class);
@@ -62,6 +76,9 @@ class AuctionExtension extends Model
     /**
      * Get the bid that triggered this extension.
      */
+    /**
+     * @return BelongsTo<Bid, $this>
+     */
     public function triggeringBid(): BelongsTo
     {
         return $this->belongsTo(Bid::class, 'triggered_by_bid_id');
@@ -69,6 +86,9 @@ class AuctionExtension extends Model
 
     /**
      * Alias kept for backwards compatibility.
+     */
+    /**
+     * @return BelongsTo<Bid, $this>
      */
     public function bid(): BelongsTo
     {

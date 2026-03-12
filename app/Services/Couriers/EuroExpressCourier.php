@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Couriers;
 
 use Exception;
@@ -8,8 +10,12 @@ use Illuminate\Support\Facades\Http;
 class EuroExpressCourier implements CourierInterface
 {
     protected string $apiKey;
+
     protected string $apiSecret;
+
     protected string $apiUrl;
+
+    /** @var array<string, mixed> */
     protected array $sender;
 
     public function __construct()
@@ -60,8 +66,8 @@ class EuroExpressCourier implements CourierInterface
             // ])->post($this->apiUrl . '/waybills', $waybillData);
 
             // Mock response for now
-            $waybillNumber = 'EE' . date('Ymd') . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
-            $trackingNumber = 'TRK' . strtoupper(substr(md5($waybillNumber), 0, 10));
+            $waybillNumber = 'EE'.date('Ymd').str_pad((string) rand(1, 99999), 5, '0', STR_PAD_LEFT);
+            $trackingNumber = 'TRK'.strtoupper(substr(md5($waybillNumber), 0, 10));
 
             return [
                 'success' => true,
@@ -75,7 +81,7 @@ class EuroExpressCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to create waybill: ' . $e->getMessage(),
+                'error' => 'Failed to create waybill: '.$e->getMessage(),
                 'courier' => 'euroexpress',
             ];
         }
@@ -121,7 +127,7 @@ class EuroExpressCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to get tracking info: ' . $e->getMessage(),
+                'error' => 'Failed to get tracking info: '.$e->getMessage(),
                 'courier' => 'euroexpress',
             ];
         }
@@ -133,12 +139,12 @@ class EuroExpressCourier implements CourierInterface
             $pricing = config('shipping.euroexpress.pricing', []);
             $basePrice = $pricing['base_price'] ?? 5.00;
             $perKg = $pricing['per_kg'] ?? 1.00;
-            
+
             $price = $basePrice + ($weightKg * $perKg);
-            
+
             // Add insurance if declared value provided
             $insuranceRate = $pricing['insurance_percentage'] ?? 0.02;
-            
+
             return [
                 'success' => true,
                 'courier' => 'euroexpress',
@@ -151,7 +157,7 @@ class EuroExpressCourier implements CourierInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to estimate shipping: ' . $e->getMessage(),
+                'error' => 'Failed to estimate shipping: '.$e->getMessage(),
                 'courier' => 'euroexpress',
             ];
         }
@@ -159,25 +165,12 @@ class EuroExpressCourier implements CourierInterface
 
     public function cancelShipment(string $waybillNumber): array
     {
-        try {
-            // In production, send cancel request to EuroExpress API
-            // $response = Http::withHeaders([
-            //     'Authorization' => 'Bearer ' . $this->apiKey,
-            // ])->delete($this->apiUrl . '/waybills/' . $waybillNumber);
-
-            return [
-                'success' => true,
-                'waybill_number' => $waybillNumber,
-                'status' => 'cancelled',
-                'courier' => 'euroexpress',
-            ];
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to cancel shipment: ' . $e->getMessage(),
-                'courier' => 'euroexpress',
-            ];
-        }
+        return [
+            'success' => true,
+            'waybill_number' => $waybillNumber,
+            'status' => 'cancelled',
+            'courier' => 'euroexpress',
+        ];
     }
 
     public function getName(): string
@@ -188,7 +181,7 @@ class EuroExpressCourier implements CourierInterface
     public function isAvailable(): bool
     {
         return config('shipping.euroexpress.enabled', true)
-            && !empty($this->apiKey);
+            && ! empty($this->apiKey);
     }
 
     /**
@@ -196,11 +189,14 @@ class EuroExpressCourier implements CourierInterface
      */
     protected function getTrackingUrl(string $trackingNumber): string
     {
-        return 'https://track.euroexpress.ba/' . $trackingNumber;
+        return 'https://track.euroexpress.ba/'.$trackingNumber;
     }
 
     /**
      * Get available services
+     */
+    /**
+     * @return array<string, array<string, string>>
      */
     public function getServices(): array
     {

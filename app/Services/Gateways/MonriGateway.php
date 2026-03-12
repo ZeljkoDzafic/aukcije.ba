@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Gateways;
 
 use Exception;
@@ -8,9 +10,13 @@ use Illuminate\Support\Facades\Http;
 class MonriGateway implements PaymentGatewayInterface
 {
     protected string $key;
+
     protected string $authenticityToken;
+
     protected string $webhookSecret;
+
     protected string $currency;
+
     protected string $apiUrl;
 
     public function __construct()
@@ -19,7 +25,7 @@ class MonriGateway implements PaymentGatewayInterface
         $this->authenticityToken = config('payment.monri.authenticity_token');
         $this->webhookSecret = config('payment.monri.webhook_secret');
         $this->currency = config('payment.monri.currency', 'BAM');
-        $this->apiUrl = config('payment.monri.sandbox', true) 
+        $this->apiUrl = config('payment.monri.sandbox', true)
             ? config('payment.monri.api_url')
             : config('payment.monri.api_url_production');
     }
@@ -37,7 +43,7 @@ class MonriGateway implements PaymentGatewayInterface
                 'order_id' => $orderId,
                 'merchant_code' => $this->key,
             ];
-            
+
             $signature = $this->generateSignature($signatureData);
 
             // Prepare payment request
@@ -57,12 +63,12 @@ class MonriGateway implements PaymentGatewayInterface
             // $response = Http::post($this->apiUrl . '/payment', $paymentData);
 
             // Generate form for redirect (Monri uses form POST)
-            $formAction = $this->apiUrl . '/payment';
+            $formAction = $this->apiUrl.'/payment';
             $formFields = $paymentData;
 
             return [
                 'success' => true,
-                'transaction_id' => 'monri_' . $orderId,
+                'transaction_id' => 'monri_'.$orderId,
                 'gateway' => 'monri',
                 'status' => 'pending',
                 'redirect_url' => $formAction,
@@ -72,7 +78,7 @@ class MonriGateway implements PaymentGatewayInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Payment failed: ' . $e->getMessage(),
+                'error' => 'Payment failed: '.$e->getMessage(),
                 'gateway' => 'monri',
             ];
         }
@@ -96,14 +102,14 @@ class MonriGateway implements PaymentGatewayInterface
 
             return [
                 'success' => true,
-                'refund_id' => 'monri_refund_' . uniqid(),
+                'refund_id' => 'monri_refund_'.uniqid(),
                 'gateway' => 'monri',
                 'status' => 'pending',
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Refund failed: ' . $e->getMessage(),
+                'error' => 'Refund failed: '.$e->getMessage(),
                 'gateway' => 'monri',
             ];
         }
@@ -113,8 +119,8 @@ class MonriGateway implements PaymentGatewayInterface
     {
         // Verify Monri webhook signature
         $data = json_decode($payload, true);
-        
-        if (!$data) {
+
+        if (! $data) {
             return false;
         }
 
@@ -141,17 +147,21 @@ class MonriGateway implements PaymentGatewayInterface
     public function isAvailable(): bool
     {
         return config('payment.monri.enabled', true)
-            && !empty($this->key)
+            && ! empty($this->key)
             && $this->key !== 'test_monri_key';
     }
 
     /**
      * Generate Monri-compatible signature
      */
+    /**
+     * @param array<string, int|string|null> $data
+     */
     protected function generateSignature(array $data): string
     {
         $stringToSign = implode('', $data);
-        return hash('sha512', $stringToSign . $this->authenticityToken);
+
+        return hash('sha512', $stringToSign.$this->authenticityToken);
     }
 
     /**
@@ -159,7 +169,7 @@ class MonriGateway implements PaymentGatewayInterface
      */
     protected function getLanguageCode(string $locale): int
     {
-        return match($locale) {
+        return match ($locale) {
             'bs', 'sr', 'hr' => 1, // Bosnian/Croatian/Serbian
             'de' => 2, // German
             'it' => 3, // Italian
@@ -170,6 +180,9 @@ class MonriGateway implements PaymentGatewayInterface
 
     /**
      * Get supported card types
+     */
+    /**
+     * @return list<string>
      */
     public function getSupportedCardTypes(): array
     {

@@ -1,10 +1,14 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use App\Models\Auction;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -16,13 +20,14 @@ use Symfony\Component\HttpFoundation\Response;
 class PreventShillBidding
 {
     private const MAX_BIDS_PER_WINDOW = 20;
+
     private const WINDOW_MINUTES = 60;
 
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -31,10 +36,10 @@ class PreventShillBidding
         $bidCount = Cache::get($velocityKey, 0);
 
         if ($bidCount >= self::MAX_BIDS_PER_WINDOW) {
-            \Illuminate\Support\Facades\Log::warning("Shill bid velocity detected", [
+            Log::warning('Shill bid velocity detected', [
                 'user_id' => $user->id,
-                'ip'      => $request->ip(),
-                'count'   => $bidCount,
+                'ip' => $request->ip(),
+                'count' => $bidCount,
             ]);
 
             if ($request->expectsJson()) {
@@ -42,6 +47,7 @@ class PreventShillBidding
                     'error' => 'Previše pokušaja licitiranja. Vaš račun je privremeno ograničen.',
                 ], 429);
             }
+
             return redirect()->back()->with('error', 'Previše pokušaja licitiranja.');
         }
 

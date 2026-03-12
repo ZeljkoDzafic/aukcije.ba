@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
@@ -21,7 +23,7 @@ class HelperServiceProvider extends ServiceProvider
     {
         // Load helper files
         $helpers = config('app.helpers', []);
-        
+
         foreach ($helpers as $helper) {
             if (file_exists($helper)) {
                 require_once $helper;

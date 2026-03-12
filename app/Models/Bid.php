@@ -1,18 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Bid extends Model
 {
-    use HasFactory, HasUuids;
+    /** @use HasFactory<Factory<self>> */
+    use HasFactory;
+    use HasUuids;
 
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     /**
@@ -51,32 +59,54 @@ class Bid extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<Auction, $this>
+     */
     public function auction(): BelongsTo
     {
         return $this->belongsTo(Auction::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function scopeForAuction($query, $auctionId)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeForAuction(Builder $query, string $auctionId): Builder
     {
         return $query->where('auction_id', $auctionId);
     }
 
-    public function scopeByUser($query, $userId)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeByUser(Builder $query, string $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
 
-    public function scopeWinning($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeWinning(Builder $query): Builder
     {
         return $query->where('is_winning', true);
     }
 
-    public function scopeOrderByAmount($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeOrderByAmount(Builder $query): Builder
     {
         return $query->orderBy('amount', 'desc');
     }
@@ -84,7 +114,11 @@ class Bid extends Model
     /**
      * Scope: only proxy bids.
      */
-    public function scopeProxy($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeProxy(Builder $query): Builder
     {
         return $query->where('is_proxy', true);
     }
@@ -92,12 +126,16 @@ class Bid extends Model
     /**
      * Scope: only auto bids.
      */
-    public function scopeAuto($query)
+    /**
+     * @param Builder<$this> $query
+     * @return Builder<$this>
+     */
+    public function scopeAuto(Builder $query): Builder
     {
         return $query->where('is_auto', true);
     }
 
-    public function getIsWinningAttribute($value): bool
+    public function getIsWinningAttribute(bool|int|string|null $value): bool
     {
         if (! $this->exists || ! $this->id) {
             return (bool) $value;

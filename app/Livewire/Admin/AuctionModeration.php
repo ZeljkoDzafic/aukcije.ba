@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Admin;
 
+use App\Models\AdminLog;
 use App\Models\Auction;
-use Livewire\Component;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
 
 class AuctionModeration extends Component
 {
@@ -13,9 +18,10 @@ class AuctionModeration extends Component
 
     public string $feedback = '';
 
+    /** @var list<array{id: string, title: string, status: string, seller: string}> */
     public array $auctions = [
-        ['id' => 1, 'title' => 'Rolex Datejust 36', 'status' => 'reported', 'seller' => 'Amar Hadžić'],
-        ['id' => 2, 'title' => 'iPhone 15 Pro', 'status' => 'pending review', 'seller' => 'Lana R.'],
+        ['id' => '1', 'title' => 'Rolex Datejust 36', 'status' => 'reported', 'seller' => 'Amar Hadžić'],
+        ['id' => '2', 'title' => 'iPhone 15 Pro', 'status' => 'pending review', 'seller' => 'Lana R.'],
     ];
 
     public function applyAction(int $auctionId, string $action): void
@@ -34,7 +40,7 @@ class AuctionModeration extends Component
                 };
 
                 if (Schema::hasTable('admin_logs')) {
-                    \App\Models\AdminLog::query()->create([
+                    AdminLog::query()->create([
                         'admin_id' => Auth::id(),
                         'action' => $action,
                         'target_type' => 'auction',
@@ -54,7 +60,7 @@ class AuctionModeration extends Component
 
     public function applyBulk(string $action): void
     {
-        $visibleIds = collect($this->visibleAuctions)->pluck('id')->all();
+        $visibleIds = $this->getVisibleAuctionsProperty()->pluck('id')->all();
 
         if ($visibleIds === []) {
             $this->feedback = 'Nema aukcija za bulk akciju.';
@@ -79,7 +85,10 @@ class AuctionModeration extends Component
             : 'Bulk cancel je izvršen nad vidljivim aukcijama.';
     }
 
-    public function getVisibleAuctionsProperty()
+    /**
+     * @return Collection<int, array{id: string, title: string, status: string, seller: string}>
+     */
+    public function getVisibleAuctionsProperty(): Collection
     {
         $auctions = collect($this->auctions);
 
@@ -89,9 +98,9 @@ class AuctionModeration extends Component
                 ->limit(20)
                 ->get()
                 ->map(fn (Auction $auction) => [
-                    'id' => $auction->id,
+                    'id' => (string) $auction->id,
                     'title' => $auction->title,
-                    'status' => strtolower($auction->status instanceof \BackedEnum ? $auction->status->value : (string) $auction->status),
+                    'status' => strtolower((string) $auction->status),
                     'seller' => $auction->seller?->name ?? 'Nepoznato',
                 ]);
 
@@ -105,7 +114,7 @@ class AuctionModeration extends Component
             ->values();
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin.auction-moderation');
     }

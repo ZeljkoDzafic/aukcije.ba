@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 it('renders sitemap xml and robots txt', function () {
     $this->get(route('sitemap'))
         ->assertOk()

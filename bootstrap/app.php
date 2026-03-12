@@ -1,14 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\EnsureAuctionActive;
+use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\EnsureKycVerified;
+use App\Http\Middleware\EnsureSellerRole;
+use App\Http\Middleware\FeatureEnabled;
+use App\Http\Middleware\HandleViewData;
+use App\Http\Middleware\PreventShillBidding;
+use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\ThrottleBids;
+use App\Http\Middleware\ValidateApiSignature;
+use App\Providers\AppServiceProvider;
+use App\Providers\AuthServiceProvider;
+use App\Providers\EventServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
-        \App\Providers\AppServiceProvider::class,
-        \App\Providers\EventServiceProvider::class,
-        \App\Providers\AuthServiceProvider::class,
+        AppServiceProvider::class,
+        EventServiceProvider::class,
+        AuthServiceProvider::class,
     ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -20,34 +43,34 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Web middleware — share view data (feature flags, app name) globally
         $middleware->web(append: [
-            \App\Http\Middleware\HandleViewData::class,
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\SecurityHeaders::class,
+            HandleViewData::class,
+            SetLocale::class,
+            SecurityHeaders::class,
         ]);
 
         // API middleware
         $middleware->api(append: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            SubstituteBindings::class,
         ]);
 
         // Middleware aliases
         $middleware->alias([
-            'auth' => \App\Http\Middleware\Authenticate::class,
-            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'kyc.verified' => \App\Http\Middleware\EnsureKycVerified::class,
-            'seller' => \App\Http\Middleware\EnsureSellerRole::class,
-            'throttle.bids'  => \App\Http\Middleware\ThrottleBids::class,
-            'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
-            'auction.active'   => \App\Http\Middleware\EnsureAuctionActive::class,
-            'anti.shill'       => \App\Http\Middleware\PreventShillBidding::class,
-            'api.signature'    => \App\Http\Middleware\ValidateApiSignature::class,
-            'feature'          => \App\Http\Middleware\FeatureEnabled::class,
+            'auth' => Authenticate::class,
+            'guest' => RedirectIfAuthenticated::class,
+            'verified' => EnsureEmailIsVerified::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'kyc.verified' => EnsureKycVerified::class,
+            'seller' => EnsureSellerRole::class,
+            'throttle.bids' => ThrottleBids::class,
+            'security.headers' => SecurityHeaders::class,
+            'auction.active' => EnsureAuctionActive::class,
+            'anti.shill' => PreventShillBidding::class,
+            'api.signature' => ValidateApiSignature::class,
+            'feature' => FeatureEnabled::class,
         ]);
 
         // Stateful API domains

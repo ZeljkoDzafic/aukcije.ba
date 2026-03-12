@@ -1,6 +1,20 @@
 <?php
 
-use Illuminate\Http\Request;
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\Admin\DisputeController;
+use App\Http\Controllers\Api\Admin\StatisticsController;
+use App\Http\Controllers\Api\AuctionController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BidController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\RatingController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\WatchlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,14 +42,14 @@ Route::prefix('v1')->group(function () {
     */
 
     // Auctions
-    Route::get('/auctions', [App\Http\Controllers\Api\AuctionController::class, 'index']);
-    Route::get('/auctions/{auction}', [App\Http\Controllers\Api\AuctionController::class, 'show']);
+    Route::get('/auctions', [AuctionController::class, 'index']);
+    Route::get('/auctions/{auction}', [AuctionController::class, 'show']);
 
     // Categories
-    Route::get('/categories', [App\Http\Controllers\Api\CategoryController::class, 'index']);
+    Route::get('/categories', [CategoryController::class, 'index']);
 
     // Search
-    Route::get('/search', [App\Http\Controllers\Api\SearchController::class, 'search']);
+    Route::get('/search', [SearchController::class, 'search']);
 
     /*
     |--------------------------------------------------------------------------
@@ -43,12 +57,12 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/auth/register', [App\Http\Controllers\Api\AuthController::class, 'register']);
-    Route::post('/auth/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/auth/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
-        Route::get('/auth/me', [App\Http\Controllers\Api\AuthController::class, 'me']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::get('/auth/me', [AuthController::class, 'me']);
     });
 
     /*
@@ -60,34 +74,34 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
 
         // Bidding
-        Route::post('/auctions/{auction}/bid', [App\Http\Controllers\Api\BidController::class, 'place'])->middleware('throttle.bids');
-        Route::get('/auctions/{auction}/bids', [App\Http\Controllers\Api\BidController::class, 'index']);
+        Route::post('/auctions/{auction}/bid', [BidController::class, 'place'])->middleware('throttle.bids');
+        Route::get('/auctions/{auction}/bids', [BidController::class, 'index']);
 
         // Watchlist
-        Route::get('/watchlist', [App\Http\Controllers\Api\WatchlistController::class, 'index']);
-        Route::post('/watchlist/{auction}', [App\Http\Controllers\Api\WatchlistController::class, 'add']);
-        Route::delete('/watchlist/{auction}', [App\Http\Controllers\Api\WatchlistController::class, 'remove']);
+        Route::get('/watchlist', [WatchlistController::class, 'index']);
+        Route::post('/watchlist/{auction}', [WatchlistController::class, 'add']);
+        Route::delete('/watchlist/{auction}', [WatchlistController::class, 'remove']);
 
         // User Profile
-        Route::get('/user/profile', [App\Http\Controllers\Api\UserController::class, 'profile']);
-        Route::put('/user/profile', [App\Http\Controllers\Api\UserController::class, 'update']);
+        Route::get('/user/profile', [UserController::class, 'profile']);
+        Route::put('/user/profile', [UserController::class, 'update']);
 
         // Wallet
-        Route::get('/user/wallet', [App\Http\Controllers\Api\WalletController::class, 'balance']);
-        Route::post('/user/wallet/deposit', [App\Http\Controllers\Api\WalletController::class, 'deposit']);
-        Route::post('/user/wallet/withdraw', [App\Http\Controllers\Api\WalletController::class, 'withdraw']);
-        Route::get('/user/wallet/transactions', [App\Http\Controllers\Api\WalletController::class, 'transactions']);
+        Route::get('/user/wallet', [WalletController::class, 'balance']);
+        Route::post('/user/wallet/deposit', [WalletController::class, 'deposit']);
+        Route::post('/user/wallet/withdraw', [WalletController::class, 'withdraw']);
+        Route::get('/user/wallet/transactions', [WalletController::class, 'transactions']);
 
         // Orders
-        Route::get('/user/orders', [App\Http\Controllers\Api\OrderController::class, 'index']);
-        Route::get('/user/orders/{order}', [App\Http\Controllers\Api\OrderController::class, 'show']);
+        Route::get('/user/orders', [OrderController::class, 'index']);
+        Route::get('/user/orders/{order}', [OrderController::class, 'show']);
 
         // Ratings
-        Route::post('/orders/{order}/rate', [App\Http\Controllers\Api\RatingController::class, 'rate']);
+        Route::post('/orders/{order}/rate', [RatingController::class, 'rate']);
 
         // Messages
-        Route::get('/user/messages', [App\Http\Controllers\Api\MessageController::class, 'index']);
-        Route::post('/user/messages', [App\Http\Controllers\Api\MessageController::class, 'store']);
+        Route::get('/user/messages', [MessageController::class, 'index']);
+        Route::post('/user/messages', [MessageController::class, 'store']);
     });
 
     /*
@@ -132,11 +146,11 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('/categories', App\Http\Controllers\Api\Admin\CategoryController::class);
 
         // Disputes
-        Route::get('/disputes', [App\Http\Controllers\Api\Admin\DisputeController::class, 'index']);
-        Route::get('/disputes/{dispute}', [App\Http\Controllers\Api\Admin\DisputeController::class, 'show']);
-        Route::post('/disputes/{dispute}/resolve', [App\Http\Controllers\Api\Admin\DisputeController::class, 'resolve']);
+        Route::get('/disputes', [DisputeController::class, 'index']);
+        Route::get('/disputes/{dispute}', [DisputeController::class, 'show']);
+        Route::post('/disputes/{dispute}/resolve', [DisputeController::class, 'resolve']);
 
         // Statistics
-        Route::get('/statistics', [App\Http\Controllers\Api\Admin\StatisticsController::class, 'index']);
+        Route::get('/statistics', [StatisticsController::class, 'index']);
     });
 });
