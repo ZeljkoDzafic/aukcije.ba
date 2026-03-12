@@ -126,7 +126,7 @@
                 <div class="flex items-center gap-4">
                     <x-avatar :name="$auction->seller_name" size="lg" />
                     <div>
-                        <p class="font-semibold text-slate-900">{{ $auction->seller_name }}</p>
+                        <a href="{{ ! empty($auction->seller_id) ? route('sellers.show', ['user' => $auction->seller_id]) : '#' }}" class="font-semibold text-slate-900 transition hover:text-trust-700">{{ $auction->seller_name }}</a>
                         <p class="text-sm text-slate-600">{{ $auction->seller_rating }} rating · {{ $auction->seller_sales }} prodaja · {{ $auction->seller_location }}</p>
                     </div>
                 </div>
@@ -170,7 +170,7 @@
 
             <x-card class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-slate-900">Historija bidova</h2>
+                    <h2 class="text-xl font-semibold text-slate-900">Pregled bidova</h2>
                     <span class="text-sm text-slate-500">{{ $auction->bids_count }} ukupno</span>
                 </div>
                 <div class="space-y-3">

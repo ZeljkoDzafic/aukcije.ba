@@ -39,6 +39,8 @@ Taskovi su podijeljeni na **3 AI agenta** koji rade paralelno:
 - 3 seller tiera: **Free** (5 aukcija) → **Premium** (50 aukcija, 29 BAM/mj) → **Storefront** (neograničeno, 99 BAM/mj)
 - Komisija: 8% (Free) → 5% (Premium) → 3% (Storefront)
 - See `docs/arhitektura/14-feature-flags-and-tiers.md`
+- Post-production excellence roadmap: `docs/WORLD_CLASS_ROADMAP.md`
+- **121 taskova** ukupno: Phase 0-10 (67 originalni) + Phase 11-16 (54 world-class)
 
 ---
 
@@ -1179,9 +1181,9 @@ Taskovi su podijeljeni na **3 AI agenta** koji rade paralelno:
 | Agent | Completed | Pending | Total | % Done |
 |-------|-----------|---------|-------|--------|
 | 🟣 Claude | 36 | 0 | 36 | **100%** ✅ |
-| 🟢 Codex | 0 | 20 | 20 | **0%** ⏳ |
+| 🟢 Codex | 20 | 0 | 20 | **100%** ✅ |
 | 🔵 Qwen | 22 | 0 | 22 | **100%** ✅ |
-| **TOTAL** | **58** | **20** | **78** | **74%** 🔄 |
+| **TOTAL** | **78** | **0** | **78** | **100%** ✅ |
 
 ---
 
@@ -1255,3 +1257,165 @@ Week 10-11: Launch
 Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 **Ukupno trajanje: ~11 sedmica (2.75 mjeseca) sa 3 AI agenta paralelno.**
+
+---
+
+## PHASE 11: Trust & Safety (World-Class — M1) 🔴
+
+> Detalji: [WORLD_CLASS_ROADMAP.md → Faza 1](WORLD_CLASS_ROADMAP.md)
+
+### Backend (🟣 Claude)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1100 | FraudScoringService | 🟣 Claude | ✅ DONE | Risk score 0-100 po korisniku: account age, bid velocity, win/bid ratio, device fingerprint. Ažurira se na svaki bid. |
+| T-1101 | ShillBiddingDetector | 🟣 Claude | ✅ DONE | Heuristika: isti IP/device/seller. Auto-flag za admin review queue u `admin_logs`. |
+| T-1102 | RiskReviewQueueAPI | 🟣 Claude | ✅ DONE | Proširiti `admin_logs` sa `risk_level`, `risk_signals`, `review_status`. Admin API za review. |
+| T-1103 | AuditTrailMiddleware | 🟣 Claude | ✅ DONE | Middleware koji automatski loguje sve POST/PUT/DELETE admin/seller akcije. |
+| T-1104 | SellerReputationScore | 🟣 Claude | ✅ DONE | Periodični job (svaka 24h): fulfilment_rate×0.4 + punctuality×0.3 + dispute_rate×0.2 + response_time×0.1. |
+| T-1105 | KycEnforcementService | 🟣 Claude | ✅ DONE | Striktna ograničenja po KYC nivou: email=praćenje, sms=licitiranje, dokument=prodaja+withdrawal. |
+| T-1106 | 2FA za prodavace | 🟣 Claude | ✅ DONE | TOTP obavezan za verified_seller i admin. `laravel-google-2fa`. |
+
+### Frontend (🟢 Codex)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1150 | SellerReputationBadge | 🟢 Codex | ⏳ TODO | Badge sa tooltip: fulfilment rate, avg response time, disputes. Na auction detail i seller profilu. |
+| T-1151 | 2FA Enrollment UI | 🟢 Codex | ⏳ TODO | Livewire wizard: QR kod → unos koda → backup codes. |
+| T-1152 | KYC Status Dashboard | 🟢 Codex | ⏳ TODO | Buyer/seller vidi nivo, šta fali, CTA za upload dokumenta. |
+
+---
+
+## PHASE 12: Discovery & Search (World-Class — M1) 🟡
+
+> Detalji: [WORLD_CLASS_ROADMAP.md → Faza 2](WORLD_CLASS_ROADMAP.md)
+
+### Backend (🟣 Claude)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1200 | Meilisearch Schema | 🟣 Claude | ✅ DONE | Definisati filterableAttributes, sortableAttributes, rankingRules. Reindex job. |
+| T-1201 | SavedSearchService | 🟣 Claude | ✅ DONE | `saved_searches` tabela. Job svaka 4h: nova aukcija → notifikacija svim matching saved searches. |
+| T-1202 | HomepageDataService | 🟣 Claude | ✅ DONE | Cache za 4 sekcije: featured, ending_soon, new_arrivals, most_watched. TTL 5min. |
+| T-1203 | SellerDirectoryController | 🟣 Claude | ✅ DONE | API: seller profili sa reputacijom, aktivnim aukcijama, kategorijama. Paginate + sort. |
+| T-1204 | ReservePrice API | 🟣 Claude | ✅ DONE | BiddingService: bid >= reserve_price otvara buy-now. Seller postavlja pri kreiranju. |
+
+### Frontend (🟢 Codex)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1250 | HomepageSections | 🟢 Codex | ⏳ TODO | 4 Livewire sekcije (featured, ending_soon, new_arrivals, most_watched) sa lazy loadingom. |
+| T-1251 | SavedSearchUI | 🟢 Codex | ⏳ TODO | "Sačuvaj ovu pretragu" sa bell iconom. Livewire: prikaz, brisanje, toggle notifikacija. |
+| T-1252 | SellerDirectory | 🟢 Codex | ⏳ TODO | Javna stranica `/sellers`: profili, filter po kategoriji, sort po reputaciji. |
+| T-1253 | CategoryLandingPages | 🟢 Codex | ⏳ TODO | Blade template za `/kategorije/{slug}` sa hero sekcijom, top artiklima, SEO copy. |
+| T-1254 | ReservePriceBadge | 🟢 Codex | ⏳ TODO | BiddingConsole badge "Rezervna cijena dostignuta" / "???" ovisno o seller podešavanju. |
+
+---
+
+## PHASE 13: Seller Command Center (World-Class — M2) 🟡
+
+> Detalji: [WORLD_CLASS_ROADMAP.md → Faza 3](WORLD_CLASS_ROADMAP.md)
+
+### Backend (🟣 Claude)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1300 | SellerStatsController | 🟣 Claude | ✅ DONE | GMV, sell-through rate, avg days to sell, top kategorije, dispute rate. Cache 1h. |
+| T-1301 | AuctionTemplateService | 🟣 Claude | ✅ DONE | `auction_templates` tabela. `AuctionService::createFromTemplate()`. |
+| T-1302 | BulkAuctionService | 🟣 Claude | ✅ DONE | Bulk publish/end/clone N aukcija kao queued jobs. |
+| T-1303 | ScheduledStartTime | 🟣 Claude | ✅ DONE | `scheduled` status. Cron job svaka minuta prelazi scheduled → active. |
+| T-1304 | SecondChanceOffer | 🟣 Claude | ✅ DONE | `second_chance_offers` tabela. Seller nudi 2. licitantu. Notifikacija kupcu. |
+| T-1305 | SellerTierEnforcement | 🟣 Claude | ✅ DONE | `AuctionService::store()` — provjera tier limita (5/50/∞) i komisije (8/5/3%). |
+| T-1306 | PaymentDeadlineAutoCancel | 🟣 Claude | ✅ DONE | Job svaki sat: expired payment deadline → cancel order + vrati escrow. |
+
+### Frontend (🟢 Codex)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1350 | SellerAnalyticsDashboard | 🟢 Codex | ⏳ TODO | Livewire: GMV chart, sell-through, top artikli, dispute rate. Period 7d/30d/90d. |
+| T-1351 | AuctionTemplateUI | 🟢 Codex | ⏳ TODO | Sačuvaj aukciju kao template. Kreiraj novu iz template-a. Livewire wizard. |
+| T-1352 | BulkOperationsUI | 🟢 Codex | ⏳ TODO | Seller checklist sa bulk publish/end/clone. Confirm modal. |
+| T-1353 | ScheduledStartPicker | 🟢 Codex | ⏳ TODO | DateTimePicker u CreateAuctionWizard koraku 3. |
+
+---
+
+## PHASE 14: Buyer Experience (World-Class — M2) 🟡
+
+> Detalji: [WORLD_CLASS_ROADMAP.md → Faza 4](WORLD_CLASS_ROADMAP.md)
+
+### Backend (🟣 Claude)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1400 | GDPRDataExportJob | 🟣 Claude | ✅ DONE | Kompajlira sve PII u JSON/ZIP. Download link emailom u < 24h. |
+| T-1401 | GDPRErasureService | 🟣 Claude | ✅ DONE | `User::anonymize()` — zamjenjuje PII anonimiziranim podacima, čuva transakcione zapise. |
+| T-1402 | PushNotificationService | 🟣 Claude | ✅ DONE | Firebase FCM za web push: outbid, auction_won, payment_due, shipped. |
+| T-1403 | WishlistReminderJob | 🟣 Claude | ✅ DONE | Svaka 24h: watchlist aukcije koje uskoro ističu (< 2h) → push/email reminder. |
+
+### Frontend (🟢 Codex)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1450 | LiveBidFeedComponent | 🟢 Codex | ⏳ TODO | Vue komponenta: posljednjih 10 bidova real-time (Echo listener). Animirani feed. |
+| T-1451 | PWAManifest | 🟢 Codex | ⏳ TODO | `manifest.json`, service worker za offline cache, install prompt. |
+| T-1452 | MobileOneTapBid | 🟢 Codex | ⏳ TODO | Quick bid dugme na mobilnom (minimum_bid). Haptic feedback. |
+| T-1453 | BlurhashPlaceholders | 🟢 Codex | ⏳ TODO | Blurhash placeholder dok se slike učitavaju u listingu. |
+| T-1454 | SimilarAuctionsSection | 🟢 Codex | ⏳ TODO | Na auction detail: "Slične aukcije" (ista kategorija, active, sort by ends_at). |
+| T-1455 | CookieConsentBanner | 🟢 Codex | ⏳ TODO | GDPR cookie consent: necessary, analytics, marketing kategorije. |
+| T-1456 | GDPRSettingsUI | 🟢 Codex | ⏳ TODO | Na profilu: "Preuzmi podatke" i "Izbriši račun" sa potvrdom. |
+
+---
+
+## PHASE 15: Admin Operations (World-Class — M2) 🟡
+
+> Detalji: [WORLD_CLASS_ROADMAP.md → Faza 5](WORLD_CLASS_ROADMAP.md)
+
+### Backend (🟣 Claude)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1500 | BulkModerationService | 🟣 Claude | ✅ DONE | Bulk approve/reject aukcija sa razlogom. Batch AdminLog. Cache invalidacija. |
+| T-1501 | KYCBackofficeController | 🟣 Claude | ✅ DONE | Admin API: pending KYC listanje, pregled dokumenata, approve/reject sa napomenom. |
+| T-1502 | CategoryMerchandizingService | 🟣 Claude | ✅ DONE | Sort order za kategorije. `featured` flag za homepage. |
+| T-1503 | AdminAnalyticsAPI | 🟣 Claude | ✅ DONE | GMV daily/weekly/monthly, active auctions, new users, conversion rate, top sellers. |
+| T-1504 | DBIndicesMigration | 🟣 Claude | ✅ DONE | KRITIČNO: bids(auction_id,created_at), auctions(status,ends_at), auctions(seller_id,status), wallet_transactions(wallet_id,created_at), watchlist(user_id), orders(buyer_id,status). |
+
+### Frontend (🟢 Codex)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1550 | AdminBulkModerationUI | 🟢 Codex | ⏳ TODO | Moderation queue sa checkbox selekcijom, bulk approve/reject, inline preview. |
+| T-1551 | KYCBackofficeUI | 🟢 Codex | ⏳ TODO | Admin pregled dokumenata sa lightbox, approve/reject, status history. |
+| T-1552 | AdminAnalyticsUI | 🟢 Codex | ⏳ TODO | Dashboard sa Chart.js: GMV trend, user growth, auction conversion. Period selector. |
+
+---
+
+## PHASE 16: Performance & Observability (World-Class — M3) 🟢
+
+> Detalji: [WORLD_CLASS_ROADMAP.md → Faza 6](WORLD_CLASS_ROADMAP.md)
+
+### Backend (🟣 Claude / 🔵 Qwen)
+
+| ID | Task | Agent | Status | Opis |
+|----|------|-------|--------|------|
+| T-1600 | HorizonQueueConfig | 🔵 Qwen | ⏳ TODO | Horizon: `default` (8 workers), `notifications` (4), `high` za bids (2, prioritet). Alert za failed jobs > 10. |
+| T-1601 | SLOMonitoringJob | 🔵 Qwen | ⏳ TODO | Periodični job: mjeri p99 za bidding/search/checkout. Grafana metrika. Alert p99 > 500ms. |
+| T-1602 | QueryOptimizationAudit | 🟣 Claude | ✅ DONE | Telescope N+1 audit. Dodati eager loads gdje nedostaju. |
+| T-1603 | ImageOptimizationPipeline | 🔵 Qwen | ⏳ TODO | `spatie/laravel-medialibrary` + Imgix URL transformacije (width, webp, quality). CDN-ready. |
+
+---
+
+## World-Class Task Summary
+
+| Faza | Backend (🟣 Claude) | Frontend (🟢 Codex) | DevOps (🔵 Qwen) | Milestone |
+|------|---------------------|---------------------|------------------|-----------|
+| 11: Trust & Safety | T-1100..1106 (7) | T-1150..1152 (3) | — | M1 |
+| 12: Discovery | T-1200..1204 (5) | T-1250..1254 (5) | — | M1 |
+| 13: Seller Tools | T-1300..1306 (7) | T-1350..1353 (4) | — | M2 |
+| 14: Buyer Experience | T-1400..1403 (4) | T-1450..1456 (7) | — | M2 |
+| 15: Admin Ops | T-1500..1504 (5) | T-1550..1552 (3) | — | M2 |
+| 16: Performance | T-1602 (1) | — | T-1600, T-1601, T-1603 (3) | M3 |
+| **Ukupno** | **29 taskova** | **22 taskova** | **3 taskova** | |
+
+**Ukupno world-class taskova: 54**
+**Ukupno svih taskova (Phase 0-16): ~121**

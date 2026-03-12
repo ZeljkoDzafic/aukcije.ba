@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -45,12 +44,6 @@ Schedule::command('scout:import "App\\Models\\Auction"')
     ->name('search:reindex')
     ->onOneServer();
 
-// Backup database - runs daily at midnight
-Schedule::command('backup:run')
-    ->dailyAt('00:00')
-    ->name('backup:database')
-    ->onOneServer();
-
 // Calculate daily statistics - runs daily at 1 AM
 Schedule::command('analytics:daily-stats')
     ->dailyAt('01:00')
@@ -69,10 +62,22 @@ Schedule::command('notifications:ending-soon')
     ->name('notifications:ending-soon')
     ->onOneServer();
 
+// Send saved search alerts - runs hourly
+Schedule::command('searches:send-alerts')
+    ->hourly()
+    ->name('searches:send-alerts')
+    ->onOneServer();
+
 // Process proxy bids - runs every minute
 Schedule::command('bidding:process-proxy')
     ->everyMinute()
     ->name('bidding:process-proxy')
+    ->onOneServer();
+
+// SLO Monitoring - runs every 5 minutes
+Schedule::job(new \App\Jobs\SloMonitoringJob())
+    ->everyFiveMinutes()
+    ->name('slo:monitoring')
     ->onOneServer();
 
 // Clean up old sessions - runs daily at 4 AM
@@ -87,20 +92,26 @@ Schedule::command('notifications:table --prune=168')
     ->name('cleanup:notifications')
     ->onOneServer();
 
-// Optimize database - runs weekly on Sunday at 3 AM
-Schedule::command('db:optimize')
-    ->weeklyOn(0, '03:00')
-    ->name('db:optimize')
+// Prune expired Sanctum tokens - runs weekly
+Schedule::command('sanctum:prune-expired --hours=168')
+    ->weekly()
+    ->name('sanctum:prune-expired')
     ->onOneServer();
 
-/*
-|--------------------------------------------------------------------------
-| Schedule Monitoring Route (Admin Only)
-|--------------------------------------------------------------------------
-*/
+// T-1303: Publish scheduled auctions when starts_at arrives - runs every minute
+Schedule::command('auctions:publish-scheduled')
+    ->everyMinute()
+    ->name('auctions:publish-scheduled')
+    ->onOneServer();
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Schedule::command('schedule:monitor')
-        ->everyFiveMinutes()
-        ->onOneServer();
-});
+// T-1104: Recalculate seller reputation scores - runs daily at 5 AM
+Schedule::command('sellers:recalculate-reputation')
+    ->dailyAt('05:00')
+    ->name('sellers:recalculate-reputation')
+    ->onOneServer();
+
+// T-1306: Cancel orders that missed payment deadline - runs hourly
+Schedule::command('orders:cancel-payment-deadline')
+    ->hourly()
+    ->name('orders:cancel-payment-deadline')
+    ->onOneServer();

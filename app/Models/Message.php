@@ -21,11 +21,12 @@ class Message extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'sender_id', 'receiver_id', 'auction_id', 'content', 'is_read', 'created_at',
+        'sender_id', 'receiver_id', 'auction_id', 'message_type', 'content', 'attachment_name', 'attachment_url', 'metadata', 'is_read', 'created_at',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
+        'metadata' => 'array',
         'created_at' => 'datetime',
     ];
 

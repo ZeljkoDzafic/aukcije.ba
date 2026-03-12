@@ -59,6 +59,7 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'kyc_level' => 2,
         ])->afterCreating(function (User $user) {
+            $user->assignRole('buyer');
             $user->assignRole('seller');
         });
     }
@@ -69,6 +70,8 @@ class UserFactory extends Factory
             'kyc_level' => 3,
             'phone_verified_at' => now(),
         ])->afterCreating(function (User $user) {
+            $user->assignRole('buyer');
+            $user->assignRole('seller');
             $user->assignRole('verified_seller');
         });
     }

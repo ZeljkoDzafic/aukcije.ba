@@ -5,7 +5,12 @@ declare(strict_types=1);
 use App\Livewire\Admin\CategoryManager;
 use App\Livewire\Admin\StatisticsOverview;
 use App\Livewire\Seller\OrderFulfillment;
+use App\Models\Order;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+
+uses(RefreshDatabase::class);
 
 it('renders admin category manager livewire component', function () {
     Livewire::test(CategoryManager::class)
@@ -22,7 +27,16 @@ it('renders admin statistics overview livewire component', function () {
 });
 
 it('renders seller order fulfillment livewire component', function () {
-    Livewire::test(OrderFulfillment::class)
+    $seller = User::factory()->seller()->create();
+    $order = Order::factory()->create([
+        'seller_id' => $seller->id,
+    ]);
+
+    $this->actingAs($seller);
+
+    Livewire::test(OrderFulfillment::class, ['orderId' => $order->id])
+        ->set('courier', 'euroexpress')
+        ->set('trackingNumber', 'EE123456789BA')
         ->call('markShipped')
-        ->assertSee('Narudžba je označena kao poslana');
+        ->assertSee('Tracking podaci su sačuvani i status pošiljke je ažuriran.');
 });

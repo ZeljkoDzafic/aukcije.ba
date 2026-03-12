@@ -21,6 +21,7 @@ class BidPlaced implements ShouldBroadcast
     public function __construct(
         public readonly Auction $auction,
         public readonly Bid $bid,
+        public readonly ?string $previousWinnerId = null,
     ) {}
 
     public function broadcastOn(): Channel

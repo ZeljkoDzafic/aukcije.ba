@@ -39,6 +39,7 @@ class UserRating extends Model
     protected $casts = [
         'score' => 'integer',
         'is_visible' => 'boolean',
+        'created_at' => 'datetime',
     ];
 
     /**

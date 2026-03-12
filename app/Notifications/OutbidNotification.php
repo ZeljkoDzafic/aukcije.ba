@@ -25,7 +25,13 @@ class OutbidNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast'];
+        $channels = ['database', 'broadcast'];
+
+        if ($notifiable->prefersEmailNotification('outbid')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

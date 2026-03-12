@@ -33,7 +33,7 @@
                 @endforeach
             </div>
             <x-input wire:model.live="depositAmount" name="deposit_amount" type="number" label="Custom iznos" />
-            <x-select wire:model.live="gateway" name="gateway" label="Gateway" :options="['stripe' => 'Stripe', 'monri' => 'Monri', 'corvus' => 'CorvusPay', 'wallet' => 'Wallet transfer']" />
+            <x-select wire:model.live="gateway" name="gateway" label="Gateway" :options="['stripe' => 'Stripe (kartica)', 'monri' => 'Monri (BiH kartica)', 'corvuspay' => 'CorvusPay (HR kartica)']" />
             <x-button wire:click="deposit">Dopuni balans</x-button>
         </x-card>
 
@@ -55,7 +55,7 @@
         <x-card class="space-y-4">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <h2 class="text-2xl font-semibold text-slate-900">Historija transakcija</h2>
+                    <h2 class="text-2xl font-semibold text-slate-900">Pregled transakcija</h2>
                     <p class="text-sm text-slate-500">Filtrirano po tipu, sa BHS oznakama i ikonama statusa.</p>
                 </div>
                 <div class="flex flex-wrap gap-3 text-sm">
@@ -84,6 +84,12 @@
                     </tr>
                 @endforelse
             </x-data-table>
+
+            @if (method_exists($this->transactions, 'links'))
+                <div class="mt-4">
+                    {{ $this->transactions->links() }}
+                </div>
+            @endif
         </x-card>
     </div>
 </div>

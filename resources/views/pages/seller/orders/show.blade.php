@@ -29,7 +29,9 @@
                         <p class="text-sm uppercase tracking-[0.18em] text-slate-500">Order #{{ $order->id }}</p>
                         <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $order->title }}</h1>
                     </div>
-                    <x-badge variant="warning">Spremno za slanje</x-badge>
+                    <x-badge variant="{{ in_array($order->status, ['shipped', 'delivered', 'completed'], true) ? 'success' : 'warning' }}">
+                        {{ str_replace('_', ' ', $order->status) }}
+                    </x-badge>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
@@ -66,14 +68,41 @@
             <x-card class="space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Timeline</h2>
                 <div class="space-y-3">
-                    @foreach (['Aukcija završena', 'Kupac uplatio', 'Narudžba spremna za slanje', 'Tracking: '.$order->tracking_number] as $step)
-                        <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{{ $step }}</div>
+                    @foreach ([
+                        'Aukcija završena',
+                        $order->status !== 'pending_payment' ? 'Kupac uplatio' : 'Čeka uplatu kupca'.($order->payment_deadline_at ? ' do '.$order->payment_deadline_at : ''),
+                        in_array($order->status, ['awaiting_shipment', 'shipped', 'delivered', 'completed'], true) ? 'Narudžba spremna za slanje' : 'Narudžba u obradi',
+                        'Tracking: '.($order->tracking_number ?: 'nije dodan'),
+                        $order->dispute_status ? 'Spor: '.str_replace('_', ' ', (string) $order->dispute_status) : null,
+                    ] as $step)
+                        @if ($step)
+                            <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{{ $step }}</div>
+                        @endif
                     @endforeach
                 </div>
             </x-card>
         </div>
 
         <div class="space-y-6">
+            @if (($orderActions ?? collect())->isNotEmpty())
+                <x-card class="space-y-4">
+                    <h2 class="text-xl font-semibold text-slate-900">Operativni koraci</h2>
+                    <div class="space-y-3">
+                        @foreach ($orderActions as $action)
+                            <div class="rounded-2xl border border-slate-200 px-4 py-4">
+                                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-900">{{ $action['label'] }}</p>
+                                        <p class="mt-1 text-sm text-slate-600">{{ $action['hint'] }}</p>
+                                    </div>
+                                    <x-button variant="ghost" :href="$action['href']">{{ $action['label'] }}</x-button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </x-card>
+            @endif
+
             @livewire('seller.order-fulfillment', ['orderId' => request()->route('order')])
         </div>
     </div>

@@ -66,6 +66,7 @@ class BiddingService
         $this->validateBid($user, $auction, $amount);
 
         return DB::transaction(function () use ($user, $auction, $amount, $isProxy, $maxProxyAmount) {
+            $previousWinnerId = $auction->bids()->where('is_winning', true)->value('user_id');
             $auction->bids()->where('is_winning', true)->update(['is_winning' => false]);
 
             $bid = Bid::create([
@@ -83,18 +84,27 @@ class BiddingService
                 );
             }
 
-            $auction->update([
+            // T-1204: track whether reserve price has been met
+            $reserveMet = $auction->reserve_price === null || $amount >= $auction->reserve_price;
+
+            $auctionUpdate = [
                 'current_price' => $amount,
-                'bids_count' => $auction->bids_count + 1,
-                'last_bid_at' => now(),
-                'winner_id' => $user->id,
-            ]);
+                'bids_count'    => $auction->bids_count + 1,
+                'last_bid_at'   => now(),
+                'winner_id'     => $user->id,
+            ];
+
+            if ($reserveMet && ! $auction->reserve_met) {
+                $auctionUpdate['reserve_met'] = true;
+            }
+
+            $auction->update($auctionUpdate);
 
             $this->checkAntiSniping($auction, $bid);
             $this->processProxyBids($auction, $bid);
 
             $freshBid = $bid->fresh();
-            BidPlaced::dispatch($auction->fresh(), $freshBid);
+            BidPlaced::dispatch($auction->fresh(), $freshBid, $previousWinnerId);
 
             return $freshBid;
         });

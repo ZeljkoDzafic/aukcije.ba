@@ -17,10 +17,16 @@
         <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($results as $auction)
                 <div class="space-y-3">
-                    <x-auction-card :title="$auction['title']" :category="$auction['category']" :price="$auction['price']" :bids="$auction['bids']" :watchers="$auction['watchers']" :location="$auction['location']" :time="$auction['time']" :href="route('auctions.show', ['auction' => $auction['id']])" />
+                    <x-auction-card :title="$auction['title']" :category="$auction['category']" :price="$auction['price']" :bids="$auction['bids']" :watchers="$auction['watchers']" :location="$auction['location']" :time="$auction['time']" :image-url="$auction['image_url'] ?? null" :badge="$auction['badge'] ?? 'Praćena aukcija'" :href="route('auctions.show', ['auction' => $auction['id']])" />
                     <x-button variant="ghost" class="w-full" wire:click="remove('{{ $auction['id'] }}')">Ukloni iz praćenja</x-button>
                 </div>
             @endforeach
         </div>
+
+        @if (method_exists($results, 'links'))
+            <div class="mt-6">
+                {{ $results->links() }}
+            </div>
+        @endif
     @endif
 </div>

@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Models\Wallet;
-use App\Models\WalletTransaction;
+use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class WalletManager extends Component
 {
+    use WithPagination;
+
     public string $depositAmount = '';
 
     public string $withdrawAmount = '';
@@ -32,17 +33,36 @@ class WalletManager extends Component
         $this->depositAmount = (string) $amount;
     }
 
-    public function deposit(WalletService $walletService): void
+    public function deposit(PaymentService $paymentService): void
     {
         $this->reset(['feedback', 'errorMessage']);
         $this->validate([
-            'depositAmount' => ['required', 'numeric', 'min:1'],
-            'gateway' => ['required', 'string'],
+            'depositAmount' => ['required', 'numeric', 'min:1', 'max:10000'],
+            'gateway'       => ['required', 'string', 'in:stripe,monri,corvuspay'],
         ]);
 
         try {
-            $walletService->deposit(Auth::user(), (float) $this->depositAmount, $this->gateway);
-            $this->feedback = 'Wallet dopuna je evidentirana.';
+            $result = $paymentService->initiateDeposit(
+                Auth::user(),
+                (float) $this->depositAmount,
+                $this->gateway,
+                url('/user/wallet')
+            );
+
+            if (! $result['success']) {
+                $this->errorMessage = $result['error'] ?? 'Greška pri inicijalizaciji plaćanja.';
+
+                return;
+            }
+
+            if (isset($result['redirect_url'])) {
+                $this->redirect($result['redirect_url']);
+
+                return;
+            }
+
+            // Gateway processed synchronously (e.g. local/test gateway)
+            $this->feedback = 'Dopuna je evidentirana.';
             $this->depositAmount = '';
         } catch (\Throwable $exception) {
             $this->errorMessage = $exception->getMessage();
@@ -53,7 +73,7 @@ class WalletManager extends Component
     {
         $this->reset(['feedback', 'errorMessage']);
         $this->validate([
-            'withdrawAmount' => ['required', 'numeric', 'min:1'],
+            'withdrawAmount' => ['required', 'numeric', 'min:10'],
         ]);
 
         try {
@@ -65,27 +85,28 @@ class WalletManager extends Component
         }
     }
 
+    public function updatedFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function getWalletProperty(): ?Wallet
     {
         return Auth::user()?->wallet;
     }
 
-    /**
-     * @return Collection<int, WalletTransaction>|EloquentCollection<int, WalletTransaction>
-     */
-    public function getTransactionsProperty(): Collection|EloquentCollection
+    public function getTransactionsProperty(): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $wallet = $this->getWalletProperty();
 
         if (! $wallet) {
-            return collect();
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         }
 
         return $wallet->transactions()
+            ->when($this->filter !== 'all', fn ($q) => $q->where('type', $this->filter))
             ->latest('created_at')
-            ->get()
-            ->when($this->filter !== 'all', fn ($items) => $items->where('type', $this->filter))
-            ->values();
+            ->paginate(20);
     }
 
     public function render(): View

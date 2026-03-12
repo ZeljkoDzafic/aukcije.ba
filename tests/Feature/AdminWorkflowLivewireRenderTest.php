@@ -33,7 +33,7 @@ it('renders admin dispute resolution livewire component', function () {
 
 it('renders admin user profile manager livewire component', function () {
     Livewire::test(UserProfileManager::class)
-        ->assertSee('Promijeni rolu')
+        ->assertSee('Toggle seller pristup')
         ->assertSee('Reset lozinke');
 });
 

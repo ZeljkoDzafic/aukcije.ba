@@ -78,9 +78,19 @@ class WalletController extends Controller
     {
         $wallet = $this->walletService->getWallet($request->user());
 
+        $transactions = $wallet->transactions()
+            ->latest('created_at')
+            ->paginate(50);
+
         return response()->json([
             'success' => true,
-            'data' => $wallet->transactions()->latest('created_at')->get(),
+            'data' => $transactions->items(),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'per_page' => $transactions->perPage(),
+                'total' => $transactions->total(),
+                'last_page' => $transactions->lastPage(),
+            ],
         ]);
     }
 }

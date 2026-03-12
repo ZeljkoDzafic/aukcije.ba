@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class AuctionWatcher extends Model
+class AuctionWatcher extends Pivot
 {
     use HasUuids;
 
@@ -20,16 +20,19 @@ class AuctionWatcher extends Model
 
     public $incrementing = false;
 
-    public $timestamps = false;
+    public $timestamps = true;
 
-    protected $fillable = ['auction_id', 'user_id', 'created_at'];
+    protected $fillable = ['id', 'auction_id', 'user_id', 'created_at', 'updated_at'];
 
-    protected $casts = ['created_at' => 'datetime'];
+    protected $casts = ['created_at' => 'datetime', 'updated_at' => 'datetime'];
 
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn ($m) => $m->created_at = now());
+        static::creating(function (self $watcher): void {
+            $watcher->created_at ??= now();
+            $watcher->updated_at ??= now();
+        });
     }
 
     /**

@@ -230,7 +230,10 @@ class Auction extends Model
      */
     public function watchingUsers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'auction_watchers')->withTimestamps();
+        return $this->belongsToMany(User::class, 'auction_watchers')
+            ->using(AuctionWatcher::class)
+            ->withPivot('id')
+            ->withTimestamps();
     }
 
     /**

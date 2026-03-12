@@ -72,9 +72,16 @@ class BidController extends Controller
                 'error' => ['message' => $e->getMessage()],
             ], 403);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Bid placement failed', [
+                'auction_id' => $auction->id,
+                'user_id' => $user->id,
+                'amount' => $request->amount,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => ['message' => 'Bid failed: '.$e->getMessage()],
+                'error' => ['message' => 'Licitacija nije uspjela. Molimo pokušajte ponovo.'],
             ], 500);
         }
     }

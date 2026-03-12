@@ -26,7 +26,11 @@ class ItemShippedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        $channels = ['database', 'broadcast', 'mail'];
+        $channels = ['database', 'broadcast'];
+
+        if ($notifiable->prefersEmailNotification('shipping_updates')) {
+            $channels[] = 'mail';
+        }
 
         if ($notifiable->prefersSmsNotification()) {
             $channels[] = 'sms';

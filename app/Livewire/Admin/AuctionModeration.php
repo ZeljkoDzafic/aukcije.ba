@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin;
 
-use App\Models\AdminLog;
 use App\Models\Auction;
+use App\Services\AdminAuditService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -39,15 +39,13 @@ class AuctionModeration extends Component
                     default => null,
                 };
 
-                if (Schema::hasTable('admin_logs')) {
-                    AdminLog::query()->create([
-                        'admin_id' => Auth::id(),
-                        'action' => $action,
-                        'target_type' => 'auction',
-                        'target_id' => $model->id,
-                        'metadata' => ['title' => $model->title],
-                    ]);
-                }
+                app(AdminAuditService::class)->record(
+                    Auth::id(),
+                    $action,
+                    'auction',
+                    $model->id,
+                    ['title' => $model->title]
+                );
 
                 $this->feedback = "Akcija '{$action}' izvršena za aukciju {$model->title}.";
 

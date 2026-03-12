@@ -344,7 +344,7 @@ describe('Auth API', function () {
         $response = $this->getJson('/api/v1/auth/me');
 
         $response->assertStatus(200)
-            ->assertJson(['email' => $user->email]);
+            ->assertJsonPath('user.email', $user->email);
     });
 
     it('logs out user', function () {

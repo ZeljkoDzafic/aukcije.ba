@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin;
 
-use App\Models\AdminLog;
 use App\Models\User;
+use App\Services\AdminAuditService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +26,7 @@ class UserDirectory extends Component
 
     /** @var list<array{id: string, name: string, role: string, kyc: string, tier: string}> */
     public array $users = [
-        ['id' => '1', 'name' => 'Amar Hadžić', 'role' => 'seller', 'kyc' => '3', 'tier' => 'premium'],
+        ['id' => '1', 'name' => 'Amar Hadžić', 'role' => 'buyer, seller', 'kyc' => '3', 'tier' => 'premium'],
         ['id' => '2', 'name' => 'Lana R.', 'role' => 'buyer', 'kyc' => '1', 'tier' => '-'],
         ['id' => '3', 'name' => 'Admin Demo', 'role' => 'moderator', 'kyc' => '3', 'tier' => '-'],
     ];
@@ -46,20 +46,19 @@ class UserDirectory extends Component
                     ]);
                 }
 
-                if ($action === 'change-role' && method_exists($model, 'syncRoles')) {
-                    $nextRole = $model->hasRole('seller') ? 'buyer' : 'seller';
-                    $model->syncRoles([$nextRole]);
+                if ($action === 'toggle-seller-access') {
+                    $model->hasAnyRole(['seller', 'verified_seller'])
+                        ? $model->revokeSellerAccess()
+                        : $model->grantSellerAccess();
                 }
 
-                if (Schema::hasTable('admin_logs')) {
-                    AdminLog::query()->create([
-                        'admin_id' => Auth::id(),
-                        'action' => $action,
-                        'target_type' => 'user',
-                        'target_id' => $model->id,
-                        'metadata' => ['name' => $model->name],
-                    ]);
-                }
+                app(AdminAuditService::class)->record(
+                    Auth::id(),
+                    $action,
+                    'user',
+                    $model->id,
+                    ['name' => $model->name]
+                );
 
                 $this->statusMessage = "Akcija '{$action}' izvršena za korisnika {$model->name}.";
 
@@ -83,7 +82,7 @@ class UserDirectory extends Component
                 ->limit(20)
                 ->get()
                 ->map(function (User $user): array {
-                    $role = method_exists($user, 'getRoleNames') ? ($user->getRoleNames()->first() ?? 'buyer') : 'buyer';
+                    $role = method_exists($user, 'roleSummary') ? $user->roleSummary() : 'buyer';
                     $isSeller = method_exists($user, 'hasRole') && ($user->hasRole('seller') || $user->hasRole('verified_seller'));
 
                     return [
@@ -102,7 +101,7 @@ class UserDirectory extends Component
 
         return $users
             ->filter(fn (array $user) => $this->search === '' || str_contains(strtolower($user['name']), strtolower($this->search)))
-            ->filter(fn (array $user) => $this->role === '' || $user['role'] === $this->role)
+            ->filter(fn (array $user) => $this->role === '' || str_contains($user['role'], $this->role))
             ->filter(fn (array $user) => $this->kyc === '' || $user['kyc'] === $this->kyc)
             ->filter(fn (array $user) => $this->tier === '' || $user['tier'] === $this->tier)
             ->values();

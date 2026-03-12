@@ -11,31 +11,34 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StatisticsController extends Controller
 {
     public function index(Request $request): JsonResponse|StreamedResponse
     {
-        $data = [
-            'users' => [
-                'total' => User::query()->count(),
-                'banned' => User::query()->where('is_banned', true)->count(),
-            ],
-            'auctions' => [
-                'total' => Auction::query()->count(),
-                'active' => Auction::query()->where('status', 'active')->count(),
-                'featured' => Auction::query()->where('is_featured', true)->count(),
-            ],
-            'revenue' => [
-                'gross' => (float) Order::query()->sum('total_amount'),
-                'commission' => (float) Order::query()->sum('commission_amount'),
-            ],
-            'trust' => [
-                'disputes' => Dispute::query()->count(),
-                'resolved' => Dispute::query()->where('status', 'resolved')->count(),
-            ],
-        ];
+        $data = Cache::remember('admin_stats', 300, function () {
+            return [
+                'users' => [
+                    'total'  => User::query()->count(),
+                    'banned' => User::query()->where('is_banned', true)->count(),
+                ],
+                'auctions' => [
+                    'total'    => Auction::query()->count(),
+                    'active'   => Auction::query()->where('status', 'active')->count(),
+                    'featured' => Auction::query()->where('is_featured', true)->count(),
+                ],
+                'revenue' => [
+                    'gross'      => (float) Order::query()->sum('total_amount'),
+                    'commission' => (float) Order::query()->sum('commission_amount'),
+                ],
+                'trust' => [
+                    'disputes' => Dispute::query()->count(),
+                    'resolved' => Dispute::query()->where('status', 'resolved')->count(),
+                ],
+            ];
+        });
 
         if ((string) $request->query('format') === 'csv') {
             return response()->streamDownload(function () use ($data) {

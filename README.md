@@ -70,6 +70,11 @@ Full task breakdown: [`docs/TASKS.md`](docs/TASKS.md)
 - **Codex** — Frontend, UI, stranice (20 taskova)
 - **Qwen** — DevOps, API, integracije, testovi (17 taskova)
 
+## Current Product Roadmap
+
+- Production checklist: [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md)
+- World-class roadmap: [`docs/WORLD_CLASS_ROADMAP.md`](docs/WORLD_CLASS_ROADMAP.md)
+
 ## Project Structure
 
 ```

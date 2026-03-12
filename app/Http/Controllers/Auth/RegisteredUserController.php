@@ -38,8 +38,11 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Assign role
-        $user->assignRole($request->role);
+        $user->assignRole('buyer');
+
+        if ($request->role === 'seller') {
+            $user->assignRole('seller');
+        }
 
         // Create profile
         UserProfile::create(['user_id' => $user->id, 'full_name' => $request->name]);

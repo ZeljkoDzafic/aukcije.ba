@@ -109,12 +109,12 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $request->user()->load('profile', 'wallet');
 
-        return response()->json(array_merge(
-            $user->toArray(),
-            ['user' => $user],
-        ));
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+        ]);
     }
 
     /**
@@ -131,16 +131,13 @@ class AuthController extends Controller
     }
 
     /**
-     * Verify email
+     * Verify email via signed URL (standard Laravel email verification).
+     * The user must follow the signed link sent by sendVerification().
      */
-    public function verifyEmail(Request $request): JsonResponse
-    {
-        $request->validate([
-            'token' => 'required|string',
-        ]);
-
-        // Implement email verification logic
-        // This is a simplified version
+    public function verifyEmail(
+        \Illuminate\Foundation\Auth\EmailVerificationRequest $request
+    ): JsonResponse {
+        $request->fulfill();
 
         return response()->json([
             'success' => true,

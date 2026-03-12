@@ -28,7 +28,7 @@ class UserProfileManager extends Component
 
         match ($action) {
             'ban' => $user->update(['is_banned' => ! $user->is_banned, 'banned_at' => $user->is_banned ? null : now()]),
-            'change-role' => method_exists($user, 'syncRoles') ? $user->syncRoles([$user->hasRole('seller') ? 'buyer' : 'seller']) : null,
+            'toggle-seller-access' => $user->hasAnyRole(['seller', 'verified_seller']) ? $user->revokeSellerAccess() : $user->grantSellerAccess(),
             'force-kyc-review' => $this->forceKycReview($user),
             'reset-password' => null,
             default => null,

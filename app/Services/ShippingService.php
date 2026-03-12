@@ -17,20 +17,15 @@ class ShippingService
     /** @var array<string, CourierInterface> */
     protected array $couriers = [];
 
-    public function __construct()
-    {
-        $this->initializeCouriers();
-    }
-
-    /**
-     * Initialize all configured couriers
-     */
-    protected function initializeCouriers(): void
-    {
+    public function __construct(
+        EuroExpressCourier $euroExpress,
+        PostExpressCourier $postExpress,
+        BhPostaCourier $bhPosta,
+    ) {
         $this->couriers = [
-            'euroexpress' => new EuroExpressCourier,
-            'postexpress' => new PostExpressCourier,
-            'bhposta' => new BhPostaCourier,
+            'euroexpress' => $euroExpress,
+            'postexpress' => $postExpress,
+            'bhposta'     => $bhPosta,
         ];
     }
 
@@ -272,6 +267,10 @@ class ShippingService
         }
     }
 
+    // TODO: No webhook route is registered for courier callbacks. Add to routes/api.php:
+    //       Route::post('/webhooks/courier/{courier}', [CourierWebhookController::class, 'handle'])
+    //       ->name('webhooks.courier')->withoutMiddleware(['auth:sanctum']);
+    //       The controller should verify the courier's HMAC signature before calling handleWebhook().
     /**
      * Handle webhook from courier
      */

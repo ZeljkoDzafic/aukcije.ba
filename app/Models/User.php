@@ -54,6 +54,12 @@ class User extends Authenticatable
         'banned_at',
         'ban_reason',
         'notification_preferences',
+        'fraud_score',
+        'seller_reputation_score',
+        'seller_reputation_updated_at',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -62,6 +68,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -73,8 +81,12 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_banned' => 'boolean',
         'banned_at' => 'datetime',
-        'trust_score' => 'decimal:2',
-        'notification_preferences' => 'array',
+        'trust_score'                    => 'decimal:2',
+        'fraud_score'                    => 'integer',
+        'seller_reputation_score'        => 'decimal:2',
+        'seller_reputation_updated_at'   => 'datetime',
+        'two_factor_confirmed_at'        => 'datetime',
+        'notification_preferences'       => 'array',
     ];
 
     // -------------------------------------------------------------------------
@@ -166,7 +178,7 @@ class User extends Authenticatable
      */
     public function ratingsReceived(): HasMany
     {
-        return $this->hasMany(UserRating::class, 'rated_user_id');
+        return $this->hasMany(UserRating::class, 'rated_id');
     }
 
     /**
@@ -200,6 +212,8 @@ class User extends Authenticatable
     public function watchlist(): BelongsToMany
     {
         return $this->belongsToMany(Auction::class, 'auction_watchers')
+            ->using(AuctionWatcher::class)
+            ->withPivot('id')
             ->withTimestamps();
     }
 
@@ -234,6 +248,30 @@ class User extends Authenticatable
     public function subscription(): HasOne
     {
         return $this->hasOne(SellerSubscription::class)->latestOfMany('starts_at');
+    }
+
+    /**
+     * @return HasMany<AuctionNotification, $this>
+     */
+    public function marketplaceNotifications(): HasMany
+    {
+        return $this->hasMany(AuctionNotification::class, 'user_id');
+    }
+
+    /**
+     * @return HasMany<AdminLog, $this>
+     */
+    public function adminLogs(): HasMany
+    {
+        return $this->hasMany(AdminLog::class, 'admin_id');
+    }
+
+    /**
+     * @return HasMany<SavedSearch, $this>
+     */
+    public function savedSearches(): HasMany
+    {
+        return $this->hasMany(SavedSearch::class);
     }
 
     // -------------------------------------------------------------------------
@@ -415,7 +453,11 @@ class User extends Authenticatable
      */
     public function prefersSmsNotification(): bool
     {
+        $defaults = config('mail.preferences.defaults', []);
+        $preferences = $this->notification_preferences ?? $defaults;
+
         return $this->phone_verified_at !== null
+            && (bool) ($preferences['sms_enabled'] ?? false)
             && config('mail.notifications.sms.enabled', false);
     }
 
@@ -424,7 +466,11 @@ class User extends Authenticatable
      */
     public function prefersPushNotification(): bool
     {
-        return config('mail.notifications.push.enabled', false);
+        $defaults = config('mail.preferences.defaults', []);
+        $preferences = $this->notification_preferences ?? $defaults;
+
+        return (bool) ($preferences['push_enabled'] ?? true)
+            && config('mail.notifications.push.enabled', false);
     }
 
     /**
@@ -493,5 +539,74 @@ class User extends Authenticatable
     public function scopeVerifiedEmail($query)
     {
         return $query->whereNotNull('email_verified_at');
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function marketplaceRoles(): array
+    {
+        $roles = method_exists($this, 'getRoleNames')
+            ? $this->getRoleNames()->values()->all()
+            : [];
+
+        if ($this->hasAnyRole(['seller', 'verified_seller']) && ! in_array('buyer', $roles, true)) {
+            $roles[] = 'buyer';
+        }
+
+        return array_values(array_unique($roles));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function marketplaceRolesForAssignment(bool $wantsSellerAccess = false, bool $verifiedSeller = false): array
+    {
+        $roles = collect($this->marketplaceRoles())
+            ->reject(fn (string $role): bool => in_array($role, ['buyer', 'seller', 'verified_seller'], true))
+            ->values();
+
+        $roles->push('buyer');
+
+        if ($wantsSellerAccess) {
+            $roles->push('seller');
+        }
+
+        if ($verifiedSeller) {
+            $roles->push('verified_seller');
+        }
+
+        return $roles->unique()->values()->all();
+    }
+
+    public function grantSellerAccess(bool $verified = false): void
+    {
+        if (! method_exists($this, 'syncRoles')) {
+            return;
+        }
+
+        $this->syncRoles($this->marketplaceRolesForAssignment(true, $verified));
+    }
+
+    public function revokeSellerAccess(): void
+    {
+        if (! method_exists($this, 'syncRoles')) {
+            return;
+        }
+
+        $this->syncRoles($this->marketplaceRolesForAssignment(false, false));
+    }
+
+    public function roleSummary(): string
+    {
+        $labels = collect($this->marketplaceRoles())->map(function (string $role): string {
+            return match ($role) {
+                'super_admin' => 'super admin',
+                'verified_seller' => 'verified seller',
+                default => str_replace('_', ' ', $role),
+            };
+        });
+
+        return $labels->implode(', ');
     }
 }

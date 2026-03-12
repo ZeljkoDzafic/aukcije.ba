@@ -6,7 +6,7 @@ import axios, { listenToAuctionUpdates, userChannel } from '../js/bootstrap';
 
 const props = defineProps({
     auctionId: {
-        type: Number,
+        type: String,
         required: true,
     },
     currentPrice: {
@@ -34,7 +34,7 @@ const props = defineProps({
         default: '',
     },
     userId: {
-        type: Number,
+        type: String,
         default: null,
     },
 });
@@ -54,7 +54,7 @@ let stopAuctionUpdates = null;
 let privateChannel = null;
 let confettiTimeout = null;
 
-const disabled = computed(() => !props.canBid || state.value === 'submitting');
+const disabled = computed(() => !props.canBid || isExpired.value || state.value === 'submitting');
 const validationError = computed(() => {
     if (Number(amount.value) < liveMinimumBid.value) {
         return `Minimalni sljedeći bid je ${liveMinimumBid.value.toFixed(2)} ${props.currency}.`;
@@ -67,8 +67,10 @@ const validationError = computed(() => {
     return '';
 });
 
+const isExpired = computed(() => new Date(liveEndsAt.value) <= new Date());
+
 const submitLabel = computed(() => {
-    if (!props.canBid) {
+    if (!props.canBid || isExpired.value) {
         return 'Aukcija završena';
     }
 
@@ -134,6 +136,9 @@ const submitBid = async () => {
         liveCurrentPrice.value = Number(payload.current_price ?? liveCurrentPrice.value);
         liveMinimumBid.value = Number(payload.next_minimum_bid ?? liveMinimumBid.value);
         liveEndsAt.value = payload.auction_ends_at ?? liveEndsAt.value;
+        if (payload.next_minimum_bid) {
+            proxyMax.value = Math.max(proxyMax.value, liveMinimumBid.value + Number(payload.bid_increment ?? 50));
+        }
         state.value = 'success';
         feedbackMessage.value = 'Ponuda je uspješno poslana.';
     } catch (error) {

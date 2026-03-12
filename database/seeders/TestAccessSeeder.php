@@ -20,7 +20,7 @@ class TestAccessSeeder extends Seeder
     {
         $users = [
             [
-                'role' => 'super_admin',
+                'roles' => ['super_admin'],
                 'name' => 'Test Super Admin',
                 'email' => 'test.superadmin@aukcije.ba',
                 'city' => 'Sarajevo',
@@ -31,7 +31,7 @@ class TestAccessSeeder extends Seeder
                 'phone' => '+38761111001',
             ],
             [
-                'role' => 'moderator',
+                'roles' => ['moderator'],
                 'name' => 'Test Moderator',
                 'email' => 'test.moderator@aukcije.ba',
                 'city' => 'Mostar',
@@ -42,7 +42,7 @@ class TestAccessSeeder extends Seeder
                 'phone' => '+38761111002',
             ],
             [
-                'role' => 'verified_seller',
+                'roles' => ['buyer', 'seller', 'verified_seller'],
                 'name' => 'Test Verified Seller',
                 'email' => 'test.verified-seller@aukcije.ba',
                 'city' => 'Banja Luka',
@@ -53,7 +53,7 @@ class TestAccessSeeder extends Seeder
                 'phone' => '+38761111003',
             ],
             [
-                'role' => 'seller',
+                'roles' => ['buyer', 'seller'],
                 'name' => 'Test Seller',
                 'email' => 'test.seller@aukcije.ba',
                 'city' => 'Tuzla',
@@ -64,7 +64,7 @@ class TestAccessSeeder extends Seeder
                 'phone' => '+38761111004',
             ],
             [
-                'role' => 'buyer',
+                'roles' => ['buyer'],
                 'name' => 'Test Buyer',
                 'email' => 'test.buyer@aukcije.ba',
                 'city' => 'Zenica',
@@ -75,7 +75,7 @@ class TestAccessSeeder extends Seeder
                 'phone' => '+38761111005',
             ],
             [
-                'role' => 'buyer',
+                'roles' => ['buyer'],
                 'name' => 'Test Banned Buyer',
                 'email' => 'test.banned@aukcije.ba',
                 'city' => 'Bihać',
@@ -88,7 +88,7 @@ class TestAccessSeeder extends Seeder
                 'ban_reason' => 'Seeded banned user for moderation tests',
             ],
             [
-                'role' => 'buyer',
+                'roles' => ['buyer'],
                 'name' => 'Test Unverified Buyer',
                 'email' => 'test.unverified@aukcije.ba',
                 'city' => 'Travnik',
@@ -117,7 +117,7 @@ class TestAccessSeeder extends Seeder
                 ]
             );
 
-            $user->syncRoles([$definition['role']]);
+            $user->syncRoles($definition['roles']);
 
             $profilePayload = [
                 'full_name' => $definition['name'],

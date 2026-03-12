@@ -11,6 +11,7 @@ use App\Services\AuctionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -39,6 +40,11 @@ class CreateAuctionWizard extends Component
     public string $reservePrice = '';
 
     public string $buyNowPrice = '';
+
+    public int $durationDays = 7;
+
+    /** @var list<int> */
+    public array $durationOptions = [1, 3, 5, 7, 10, 14];
 
     public string $shippingMethod = '';
 
@@ -78,6 +84,8 @@ class CreateAuctionWizard extends Component
                 $this->startPrice = (string) $auction->start_price;
                 $this->reservePrice = (string) ($auction->reserve_price ?? '');
                 $this->buyNowPrice = (string) ($auction->buy_now_price ?? '');
+                $this->durationDays = (int) ($auction->duration_days ?? 7);
+                $this->shippingMethod = (string) ($auction->shipping_method ?? '');
                 $this->shippingPrice = (string) ($auction->shipping_cost ?? '');
                 $this->location = (string) ($auction->location_city ?? $auction->location ?? '');
                 $this->imageUrls = $auction->images()->orderBy('sort_order')->pluck('url')->all();
@@ -149,7 +157,11 @@ class CreateAuctionWizard extends Component
             }
 
             if ($file instanceof TemporaryUploadedFile) {
-                $this->imageUrls[] = '/storage/'.$file->store('auction-images', 'public');
+                $disk = config('filesystems.default', 'public');
+                $path = $file->store('auction-images', $disk);
+                $this->imageUrls[] = $disk === 'public'
+                    ? '/storage/'.$path
+                    : Storage::disk($disk)->url($path);
             }
         }
 
@@ -164,11 +176,18 @@ class CreateAuctionWizard extends Component
     protected function persist(string $status): void
     {
         $this->validate([
-            'title' => ['required', 'string', 'max:500'],
-            'description' => ['nullable', 'string'],
-            'startPrice' => ['required', 'numeric', 'min:0.01'],
+            'title'        => ['required', 'string', 'max:500'],
+            'description'  => ['nullable', 'string'],
+            'startPrice'   => ['required', 'numeric', 'min:0.01'],
+            'durationDays' => ['required', 'integer', 'in:1,3,5,7,10,14'],
             'shippingPrice' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        if ($status === 'active' && count($this->imageUrls) === 0) {
+            $this->addError('imageUrls', 'Dodaj barem jednu sliku prije objave aukcije.');
+
+            return;
+        }
 
         if (! Auth::check() || ! Schema::hasTable('auctions')) {
             $this->statusMessage = $status === 'draft'
@@ -179,15 +198,15 @@ class CreateAuctionWizard extends Component
         }
 
         $payload = [
-            'title' => $this->title,
-            'description' => $this->description,
-            'category_id' => $this->categoryId ?: Category::query()->value('id'),
-            'start_price' => (float) $this->startPrice,
+            'title'         => $this->title,
+            'description'   => $this->description,
+            'category_id'   => $this->categoryId ?: Category::query()->value('id'),
+            'start_price'   => (float) $this->startPrice,
             'reserve_price' => $this->reservePrice !== '' ? (float) $this->reservePrice : null,
             'buy_now_price' => $this->buyNowPrice !== '' ? (float) $this->buyNowPrice : null,
-            'condition' => $this->condition,
-            'type' => 'standard',
-            'duration_days' => 7,
+            'condition'     => $this->condition,
+            'type'          => 'standard',
+            'duration_days' => $this->durationDays,
             'auto_extension' => true,
         ];
 
@@ -200,25 +219,16 @@ class CreateAuctionWizard extends Component
                 return;
             }
 
-            $updatePayload = array_merge($payload, [
-                'current_price' => (float) $this->startPrice,
-                'status' => $status,
+            $auction->update(array_merge($payload, [
+                'current_price'     => (float) $this->startPrice,
+                'status'            => $status,
                 'shipping_available' => true,
-                'shipping_cost' => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
-                'location_city' => $this->location ?: null,
-                'ends_at' => now()->addDays(7),
-                'original_end_at' => now()->addDays(7),
-            ]);
-
-            $filteredUpdatePayload = [];
-
-            foreach ($updatePayload as $column => $value) {
-                if (Schema::hasColumn('auctions', $column)) {
-                    $filteredUpdatePayload[$column] = $value;
-                }
-            }
-
-            $auction->update($filteredUpdatePayload);
+                'shipping_method'   => $this->shippingMethod ?: null,
+                'shipping_cost'     => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
+                'location_city'     => $this->location ?: null,
+                'ends_at'           => now()->addDays($this->durationDays),
+                'original_end_at'   => now()->addDays($this->durationDays),
+            ]));
         } else {
             try {
                 $auction = app(AuctionService::class)->createAuction(Auth::user(), $payload);
@@ -228,20 +238,13 @@ class CreateAuctionWizard extends Component
                 return;
             }
 
-            $shippingPayload = [
+            $auction->update([
                 'shipping_available' => true,
-                'shipping_cost' => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
-                'location_city' => $this->location ?: null,
-            ];
-            $filteredShippingPayload = [];
+                'shipping_method'    => $this->shippingMethod ?: null,
+                'shipping_cost'      => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
+                'location_city'      => $this->location ?: null,
+            ]);
 
-            foreach ($shippingPayload as $column => $value) {
-                if (Schema::hasColumn('auctions', $column)) {
-                    $filteredShippingPayload[$column] = $value;
-                }
-            }
-
-            $auction->update($filteredShippingPayload);
             $this->auctionId = $auction->id;
         }
 
@@ -267,7 +270,7 @@ class CreateAuctionWizard extends Component
         foreach ($this->imageUrls as $index => $url) {
             AuctionImage::query()->create([
                 'auction_id' => $auction->id,
-                'url' => $url,
+                'url'        => $url,
                 'sort_order' => $index,
                 'is_primary' => $index === 0,
             ]);

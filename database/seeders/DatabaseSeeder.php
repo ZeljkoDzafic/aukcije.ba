@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             TestAccessSeeder::class,
             FeatureFlagSeeder::class,
+            ContentPageSeeder::class,
+            NewsArticleSeeder::class,
             AuctionSeeder::class,
         ]);
     }

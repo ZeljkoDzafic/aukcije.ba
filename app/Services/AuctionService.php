@@ -152,6 +152,33 @@ class AuctionService
     }
 
     /**
+     * T-1303: Schedule an auction for a future start time.
+     * Transitions draft → scheduled; cron will activate it when starts_at arrives.
+     *
+     * @throws \RuntimeException
+     */
+    public function schedule(Auction $auction, \DateTimeInterface $startsAt): Auction
+    {
+        if ($this->statusValue($auction) !== AuctionStatus::Draft->value) {
+            throw new \RuntimeException('Only draft auctions can be scheduled.');
+        }
+
+        if ($startsAt <= now()) {
+            throw new \RuntimeException('starts_at must be in the future.');
+        }
+
+        $endsAt = (clone $startsAt)->modify('+' . ($auction->duration_days ?? 7) . ' days');
+
+        $auction->update([
+            'status'    => AuctionStatus::Scheduled->value,
+            'starts_at' => $startsAt,
+            'ends_at'   => $endsAt,
+        ]);
+
+        return $auction->fresh();
+    }
+
+    /**
      * Cancel an auction — only allowed when no bids have been placed.
      *
      * @throws \RuntimeException when the auction already has bids

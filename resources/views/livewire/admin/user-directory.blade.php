@@ -2,7 +2,7 @@
     <x-card class="space-y-4">
         <div class="grid gap-4 md:grid-cols-4">
             <x-input wire:model.live.debounce.300ms="search" name="search" label="Pretraga" placeholder="Ime ili email" />
-            <x-select wire:model.live="role" name="role" label="Rola" :options="['' => 'Sve role', 'buyer' => 'Buyer', 'seller' => 'Seller', 'moderator' => 'Moderator']" />
+            <x-select wire:model.live="role" name="role" label="Rola" :options="['' => 'Sve role', 'buyer' => 'Buyer', 'seller' => 'Seller', 'verified seller' => 'Verified Seller', 'moderator' => 'Moderator', 'super admin' => 'Super Admin']" />
             <x-select wire:model.live="kyc" name="kyc" label="KYC status" :options="['' => 'Svi nivoi', '1' => 'Nivo 1', '2' => 'Nivo 2', '3' => 'Nivo 3']" />
             <x-select wire:model.live="tier" name="tier" label="Tier" :options="['' => 'Svi tieri', 'free' => 'Free', 'premium' => 'Premium', 'storefront' => 'Storefront']" />
         </div>
@@ -22,7 +22,7 @@
                     <td class="px-4 py-3">
                         <div class="flex flex-wrap gap-2">
                             <x-button variant="ghost" :href="route('admin.users.show', ['user' => $user['id']])">Pregled</x-button>
-                            <x-button variant="secondary" wire:click="moderate({{ $user['id'] }}, 'change-role')">Rola</x-button>
+                            <x-button variant="secondary" wire:click="moderate({{ $user['id'] }}, 'toggle-seller-access')">Seller pristup</x-button>
                             <x-button variant="danger" wire:click="moderate({{ $user['id'] }}, 'ban')">Ban / Unban</x-button>
                         </div>
                     </td>

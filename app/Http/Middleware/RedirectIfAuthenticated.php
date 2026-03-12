@@ -25,11 +25,11 @@ class RedirectIfAuthenticated
                 // Redirect based on user role
                 $user = Auth::guard($guard)->user();
 
-                if ($user->hasRole('admin') || $user->hasRole('moderator')) {
+                if ($user->hasAnyRole(['admin', 'super_admin', 'moderator'])) {
                     return redirect()->route('admin.dashboard');
                 }
 
-                if ($user->hasRole('seller') || $user->hasRole('verified_seller')) {
+                if ($user->hasAnyRole(['seller', 'verified_seller'])) {
                     return redirect()->route('seller.dashboard');
                 }
 

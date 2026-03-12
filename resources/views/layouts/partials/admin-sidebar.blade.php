@@ -6,6 +6,9 @@
         <a href="{{ route('admin.users.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Korisnici</a>
         <a href="{{ route('admin.categories.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Kategorije</a>
         <a href="{{ route('admin.disputes.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Sporovi</a>
+        <a href="{{ route('admin.content.pages.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Statične stranice</a>
+        <a href="{{ route('admin.content.news.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Vijesti</a>
+        <a href="{{ route('admin.activity.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Audit log</a>
         <a href="{{ route('admin.statistics') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Statistike</a>
     </nav>
 </aside>
