@@ -16,6 +16,8 @@ uses(
     Tests\TestCase::class,
 )->in('Unit');
 
+class_alias(\App\Models\WalletTransaction::class, 'WalletTransaction');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

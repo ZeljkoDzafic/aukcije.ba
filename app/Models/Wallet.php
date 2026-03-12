@@ -26,8 +26,8 @@ class Wallet extends Model
     ];
 
     protected $casts = [
-        'balance' => 'decimal:2',
-        'escrow_balance' => 'decimal:2',
+        'balance' => 'float',
+        'escrow_balance' => 'float',
         'frozen' => 'boolean',
         'frozen_at' => 'datetime',
     ];

@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Route;
 
 class DisputeNotification extends Notification implements ShouldQueue
 {
@@ -46,7 +47,12 @@ class DisputeNotification extends Notification implements ShouldQueue
             ->line($this->getMessageBody());
 
         if ($this->type === self::TYPE_OPENED || $this->type === self::TYPE_ESCALATED) {
-            $mail->action('Pogledaj spor', route('disputes.show', $this->dispute));
+            $mail->action(
+                'Pogledaj spor',
+                Route::has('disputes.show')
+                    ? route('disputes.show', $this->dispute)
+                    : url("/disputes/{$this->dispute->id}")
+            );
         }
 
         return $mail->salutation('Tim Aukcije.ba');
@@ -69,14 +75,13 @@ class DisputeNotification extends Notification implements ShouldQueue
 
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return (new BroadcastMessage)
-            ->content($this->getMessageBody())
-            ->level($this->getLevel())
-            ->data([
-                'dispute_id' => $this->dispute->id,
-                'order_id' => $this->dispute->order->id,
-                'type' => $this->type,
-            ]);
+        return new BroadcastMessage([
+            'message' => $this->getMessageBody(),
+            'level' => $this->getLevel(),
+            'dispute_id' => $this->dispute->id,
+            'order_id' => $this->dispute->order->id,
+            'type' => $this->type,
+        ]);
     }
 
     protected function getLevel(): string

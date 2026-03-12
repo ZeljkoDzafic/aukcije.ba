@@ -22,7 +22,9 @@ class Order extends Model
         'buyer_id',
         'seller_id',
         'status',
+        'amount',
         'total_amount',
+        'commission',
         'commission_amount',
         'seller_payout',
         'payment_status',
@@ -42,10 +44,12 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
-        'commission_amount' => 'decimal:2',
-        'seller_payout' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
+        'amount' => 'float',
+        'total_amount' => 'float',
+        'commission' => 'float',
+        'commission_amount' => 'float',
+        'seller_payout' => 'float',
+        'shipping_cost' => 'float',
         'shipping_address' => 'array',
         'paid_at' => 'datetime',
         'payment_deadline_at' => 'datetime',
@@ -108,6 +112,16 @@ class Order extends Model
             'disputed' => ['label' => 'Spor', 'color' => 'danger'],
             default => ['label' => $this->status, 'color' => 'gray'],
         };
+    }
+
+    public function getAmountAttribute(): float
+    {
+        return (float) ($this->attributes['amount'] ?? $this->attributes['total_amount'] ?? 0);
+    }
+
+    public function getCommissionAttribute(): float
+    {
+        return (float) ($this->attributes['commission'] ?? $this->attributes['commission_amount'] ?? 0);
     }
 
     /**

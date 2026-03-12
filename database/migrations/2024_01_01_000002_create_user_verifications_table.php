@@ -20,7 +20,7 @@ return new class extends Migration
             $table->uuid('reviewer_id')->nullable();
             $table->foreign('reviewer_id')->references('id')->on('users')->onDelete('set null');
             $table->text('notes')->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
         });
 
         if (DB::getDriverName() !== 'sqlite') {

@@ -44,8 +44,8 @@ class WalletTransaction extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'balance_after' => 'decimal:2',
+        'amount' => 'float',
+        'balance_after' => 'float',
         'metadata' => 'array',
         'created_at' => 'datetime',
     ];

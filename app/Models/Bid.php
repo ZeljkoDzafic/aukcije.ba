@@ -34,8 +34,8 @@ class Bid extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'max_proxy_amount' => 'decimal:2',
+        'amount' => 'float',
+        'max_proxy_amount' => 'float',
         'is_winning' => 'boolean',
         'is_proxy' => 'boolean',
         'is_auto' => 'boolean',
@@ -95,5 +95,14 @@ class Bid extends Model
     public function scopeAuto($query)
     {
         return $query->where('is_auto', true);
+    }
+
+    public function getIsWinningAttribute($value): bool
+    {
+        if (! $this->exists || ! $this->id) {
+            return (bool) $value;
+        }
+
+        return (bool) static::query()->whereKey($this->id)->value('is_winning');
     }
 }

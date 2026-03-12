@@ -68,8 +68,9 @@ class EscrowService
         DB::transaction(function () use ($order, $buyerWallet, $total) {
             $sellerWallet = $this->walletService->getWallet($order->seller);
 
-            $commission = (float) ($order->commission_amount ?? $order->commission ?? ($total * $order->seller->getCommissionRate()));
-            $sellerNet  = $total - $commission;
+            $commissionRate = (float) $order->seller->getCommissionRate();
+            $commission = round($total * $commissionRate, 2);
+            $sellerNet  = round($total - $commission, 2);
 
             // Release from escrow
             $buyerWallet->decrement('escrow_balance', $total);

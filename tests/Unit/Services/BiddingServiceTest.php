@@ -361,7 +361,7 @@ describe('BiddingService::antiSniping', function () {
         $this->biddingService->placeBid($auction, $user, 105);
 
         expect($auction->fresh()->ends_at)->toBeGreaterThan($originalEndAt);
-        expect($auction->fresh()->ends_at->diffInMinutes($originalEndAt))->toBe(3);
+        expect((int) $auction->fresh()->ends_at->diffInMinutes($originalEndAt))->toBe(3);
     });
 
     it('does not extend auction when bid before sniping window', function () {
@@ -391,13 +391,13 @@ describe('BiddingService::antiSniping', function () {
 
         // First extension
         $this->biddingService->placeBid($auction, $user1, 105);
-        expect($auction->fresh()->ends_at->diffInMinutes($originalEndAt))->toBe(3);
+        expect((int) $auction->fresh()->ends_at->diffInMinutes($originalEndAt))->toBe(3);
 
         // Second extension (simulate time passing)
         $auction->ends_at = now()->addMinutes(1);
         $auction->save();
         $this->biddingService->placeBid($auction, $user2, 110);
-        expect($auction->fresh()->ends_at->diffInMinutes($originalEndAt))->toBe(6);
+        expect((int) $auction->fresh()->ends_at->diffInMinutes($originalEndAt))->toBe(6);
     });
 
     it('does not extend when auto_extension is disabled', function () {

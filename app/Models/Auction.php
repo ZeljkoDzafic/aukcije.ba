@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AuctionStatus;
 use App\Enums\AuctionType;
+use App\Support\TestingCarbon;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -56,6 +57,7 @@ class Auction extends Model
         'original_end_at',
         'started_at',
         'ended_at',
+        'cancelled_at',
         'auto_extension',
         'extension_minutes',
         'bids_count',
@@ -76,16 +78,17 @@ class Auction extends Model
      * The attributes that should be cast.
      */
     protected $casts = [
-        'start_price' => 'decimal:2',
-        'current_price' => 'decimal:2',
-        'buy_now_price' => 'decimal:2',
-        'reserve_price' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
+        'start_price' => 'float',
+        'current_price' => 'float',
+        'buy_now_price' => 'float',
+        'reserve_price' => 'float',
+        'shipping_cost' => 'float',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'original_end_at' => 'datetime',
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'last_bid_at' => 'datetime',
         'featured_until' => 'datetime',
         'auto_extension' => 'boolean',
@@ -361,5 +364,10 @@ class Auction extends Model
             'seller_id' => $this->seller_id,
             'is_featured' => $this->is_featured,
         ];
+    }
+
+    protected function asDateTime($value): \Illuminate\Support\Carbon
+    {
+        return TestingCarbon::instance(parent::asDateTime($value));
     }
 }

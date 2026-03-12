@@ -15,8 +15,8 @@ class WalletFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'balance' => fake()->randomFloat(2, 0, 1000),
-            'escrow_balance' => fake()->randomFloat(2, 0, 500),
+            'balance' => 0,
+            'escrow_balance' => 0,
             'frozen' => false,
             'frozen_at' => null,
             'frozen_reason' => null,
@@ -27,6 +27,7 @@ class WalletFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'balance' => $balance,
+            'escrow_balance' => 0,
         ]);
     }
 

@@ -94,7 +94,7 @@ class AuctionService
      */
     public function endAuction(Auction $auction): void
     {
-        if ($auction->status !== AuctionStatus::Active->value) {
+        if ($this->statusValue($auction) !== AuctionStatus::Active->value) {
             return;
         }
 
@@ -213,6 +213,13 @@ class AuctionService
             'cancelled' => [],
         ]);
 
-        return in_array($newStatus, $transitions[$auction->status] ?? []);
+        return in_array($newStatus, $transitions[$this->statusValue($auction)] ?? [], true);
+    }
+
+    protected function statusValue(Auction $auction): string
+    {
+        return $auction->status instanceof AuctionStatus
+            ? $auction->status->value
+            : (string) $auction->status;
     }
 }

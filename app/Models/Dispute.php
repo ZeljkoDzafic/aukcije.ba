@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,16 +10,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Dispute extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
+
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'order_id',
         'opened_by_id',
+        'opened_by',
         'reason',
         'description',
         'status',
         'resolution',
         'resolved_by_id',
+        'resolved_by',
         'seller_response',
         'evidence',
         'created_at',

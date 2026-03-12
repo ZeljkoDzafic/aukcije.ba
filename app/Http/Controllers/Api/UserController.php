@@ -10,6 +10,25 @@ use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
+    protected function walletPayload($wallet): ?array
+    {
+        if (! $wallet) {
+            return null;
+        }
+
+        return [
+            'id' => $wallet->id,
+            'user_id' => $wallet->user_id,
+            'balance' => number_format((float) $wallet->balance, 2, '.', ''),
+            'escrow_balance' => number_format((float) $wallet->escrow_balance, 2, '.', ''),
+            'frozen' => (bool) $wallet->frozen,
+            'frozen_at' => $wallet->frozen_at,
+            'frozen_reason' => $wallet->frozen_reason,
+            'created_at' => $wallet->created_at,
+            'updated_at' => $wallet->updated_at,
+        ];
+    }
+
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user()->load('profile', 'wallet');
@@ -19,7 +38,7 @@ class UserController extends Controller
             'data' => [
                 'user' => $user,
                 'profile' => $user->profile,
-                'wallet' => $user->wallet,
+                'wallet' => $this->walletPayload($user->wallet),
             ],
         ]);
     }
@@ -61,7 +80,7 @@ class UserController extends Controller
             'data' => [
                 'user' => $user,
                 'profile' => $user->profile,
-                'wallet' => $user->wallet,
+                'wallet' => $this->walletPayload($user->wallet),
             ],
         ]);
     }

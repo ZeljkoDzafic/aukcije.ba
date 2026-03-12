@@ -35,62 +35,67 @@ class BiddingService
      * @throws BidTooLowException
      */
     public function placeBid(
+        User|Auction $user,
+        Auction|User $auction,
+        float $amount,
+        bool $isProxy = false,
+        ?float $maxProxyAmount = null,
+    ): Bid {
+        if ($user instanceof Auction && $auction instanceof User) {
+            [$user, $auction] = [$auction, $user];
+        }
+
+        $lock = Cache::lock(
+            "auction_bid:{$auction->id}",
+            config('auction.lock_timeout_seconds', 10),
+        );
+
+        return $lock->block(5, fn () => $this->placeBidWithinLock($user, $auction, $amount, $isProxy, $maxProxyAmount));
+    }
+
+    protected function placeBidWithinLock(
         User $user,
         Auction $auction,
         float $amount,
         bool $isProxy = false,
         ?float $maxProxyAmount = null,
     ): Bid {
-        $lock = Cache::lock(
-            "auction_bid:{$auction->id}",
-            config('auction.lock_timeout_seconds', 10),
-        );
+        $auction->refresh();
 
-        return $lock->block(5, function () use ($user, $auction, $amount, $isProxy, $maxProxyAmount) {
-            // Refresh to get latest state inside the lock
-            $auction->refresh();
+        $this->validateBid($user, $auction, $amount);
 
-            $this->validateBid($user, $auction, $amount);
+        return DB::transaction(function () use ($user, $auction, $amount, $isProxy, $maxProxyAmount) {
+            $auction->bids()->where('is_winning', true)->update(['is_winning' => false]);
 
-            return DB::transaction(function () use ($user, $auction, $amount, $isProxy, $maxProxyAmount) {
-                // Mark previous winning bid as not winning
-                $auction->bids()->where('is_winning', true)->update(['is_winning' => false]);
+            $bid = Bid::create([
+                'auction_id' => $auction->id,
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'is_proxy' => $isProxy,
+                'is_winning' => true,
+            ]);
 
-                // Create the bid record
-                $bid = Bid::create([
-                    'auction_id' => $auction->id,
-                    'user_id'    => $user->id,
-                    'amount'     => $amount,
-                    'is_proxy'   => $isProxy,
-                    'is_winning' => true,
-                ]);
+            if ($isProxy && $maxProxyAmount !== null) {
+                ProxyBid::updateOrCreate(
+                    ['auction_id' => $auction->id, 'user_id' => $user->id],
+                    ['max_amount' => $maxProxyAmount, 'is_active' => true],
+                );
+            }
 
-                // Create or update the proxy bid record when applicable
-                if ($isProxy && $maxProxyAmount !== null) {
-                    ProxyBid::updateOrCreate(
-                        ['auction_id' => $auction->id, 'user_id' => $user->id],
-                        ['max_amount' => $maxProxyAmount, 'is_active' => true],
-                    );
-                }
+            $auction->update([
+                'current_price' => $amount,
+                'bids_count' => $auction->bids_count + 1,
+                'last_bid_at' => now(),
+                'winner_id' => $user->id,
+            ]);
 
-                // Update auction counters and current price
-                $auction->update([
-                    'current_price' => $amount,
-                    'bids_count'    => $auction->bids_count + 1,
-                    'last_bid_at'   => now(),
-                    'winner_id'     => $user->id,
-                ]);
+            $this->checkAntiSniping($auction, $bid);
+            $this->processProxyBids($auction, $bid);
 
-                // Anti-sniping check
-                $this->checkAntiSniping($auction, $bid);
+            $freshBid = $bid->fresh();
+            BidPlaced::dispatch($auction->fresh(), $freshBid);
 
-                // Compete against existing proxy bids
-                $this->processProxyBids($auction, $bid);
-
-                BidPlaced::dispatch($auction->fresh(), $bid);
-
-                return $bid;
-            });
+            return $freshBid;
         });
     }
 
@@ -103,10 +108,19 @@ class BiddingService
      */
     public function validateBid(User $user, Auction $auction, float $amount): void
     {
-        if (
-            $auction->status !== AuctionStatus::Active->value
-            || now()->gt($auction->ends_at)
-        ) {
+        if ($user->is_banned) {
+            throw new \RuntimeException('User is banned');
+        }
+
+        if (! $user->email_verified_at) {
+            throw new \RuntimeException('User email is not verified');
+        }
+
+        $status = $auction->status instanceof AuctionStatus
+            ? $auction->status->value
+            : (string) $auction->status;
+
+        if ($status !== AuctionStatus::Active->value || now()->gt($auction->ends_at)) {
             throw new AuctionNotActiveException('Aukcija nije aktivna.');
         }
 
@@ -118,6 +132,68 @@ class BiddingService
         if ($amount < $minimum) {
             throw new BidTooLowException($minimum, $amount);
         }
+    }
+
+    public function placeProxyBid(Auction $auction, User $user, float $maxAmount): ProxyBid
+    {
+        $this->validateBid($user, $auction, max($auction->minimum_bid, $auction->current_price + 0.01));
+
+        $proxyBid = ProxyBid::updateOrCreate(
+            ['auction_id' => $auction->id, 'user_id' => $user->id],
+            ['max_amount' => $maxAmount, 'is_active' => true],
+        );
+
+        $activeProxies = ProxyBid::query()
+            ->where('auction_id', $auction->id)
+            ->where('is_active', true)
+            ->orderByDesc('max_amount')
+            ->get();
+
+        if ($activeProxies->count() >= 2) {
+            $highest = $activeProxies[0];
+            $secondHighest = $activeProxies[1];
+            $increment = $this->incrementService->getIncrement((float) $auction->current_price);
+            $targetAmount = min((float) $highest->max_amount, (float) $secondHighest->max_amount + $increment);
+
+            if ((float) $auction->current_price < $targetAmount) {
+                $this->placeBid($highest->user, $auction, $targetAmount, true, (float) $highest->max_amount);
+            }
+        }
+
+        return $proxyBid->fresh();
+    }
+
+    public function buyNow(Auction $auction, User $user): array
+    {
+        if (! $auction->buy_now_price) {
+            return ['success' => false, 'error' => 'Auction does not support buy now'];
+        }
+
+        if ($auction->seller_id === $user->id) {
+            return ['success' => false, 'error' => 'Cannot buy your own auction'];
+        }
+
+        $status = $auction->status instanceof AuctionStatus
+            ? $auction->status->value
+            : (string) $auction->status;
+
+        if ($status !== AuctionStatus::Active->value || now()->gt($auction->ends_at)) {
+            return ['success' => false, 'error' => 'Auction is not active'];
+        }
+
+        $auction->update([
+            'current_price' => $auction->buy_now_price,
+            'winner_id' => $user->id,
+            'status' => AuctionStatus::Sold->value,
+            'ended_at' => now(),
+        ]);
+
+        $order = (new AuctionService($this))->createOrder($auction->fresh(), $user);
+
+        return [
+            'success' => true,
+            'order_id' => $order->id,
+        ];
     }
 
     /**
@@ -171,7 +247,7 @@ class BiddingService
                 }
 
                 // Auto-place on behalf of the current winner
-                $newBid = $this->placeBid(
+                $newBid = $this->placeBidWithinLock(
                     $winnerProxy->user,
                     $auction,
                     $counterAmount,
@@ -187,7 +263,7 @@ class BiddingService
                     $auction->current_price + $increment,
                 );
 
-                $newBid = $this->placeBid(
+                $newBid = $this->placeBidWithinLock(
                     $competitorProxy->user,
                     $auction,
                     $competitorAmount,
@@ -215,20 +291,26 @@ class BiddingService
         }
 
         $snipingWindow = config('auction.sniping_window', 120); // seconds
+        $currentEndsAt = $auction->ends_at->copy();
 
-        if ($bid->created_at >= $auction->ends_at->subSeconds($snipingWindow)) {
-            $extensionMinutes = config('auction.extension_minutes', 3);
-            $newEndsAt        = $auction->ends_at->addMinutes($extensionMinutes);
+        if ($bid->created_at >= $currentEndsAt->copy()->subSeconds($snipingWindow)) {
+            $extensionMinutes = (int) ($auction->extension_minutes ?: config('auction.extension_minutes', 3));
+            $baseEndAt = $auction->original_end_at?->copy() ?? $currentEndsAt->copy();
+            $extensionCount = $auction->extensions()->count() + 1;
+            $newEndsAt = $baseEndAt->copy()->addMinutes($extensionMinutes * $extensionCount);
 
             AuctionExtension::create([
                 'auction_id'          => $auction->id,
                 'triggered_by_bid_id' => $bid->id,
-                'old_end_at'          => $auction->ends_at,
+                'old_end_at'          => $currentEndsAt,
                 'new_end_at'          => $newEndsAt,
                 'extension_minutes'   => $extensionMinutes,
             ]);
 
-            $auction->update(['ends_at' => $newEndsAt]);
+            $auction->update([
+                'original_end_at' => $auction->original_end_at ?? $currentEndsAt,
+                'ends_at' => $newEndsAt,
+            ]);
 
             AuctionExtended::dispatch($auction->fresh(), $newEndsAt);
         }

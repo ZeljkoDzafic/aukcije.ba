@@ -15,11 +15,14 @@ return new class extends Migration
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
             $table->uuid('rater_id')->nullable();
             $table->foreign('rater_id')->references('id')->on('users')->onDelete('set null');
+            $table->uuid('rated_id')->nullable();
+            $table->foreign('rated_id')->references('id')->on('users')->onDelete('set null');
             $table->uuid('rated_user_id')->nullable();
             $table->foreign('rated_user_id')->references('id')->on('users')->onDelete('set null');
             $table->integer('score');
             $table->text('comment')->nullable();
-            $table->string('type', 10);
+            $table->string('type', 10)->nullable();
+            $table->boolean('is_visible')->default(true);
             $table->timestamp('created_at')->useCurrent();
 
             $table->unique(['order_id', 'rater_id']);

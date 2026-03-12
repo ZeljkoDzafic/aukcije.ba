@@ -18,11 +18,11 @@ class DisputeService
     {
         return DB::transaction(function () use ($order, $opener, $reason, $description) {
             $dispute = Dispute::create([
-                'order_id'    => $order->id,
-                'opened_by'   => $opener->id,
-                'reason'      => $reason,
+                'order_id' => $order->id,
+                'opened_by_id' => $opener->id,
+                'reason' => $reason,
                 'description' => $description,
-                'status'      => 'open',
+                'status' => 'open',
             ]);
 
             $order->update(['status' => 'disputed']);
@@ -36,30 +36,31 @@ class DisputeService
         });
     }
 
-    public function addEvidence(Dispute $dispute, User $user, array $files): array
+    public function addEvidence(Dispute $dispute, User $user, array $files): bool
     {
         $paths = [];
         foreach ($files as $file) {
             if ($file instanceof UploadedFile) {
                 $paths[] = Storage::disk('s3')->put("disputes/{$dispute->id}", $file);
+            } elseif (is_string($file)) {
+                $paths[] = $file;
             }
         }
 
-        // Store paths in dispute metadata (extend if needed)
-        $existing = json_decode($dispute->resolution ?? '{}', true);
-        $existing['evidence'][$user->id][] = $paths;
-        $dispute->update(['resolution' => json_encode($existing)]);
+        $existing = $dispute->evidence ?? [];
+        $existing[$user->id] = array_values(array_merge($existing[$user->id] ?? [], $paths));
+        $dispute->update(['evidence' => $existing]);
 
-        return $paths;
+        return true;
     }
 
-    public function resolve(Dispute $dispute, string $resolution, User $resolver): Dispute
+    public function resolve(Dispute $dispute, string $resolution, User $resolver): bool
     {
         DB::transaction(function () use ($dispute, $resolution, $resolver) {
             $dispute->update([
-                'status'      => 'resolved',
-                'resolution'  => $resolution,
-                'resolved_by' => $resolver->id,
+                'status' => 'resolved',
+                'resolution' => $resolution,
+                'resolved_by_id' => $resolver->id,
                 'resolved_at' => now(),
             ]);
 
@@ -83,6 +84,23 @@ class DisputeService
             );
         });
 
-        return $dispute->fresh();
+        return true;
+    }
+
+    public function autoEscalate(): int
+    {
+        $disputes = Dispute::query()
+            ->where('status', 'open')
+            ->where('created_at', '<=', now()->subHours(48))
+            ->get();
+
+        foreach ($disputes as $dispute) {
+            $dispute->update([
+                'status' => 'in_review',
+                'escalated_at' => now(),
+            ]);
+        }
+
+        return $disputes->count();
     }
 }

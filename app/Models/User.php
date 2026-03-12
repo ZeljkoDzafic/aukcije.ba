@@ -315,7 +315,7 @@ class User extends Authenticatable
         }
 
         if ($this->hasRole('verified_seller')) {
-            return config('tiers.tiers.premium', ['name' => 'premium', 'auction_limit' => 20, 'commission_rate' => 8]);
+            return config('tiers.tiers.storefront', ['name' => 'storefront', 'auction_limit' => -1, 'commission_rate' => 3]);
         }
 
         if ($this->hasRole('seller')) {

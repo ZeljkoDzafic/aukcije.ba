@@ -21,13 +21,13 @@ class AuctionFactory extends Factory
             'category_id' => Category::factory(),
             'title' => fake()->sentence(4),
             'description' => fake()->paragraph(),
-            'start_price' => fake()->randomFloat(2, 10, 500),
-            'current_price' => fake()->randomFloat(2, 10, 500),
+            'start_price' => 100.00,
+            'current_price' => 100.00,
             'buy_now_price' => fake()->randomFloat(2, 100, 2000),
             'reserve_price' => null,
-            'type' => fake()->randomElement([AuctionType::Standard, AuctionType::BuyNow]),
+            'type' => fake()->randomElement([AuctionType::Standard->value, AuctionType::BuyNow->value]),
             'condition' => fake()->randomElement(['new', 'like_new', 'used']),
-            'status' => AuctionStatus::Draft,
+            'status' => AuctionStatus::Draft->value,
             'duration_days' => 7,
             'starts_at' => now(),
             'ends_at' => now()->addDays(7),
@@ -39,7 +39,7 @@ class AuctionFactory extends Factory
             'views_count' => 0,
             'watchers_count' => 0,
             'winner_id' => null,
-            'last_bid_at' => null,
+            'last_bid_at' => now()->subMinute(),
             'is_featured' => false,
             'featured_until' => null,
             'shipping_available' => true,
@@ -55,7 +55,7 @@ class AuctionFactory extends Factory
     public function active(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => AuctionStatus::Active,
+            'status' => AuctionStatus::Active->value,
             'ends_at' => now()->addDays(3),
             'started_at' => now()->subDays(4),
         ]);
@@ -64,7 +64,7 @@ class AuctionFactory extends Factory
     public function finished(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => AuctionStatus::Finished,
+            'status' => AuctionStatus::Finished->value,
             'ends_at' => now()->subDays(1),
             'ended_at' => now()->subDays(1),
         ]);
@@ -73,7 +73,7 @@ class AuctionFactory extends Factory
     public function sold(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => AuctionStatus::Sold,
+            'status' => AuctionStatus::Sold->value,
             'ends_at' => now()->subDays(1),
             'ended_at' => now()->subDays(1),
             'winner_id' => User::factory(),
@@ -83,15 +83,14 @@ class AuctionFactory extends Factory
     public function cancelled(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => AuctionStatus::Cancelled,
-            'cancelled_at' => now(),
+            'status' => AuctionStatus::Cancelled->value,
         ]);
     }
 
     public function draft(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => AuctionStatus::Draft,
+            'status' => AuctionStatus::Draft->value,
         ]);
     }
 

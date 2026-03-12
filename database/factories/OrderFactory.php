@@ -17,15 +17,20 @@ class OrderFactory extends Factory
         $buyer = User::factory()->buyer();
         $seller = User::factory()->seller();
         
+        $total = fake()->randomFloat(2, 50, 1000);
+        $commission = round($total * 0.08, 2);
+
         return [
             'auction_id' => Auction::factory(),
             'buyer_id' => $buyer,
             'seller_id' => $seller,
             'status' => 'pending_payment',
             'payment_status' => 'pending',
-            'total_amount' => fake()->randomFloat(2, 50, 1000),
-            'commission_amount' => 0,
-            'seller_payout' => 0,
+            'amount' => $total,
+            'total_amount' => $total,
+            'commission' => $commission,
+            'commission_amount' => $commission,
+            'seller_payout' => round($total - $commission, 2),
             'payment_gateway' => null,
             'paid_at' => null,
             'payment_deadline_at' => now()->addDays(3),

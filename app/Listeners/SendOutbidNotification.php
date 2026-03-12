@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\BidPlaced;
 use App\Notifications\OutbidNotification;
+use Illuminate\Support\Facades\Schema;
 
 class SendOutbidNotification
 {
@@ -15,7 +16,7 @@ class SendOutbidNotification
             ->with('user')
             ->first();
 
-        if ($previousLeader && $previousLeader->user) {
+        if ($previousLeader && $previousLeader->user && Schema::hasTable('notifications')) {
             $previousLeader->user->notify(
                 new OutbidNotification($event->auction, $event->bid->amount)
             );

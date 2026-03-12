@@ -23,7 +23,7 @@ class ProxyBid extends Model
     ];
 
     protected $casts = [
-        'max_amount' => 'decimal:2',
+        'max_amount' => 'float',
         'is_active' => 'boolean',
     ];
 

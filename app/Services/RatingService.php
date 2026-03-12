@@ -8,38 +8,36 @@ class RatingService
 {
     public function canRate(Order $order, User $rater): bool
     {
-        if ($order->status !== 'completed') return false;
+        if ($order->status !== 'completed') {
+            return false;
+        }
 
         return !UserRating::where('order_id', $order->id)
             ->where('rater_id', $rater->id)
             ->exists();
     }
 
-    public function rateUser(Order $order, User $rater, int $score, ?string $comment = null): UserRating
+    public function rateUser(Order $order, User $rater, int $score, ?string $comment = null): UserRating|false
     {
-        if (!$this->canRate($order, $rater)) {
-            throw new \RuntimeException('Ne možete ocjenjivati ovu narudžbu.');
+        if (! $this->canRate($order, $rater)) {
+            return false;
         }
 
-        // Determine who is being rated and the type
         if ($rater->id === $order->buyer_id) {
             $ratedUser = $order->seller;
-            $type = 'seller';
         } else {
             $ratedUser = $order->buyer;
-            $type = 'buyer';
         }
 
         $rating = UserRating::create([
-            'order_id'       => $order->id,
-            'rater_id'       => $rater->id,
-            'rated_user_id'  => $ratedUser->id,
-            'score'          => $score,
-            'comment'        => $comment,
-            'type'           => $type,
+            'order_id' => $order->id,
+            'rater_id' => $rater->id,
+            'rated_id' => $ratedUser->id,
+            'score' => $score,
+            'comment' => $comment,
+            'is_visible' => true,
         ]);
 
-        // Invalidate trust score cache
         Cache::forget("trust_score:{$ratedUser->id}");
 
         return $rating;
@@ -52,27 +50,22 @@ class RatingService
     public function calculateTrustScore(User $user): float
     {
         return Cache::remember("trust_score:{$user->id}", 3600, function () use ($user) {
-            $ratings = UserRating::where('rated_user_id', $user->id)->get();
+            $ratings = UserRating::where('rated_id', $user->id)->get();
 
-            if ($ratings->isEmpty()) return 0.0;
+            if ($ratings->isEmpty()) {
+                return 0.0;
+            }
 
-            $avgRating = $ratings->avg('score');
-
-            // Transaction bonus: 0-5 scale based on completed orders
+            $avgRating = (float) $ratings->avg('score');
             $completedCount = \App\Models\Order::where(function ($q) use ($user) {
                 $q->where('buyer_id', $user->id)->orWhere('seller_id', $user->id);
             })->where('status', 'completed')->count();
 
-            $transactionBonus = min(5.0, $completedCount / 10);
-
-            // Verification bonus: based on KYC level
             $kycLevel = app(KycService::class)->getVerificationLevel($user);
-            $verificationBonus = ($kycLevel / 3) * 5;
+            $transactionBonus = min(0.5, $completedCount * 0.05);
+            $verificationBonus = min(0.5, $kycLevel * 0.15);
 
-            return round(
-                ($avgRating * 0.6) + ($transactionBonus * 0.3) + ($verificationBonus * 0.1),
-                2
-            );
+            return round(min(5.0, ($avgRating * 0.9) + $transactionBonus + $verificationBonus), 2);
         });
     }
 }
