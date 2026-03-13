@@ -69,7 +69,7 @@ return [
             'postal_code' => env('EUROEXPRESS_SENDER_POSTAL', '71000'),
             'country' => 'BA',
             'phone' => env('EUROEXPRESS_SENDER_PHONE', '+387 33 000 000'),
-            'email' => env('EUROEXPRESS_SENDER_EMAIL', 'info@aukcije.ba'),
+            'email' => env('EUROEXPRESS_SENDER_EMAIL', 'info@mojeaukcije.com'),
         ],
 
         // Services offered
@@ -148,7 +148,7 @@ return [
             'postal_code' => env('POSTEXPRESS_SENDER_POSTAL', '71000'),
             'country' => 'BA',
             'phone' => env('POSTEXPRESS_SENDER_PHONE', '+387 33 000 000'),
-            'email' => env('POSTEXPRESS_SENDER_EMAIL', 'info@aukcije.ba'),
+            'email' => env('POSTEXPRESS_SENDER_EMAIL', 'info@mojeaukcije.com'),
             'oib' => env('POSTEXPRESS_SENDER_OIB', ''), // Croatian tax ID
         ],
 
@@ -229,7 +229,7 @@ return [
             'postal_code' => env('BHPOSTA_SENDER_POSTAL', '71000'),
             'country' => 'BA',
             'phone' => env('BHPOSTA_SENDER_PHONE', '+387 33 000 000'),
-            'email' => env('BHPOSTA_SENDER_EMAIL', 'info@aukcije.ba'),
+            'email' => env('BHPOSTA_SENDER_EMAIL', 'info@mojeaukcije.com'),
         ],
 
         // Services offered

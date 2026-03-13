@@ -94,7 +94,7 @@ return [
 
     'horizon' => [
         'domains' => [
-            'production' => ['aukcije.ba', 'www.aukcije.ba'],
+            'production' => ['mojeaukcije.com', 'www.mojeaukcije.com'],
             'local' => ['localhost', 'aukcije.test'],
         ],
         

@@ -84,8 +84,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'noreply@aukcije.ba'),
-        'name' => env('MAIL_FROM_NAME', 'Aukcije.ba'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@mojeaukcije.com'),
+        'name' => env('MAIL_FROM_NAME', 'mojeaukcije.com'),
     ],
 
     /*

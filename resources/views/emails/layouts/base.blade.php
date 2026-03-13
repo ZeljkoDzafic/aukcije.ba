@@ -191,7 +191,7 @@
         <div class="email-card">
             {{-- Header with logo --}}
             <div class="email-header">
-                <a href="{{ config('app.url') }}" class="logo">🔨 Aukcije.ba</a>
+                <a href="{{ config('app.url') }}" class="logo">🔨 mojeaukcije.com</a>
             </div>
             
             {{-- Email content --}}
@@ -205,7 +205,7 @@
                     <a href="{{ config('app.url') }}/twitter">Twitter</a>
                 </div>
                 <p>
-                    © {{ date('Y') }} Aukcije.ba. Sva prava zadržana.<br>
+                    © {{ date('Y') }} mojeaukcije.com. Sva prava zadržana.<br>
                     Zmaja od Bosne 1, 71000 Sarajevo, Bosna i Hercegovina
                 </p>
                 <p>

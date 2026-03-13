@@ -25,7 +25,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # --------------------------------
@@ -55,11 +54,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Normalize image name
+        id: image
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
           tags: |
             type=ref,event=branch
             type=sha,prefix=
@@ -72,9 +75,9 @@ jobs:
           context: ./docker/php
           file: ./docker/php/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:buildcache,mode=max
+          tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}-php:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}-php:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}-php:buildcache,mode=max
 
       - name: Build and push Nginx image
         uses: docker/build-push-action@v5
@@ -82,8 +85,8 @@ jobs:
           context: ./docker/nginx
           file: ./docker/nginx/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:buildcache
+          tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}-nginx:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}-nginx:buildcache
 
   # --------------------------------
   # Deploy to Production
@@ -94,7 +97,7 @@ jobs:
     needs: build
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-      url: https://aukcije.ba
+      url: https://mojeaukcije.com
 
     steps:
       - name: Checkout code
