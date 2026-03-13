@@ -9,6 +9,8 @@
     'alt' => '',
     'width' => 800,
     'height' => 600,
+    'srcset' => null,
+    'sizes' => null,
     'class' => '',
 ])
 
@@ -27,6 +29,8 @@
     {{-- Actual Image --}}
     <img
         src="{{ $src }}"
+        @if ($srcset) srcset="{{ $srcset }}" @endif
+        @if ($sizes) sizes="{{ $sizes }}" @endif
         alt="{{ $alt }}"
         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
         :class="loaded ? 'opacity-100' : 'opacity-0'"

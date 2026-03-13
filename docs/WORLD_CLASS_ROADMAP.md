@@ -19,7 +19,7 @@
 | Frontend UI | ✅ Jak i operativan | Buyer/seller/admin command center, lazy homepage sekcije, PWA prompt i GDPR self-service su povezani kroz stvarne tokove |
 | Trust & Safety | 🟡 Jak backend, solidan UX finish | Reputation badge, 2FA settings i KYC self-service postoje; dublji backend enforcement i production TOTP hardening ostaju |
 | GDPR / Compliance | ✅ Self-service sloj aktivan | Banner, privacy settings, izvoz podataka i anonimizacija računa postoje i korisnički su dostupni |
-| Observability | 🟡 Dobar backend sloj | Prometheus/Grafana i SLO job postoje, ali runtime potvrda i operativni runbook drillovi ostaju važni |
+| Observability | 🟡 Dobar backend sloj | Prometheus/Grafana, SLO job i media optimization pipeline postoje; runtime potvrda i operativni runbook drillovi ostaju važni |
 | Seller Tools | ✅ Jak frontend sloj | Dashboard, readiness, analytics, template-i, bulk operacije i scheduled start postoje kao stvarni seller tokovi |
 | Admin Operations | ✅ Operativan | Inbox, bulk moderation, decision history, KYC pregled i analytics dashboard su povezani kroz admin tokove |
 

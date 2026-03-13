@@ -139,7 +139,9 @@ class AuctionSearch extends Component
                     'watchers'  => $auction->watchers_count,
                     'location'  => $auction->location_city ?? $auction->location ?? 'Nepoznato',
                     'time'      => $auction->time_remaining,
-                    'image_url' => $auction->primaryImage?->url,
+                    'image_url' => $auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->primaryImage?->url,
+                    'image_srcset' => $auction->primaryImage?->getSrcset(),
+                    'image_blurhash' => $auction->primaryImage?->blurhash,
                 ]),
             ]);
         }

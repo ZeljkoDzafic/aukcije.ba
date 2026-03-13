@@ -31,7 +31,7 @@
         @else
             <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 @foreach ($results as $auction)
-                    <x-auction-card :title="$auction['title']" :category="$auction['category']" :price="$auction['price']" :bids="$auction['bids']" :watchers="$auction['watchers']" :location="$auction['location']" :time="$auction['time']" :image-url="$auction['image_url'] ?? null" :href="route('auctions.show', ['auction' => $auction['id']])" />
+                    <x-auction-card :title="$auction['title']" :category="$auction['category']" :price="$auction['price']" :bids="$auction['bids']" :watchers="$auction['watchers']" :location="$auction['location']" :time="$auction['time']" :image-url="$auction['image_url'] ?? null" :srcset="$auction['image_srcset'] ?? null" :blurhash="$auction['image_blurhash'] ?? null" :href="route('auctions.show', ['auction' => $auction['id']])" />
                 @endforeach
             </div>
 

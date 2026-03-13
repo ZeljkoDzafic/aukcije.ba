@@ -57,7 +57,9 @@ class Watchlist extends Component
                         'location'  => $auction->location_city ?? $auction->location ?? 'Nepoznato',
                         'time'      => $auction->time_remaining,
                         'state'     => $auction->ends_at && $auction->ends_at->isPast() ? 'ended' : 'active',
-                        'image_url' => $auction->primaryImage?->url,
+                        'image_url' => $auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->primaryImage?->url,
+                        'image_srcset' => $auction->primaryImage?->getSrcset(),
+                        'image_blurhash' => $auction->primaryImage?->blurhash,
                         'badge'     => $auction->ends_at && $auction->ends_at->diffInHours(now(), false) <= 24 ? 'Uskoro završava' : 'Praćena aukcija',
                     ];
                 }),

@@ -1401,7 +1401,7 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 | T-1600 | HorizonQueueConfig | 🔵 Qwen | ✅ DONE | Queue config, Horizon runtime i deploy/restart tokovi su implementirani u config/docker/deploy sloju. |
 | T-1601 | SLOMonitoringJob | 🔵 Qwen | ✅ DONE | SLO monitoring job i Prometheus/Grafana wiring postoje u aplikacionom i docker observability sloju. |
 | T-1602 | QueryOptimizationAudit | 🟣 Claude | ✅ DONE | Telescope N+1 audit. Dodati eager loads gdje nedostaju. |
-| T-1603 | ImageOptimizationPipeline | 🔵 Qwen | 🟡 PARTIAL | Image optimization servis i Imgix-ready URL logika postoje, ali puni media pipeline još nije svuda uvezan. |
+| T-1603 | ImageOptimizationPipeline | 🔵 Qwen | ✅ DONE | Image optimization servis, optimized variants, blur placeholder i read-side prikaz sada su povezani kroz upload i listing flow. |
 
 ---
 
