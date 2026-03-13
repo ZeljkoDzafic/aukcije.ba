@@ -49,6 +49,24 @@
     {{-- Cookie Consent --}}
     <x-cookie-consent-banner />
 
+    <div
+        x-data="pwaInstallPrompt()"
+        x-show="deferredPrompt && !dismissed"
+        x-transition
+        class="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-xl backdrop-blur"
+        style="display: none;"
+    >
+        <div class="space-y-3">
+            <p class="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Aplikacija</p>
+            <h2 class="text-lg font-semibold text-slate-900">Instaliraj Aukcije.ba</h2>
+            <p class="text-sm text-slate-600">Dodaj platformu na početni ekran radi bržeg pristupa, push obavještenja i stabilnijeg mobilnog iskustva.</p>
+            <div class="flex gap-3">
+                <button type="button" class="btn-primary flex-1" @click="install">Instaliraj</button>
+                <button type="button" class="btn-secondary flex-1" @click="dismiss">Kasnije</button>
+            </div>
+        </div>
+    </div>
+
     {{-- Toast Notifications --}}
     @include('layouts.partials.toast')
 
@@ -58,12 +76,5 @@
     {{-- Vue Components --}}
     @vite(['resources/vue/app.js'])
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('/sw.js').catch(function () {});
-            });
-        }
-    </script>
 </body>
 </html>

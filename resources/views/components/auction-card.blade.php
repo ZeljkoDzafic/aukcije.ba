@@ -8,6 +8,7 @@
     'time' => '2d 04h',
     'href' => null,
     'imageUrl' => null,
+    'blurhash' => null,
     'badge' => 'Uskoro završava',
 ])
 
@@ -18,7 +19,7 @@
 
     <div class="auction-card-image">
         @if ($imageUrl)
-            <img src="{{ $imageUrl }}" alt="{{ $title }}" loading="lazy" />
+            <x-blurhash-placeholder :src="$imageUrl" :blurhash="$blurhash" :alt="$title" class="h-full w-full" />
         @else
             <div class="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-medium text-slate-500">Aukcija</div>
         @endif

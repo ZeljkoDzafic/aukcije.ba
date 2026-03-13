@@ -11,13 +11,13 @@ use Livewire\Livewire;
 
 it('renders admin user directory livewire component', function () {
     Livewire::test(UserDirectory::class)
-        ->set('search', 'amar')
-        ->assertSee('Amar Hadžić')
+        ->set('search', 'aleksa')
+        ->assertSee('Aleksa K.')
         ->call('toggleSelection', '1')
         ->set('bulkNote', 'Bulk pregled korisnika')
         ->assertSee('Bulk decision note')
         ->call('moderate', 1, 'ban')
-        ->assertSee("Akcija 'ban' pripremljena za korisnika Amar Hadžić.");
+        ->assertSee("Akcija 'ban' pripremljena za korisnika Aleksa K.");
 });
 
 it('renders admin auction moderation livewire component', function () {

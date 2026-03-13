@@ -8,6 +8,7 @@ use App\Models\Auction;
 use App\Models\AuctionImage;
 use App\Models\Category;
 use App\Services\AuctionService;
+use App\Services\ImageOptimizationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -66,6 +67,14 @@ class CreateAuctionWizard extends Component
 
     /** @var list<TemporaryUploadedFile> */
     public array $uploadedImages = [];
+
+    /**
+     * Keyed by the canonical URL stored in $imageUrls.
+     * Each entry: ['thumbnail'=>url, 'medium'=>url, 'large'=>url, 'original'=>url, 'blurhash'=>str, 'width'=>int, 'height'=>int]
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    public array $imageOptimizedData = [];
 
     public function mount(): void
     {
@@ -151,20 +160,38 @@ class CreateAuctionWizard extends Component
     public function updatedUploadedImages(): void
     {
         $this->validate([
-            'uploadedImages.*' => ['image', 'max:2048'],
+            'uploadedImages.*' => ['image', 'max:5120'],
         ]);
+
+        $optimizer = app(ImageOptimizationService::class);
 
         foreach ($this->uploadedImages as $file) {
             if (count($this->imageUrls) >= 10) {
                 break;
             }
 
-            if ($file instanceof TemporaryUploadedFile) {
+            if (! $file instanceof TemporaryUploadedFile) {
+                continue;
+            }
+
+            try {
+                // Optimise and store all size variants; get back URLs + blurhash + dimensions
+                $result   = $optimizer->optimizeAndStore($file, 'auction-images');
+                $canonical = $result['original'] ?? $result['medium'] ?? '';
+
+                if ($canonical !== '') {
+                    $this->imageUrls[]                     = $canonical;
+                    $this->imageOptimizedData[$canonical]  = $result;
+                }
+            } catch (\Throwable) {
+                // Fall back to raw upload on optimization failure
                 $disk = config('filesystems.default', 'public');
                 $path = $file->store('auction-images', $disk);
-                $this->imageUrls[] = $disk === 'public'
+                $url  = $disk === 'public'
                     ? '/storage/'.$path
                     : Storage::disk($disk)->url($path);
+
+                $this->imageUrls[] = $url;
             }
         }
 
@@ -282,11 +309,17 @@ class CreateAuctionWizard extends Component
         $auction->images()->delete();
 
         foreach ($this->imageUrls as $index => $url) {
+            $opt = $this->imageOptimizedData[$url] ?? [];
+
             AuctionImage::query()->create([
-                'auction_id' => $auction->id,
-                'url'        => $url,
-                'sort_order' => $index,
-                'is_primary' => $index === 0,
+                'auction_id'     => $auction->id,
+                'url'            => $url,
+                'sort_order'     => $index,
+                'is_primary'     => $index === 0,
+                'blurhash'       => $opt['blurhash'] ?? null,
+                'optimized_urls' => $opt !== [] ? array_intersect_key($opt, array_flip(['thumbnail', 'medium', 'large', 'original'])) : null,
+                'width'          => $opt['width'] ?? null,
+                'height'         => $opt['height'] ?? null,
             ]);
         }
     }

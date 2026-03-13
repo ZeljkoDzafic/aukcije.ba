@@ -1281,8 +1281,8 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
 | T-1150 | SellerReputationBadge | 🟢 Codex | ✅ DONE | Badge komponenta je uvezana na auction detail i javni profil prodavca, sa trust tooltip signalima. |
-| T-1151 | 2FA Enrollment UI | 🟢 Codex | 🟡 PARTIAL | UI view postoji, ali puni enrollment/settings flow još traži završno povezivanje. |
-| T-1152 | KYC Status Dashboard | 🟢 Codex | 🟡 PARTIAL | Status dashboard view postoji, ali puni upload/verifikacioni tok još nije zatvoren. |
+| T-1151 | 2FA Enrollment UI | 🟢 Codex | ✅ DONE | Sigurnosna settings stranica i Livewire 2FA enrollment flow su povezani kroz korisnički profil i self-service tok. |
+| T-1152 | KYC Status Dashboard | 🟢 Codex | ✅ DONE | Verifikaciona settings stranica i KYC status dashboard su povezani kroz profil sa CTA koracima za telefon i dokument. |
 
 ---
 
@@ -1304,7 +1304,7 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1250 | HomepageSections | 🟢 Codex | 🟡 PARTIAL | Homepage sada ima featured, ending soon i most watched blokove na stvarnim podacima, ali nije još prebačeno na lazy Livewire sekcije i new arrivals blok. |
+| T-1250 | HomepageSections | 🟢 Codex | ✅ DONE | Homepage listing sekcije su prebačene na lazy Livewire tok za featured, ending soon, new arrivals i most watched blokove. |
 | T-1251 | SavedSearchUI | 🟢 Codex | ✅ DONE | Spremanje pretrage, pregled, brisanje i toggle alerta su implementirani u korisničkom toku. |
 | T-1252 | SellerDirectory | 🟢 Codex | ✅ DONE | Javna stranica `/prodavci` sada ima profile, pretragu, filter po kategoriji i sortiranje. |
 | T-1253 | CategoryLandingPages | 🟢 Codex | ✅ DONE | Kategorijske stranice imaju hero sadržaj, podkategorije, listing i SEO copy. |
@@ -1332,10 +1332,10 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1350 | SellerAnalyticsDashboard | 🟢 Codex | 🟡 PARTIAL | Analytics UI view postoji, ali puni route/page integration i finalni chart flow još nisu zatvoreni. |
-| T-1351 | AuctionTemplateUI | 🟢 Codex | ⏳ TODO | Sačuvaj aukciju kao template. Kreiraj novu iz template-a. Livewire wizard. |
-| T-1352 | BulkOperationsUI | 🟢 Codex | ⏳ TODO | Seller checklist sa bulk publish/end/clone. Confirm modal. |
-| T-1353 | ScheduledStartPicker | 🟢 Codex | ⏳ TODO | DateTimePicker u CreateAuctionWizard koraku 3. |
+| T-1350 | SellerAnalyticsDashboard | 🟢 Codex | ✅ DONE | Seller analytics stranica je povezana kroz seller layout, period routing i chart prikaz za glavne metrike. |
+| T-1351 | AuctionTemplateUI | 🟢 Codex | ✅ DONE | Seller template stranica i Livewire manager podržavaju čuvanje template-a i kreiranje draft aukcije iz template-a. |
+| T-1352 | BulkOperationsUI | 🟢 Codex | ✅ DONE | Seller bulk operations stranica i Livewire komponenta podržavaju selekciju, objavu, završavanje i kloniranje aukcija. |
+| T-1353 | ScheduledStartPicker | 🟢 Codex | ✅ DONE | CreateAuctionWizard sada ima planirani početak i zakazani status u prodajnom toku. |
 
 ---
 
@@ -1356,13 +1356,13 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1450 | LiveBidFeedComponent | 🟢 Codex | ⏳ TODO | Vue komponenta: posljednjih 10 bidova real-time (Echo listener). Animirani feed. |
-| T-1451 | PWAManifest | 🟢 Codex | 🟡 PARTIAL | Manifest je dodat u layout i public root, ali service worker/install prompt još nisu zatvoreni. |
-| T-1452 | MobileOneTapBid | 🟢 Codex | ⏳ TODO | Quick bid dugme na mobilnom (minimum_bid). Haptic feedback. |
-| T-1453 | BlurhashPlaceholders | 🟢 Codex | 🟡 PARTIAL | Komponenta i image optimization osnovа postoje, ali listing još nije sistemski prebačen na blurhash render. |
+| T-1450 | LiveBidFeedComponent | 🟢 Codex | ✅ DONE | Bidding konzola sada prikazuje live feed događaja i ažurira ga kroz submit i realtime tokove. |
+| T-1451 | PWAManifest | 🟢 Codex | ✅ DONE | Manifest, service worker registracija, install prompt i osnovni offline cache sloj su implementirani. |
+| T-1452 | MobileOneTapBid | 🟢 Codex | ✅ DONE | Quick bid CTA za minimalnu ponudu je dodat u bidding konzolu. |
+| T-1453 | BlurhashPlaceholders | 🟢 Codex | 🟡 PARTIAL | Blur placeholder je sada uvezan u auction kartice, ali puni blurhash decode/media pipeline još traži završni polish. |
 | T-1454 | SimilarAuctionsSection | 🟢 Codex | ✅ DONE | Similar auctions sekcija je uvezana na auction detail. |
-| T-1455 | CookieConsentBanner | 🟢 Codex | 🟡 PARTIAL | Cookie consent banner postoji i uključen je u layout, ali puni consent/runtime governance sloj traži finalizaciju. |
-| T-1456 | GDPRSettingsUI | 🟢 Codex | 🟡 PARTIAL | GDPR settings stranica postoji i povezana je s profilom, ali izvozi/brisanje još nisu puni završeni korisnički tokovi. |
+| T-1455 | CookieConsentBanner | 🟢 Codex | ✅ DONE | Cookie consent banner sada ima kategorije, backend zapis i runtime consent čuvanje. |
+| T-1456 | GDPRSettingsUI | 🟢 Codex | ✅ DONE | GDPR settings stranica sada ima stvarni izvoz podataka, postavke privatnosti i zahtjev za anonimizaciju računa. |
 
 ---
 
@@ -1385,8 +1385,8 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
 | T-1550 | AdminBulkModerationUI | 🟢 Codex | ✅ DONE | Moderation queue ima checkbox selekciju, bulk akcije, note i decision history. |
-| T-1551 | KYCBackofficeUI | 🟢 Codex | 🟡 PARTIAL | KYC backoffice UI view postoji, ali nije još punom mjerom povezan kao finalni admin workflow ekran. |
-| T-1552 | AdminAnalyticsUI | 🟢 Codex | 🟡 PARTIAL | Analytics UI view i chart skeleton postoje, ali nisu završno spojeni na glavni admin page flow. |
+| T-1551 | KYCBackofficeUI | 🟢 Codex | ✅ DONE | Admin KYC pregled sada ima zasebnu stranicu, lightbox pregled dokumenata i approve/reject workflow. |
+| T-1552 | AdminAnalyticsUI | 🟢 Codex | ✅ DONE | Admin statistics ekran sada uključuje višegrafni analytics dashboard sa Chart.js prikazom i periodima. |
 
 ---
 

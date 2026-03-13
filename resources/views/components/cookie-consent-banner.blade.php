@@ -25,8 +25,8 @@
                     🍪 Kolačići (Cookies)
                 </h3>
                 <p class="text-sm text-gray-600 mb-4">
-                    Koristimo kolačiće kako bismo vam pružili najbolje iskustvo. 
-                    Odaberite koje kolačiće želite prihvatiti.
+                    Koristimo kolačiće kako bismo poboljšali rad platforme, mjerili upotrebu i prikazivali relevantniji sadržaj.
+                    Odaberite koje kategorije želite prihvatiti.
                 </p>
                 
                 {{-- Cookie Categories --}}
@@ -59,7 +59,7 @@
                                 Analitika
                             </span>
                         </div>
-                        <span class="text-xs text-gray-500">Google Analytics, etc.</span>
+                        <span class="text-xs text-gray-500">Mjerenje performansi i ponašanja korisnika</span>
                     </label>
                     
                     {{-- Marketing --}}
@@ -74,7 +74,7 @@
                                 Marketing
                             </span>
                         </div>
-                        <span class="text-xs text-gray-500">Facebook Pixel, Google Ads</span>
+                        <span class="text-xs text-gray-500">Remarketing i promotivne kampanje</span>
                     </label>
                 </div>
             </div>
@@ -168,7 +168,7 @@ function cookieConsent() {
             this.$el.style.display = 'none';
             
             // Send consent to backend
-            fetch('/api/cookie-consent', {
+            fetch('/cookie-consent', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

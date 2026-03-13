@@ -13,6 +13,7 @@ use App\Services\Couriers\EuroExpressCourier;
 use App\Services\Couriers\PostExpressCourier;
 use App\Services\FraudScoringService;
 use App\Services\GDPRErasureService;
+use App\Services\ImageOptimizationService;
 use App\Services\Gateways\CorvusPayGateway;
 use App\Services\Gateways\MonriGateway;
 use App\Services\Gateways\StripeGateway;
@@ -62,6 +63,9 @@ class AppServiceProvider extends ServiceProvider
 
         // GDPR
         $this->app->singleton(GDPRErasureService::class);
+
+        // Media / image pipeline
+        $this->app->singleton(ImageOptimizationService::class);
     }
 
     public function boot(): void

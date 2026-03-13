@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Kontrolna tabla')
 
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -40,7 +40,7 @@
         <div class="space-y-6">
             <x-card class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-slate-900">Command center</h2>
+                    <h2 class="text-xl font-semibold text-slate-900">Komandni centar</h2>
                     <a href="{{ route('notifications.index') }}" class="link">Sve obavijesti</a>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3">
@@ -70,7 +70,7 @@
 
             <x-card class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-slate-900">Watchlist</h2>
+                    <h2 class="text-xl font-semibold text-slate-900">Praćene aukcije</h2>
                     <a href="{{ route('watchlist.index') }}" class="link">Otvori sve</a>
                 </div>
                 <div class="space-y-3">

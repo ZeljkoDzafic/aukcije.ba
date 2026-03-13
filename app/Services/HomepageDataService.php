@@ -25,8 +25,8 @@ class HomepageDataService
             return Auction::query()
                 ->where('status', AuctionStatus::Active->value)
                 ->where('is_featured', true)
-                ->with(['seller:id,name', 'images'])
-                ->withCount('bids')
+                ->with(['seller:id,name', 'category', 'primaryImage', 'images'])
+                ->withCount(['bids', 'watchers'])
                 ->orderBy('ends_at')
                 ->limit(12)
                 ->get();
@@ -40,8 +40,8 @@ class HomepageDataService
             return Auction::query()
                 ->where('status', AuctionStatus::Active->value)
                 ->where('ends_at', '<=', now()->addHours(2))
-                ->with(['seller:id,name', 'images'])
-                ->withCount('bids')
+                ->with(['seller:id,name', 'category', 'primaryImage', 'images'])
+                ->withCount(['bids', 'watchers'])
                 ->orderBy('ends_at')
                 ->limit(12)
                 ->get();
@@ -55,8 +55,8 @@ class HomepageDataService
             return Auction::query()
                 ->where('status', AuctionStatus::Active->value)
                 ->where('created_at', '>=', now()->subDay())
-                ->with(['seller:id,name', 'images'])
-                ->withCount('bids')
+                ->with(['seller:id,name', 'category', 'primaryImage', 'images'])
+                ->withCount(['bids', 'watchers'])
                 ->orderByDesc('created_at')
                 ->limit(12)
                 ->get();
@@ -69,8 +69,8 @@ class HomepageDataService
         return Cache::remember('homepage:most_watched', self::TTL, function () {
             return Auction::query()
                 ->where('status', AuctionStatus::Active->value)
-                ->with(['seller:id,name', 'images'])
-                ->withCount('bids')
+                ->with(['seller:id,name', 'category', 'primaryImage', 'images'])
+                ->withCount(['bids', 'watchers'])
                 ->orderByDesc('watchers_count')
                 ->limit(12)
                 ->get();

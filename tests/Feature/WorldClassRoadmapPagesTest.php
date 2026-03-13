@@ -7,6 +7,7 @@ use App\Models\Auction;
 use App\Models\AuctionNotification;
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Models\UserVerification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -85,4 +86,29 @@ it('renders admin activity audit trail', function () {
         ->assertSee('Audit trail')
         ->assertSee('approve')
         ->assertSee('Sve izgleda uredno');
+});
+
+it('renders admin kyc backoffice workflow', function () {
+    $this->withoutVite();
+
+    $admin = User::factory()->moderator()->create();
+    $seller = User::factory()->seller()->create([
+        'name' => 'Milan K.',
+        'email' => 'milan@example.test',
+    ]);
+
+    UserVerification::query()->create([
+        'user_id' => $seller->id,
+        'type' => 'id_document',
+        'status' => 'pending',
+        'document_url' => 'https://example.test/front.jpg',
+        'notes' => 'Čeka pregled',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.kyc.index'))
+        ->assertOk()
+        ->assertSee('KYC Verifikacije')
+        ->assertSee('Milan K.')
+        ->assertSee('front.jpg');
 });

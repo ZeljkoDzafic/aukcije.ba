@@ -17,6 +17,7 @@ use App\Models\SavedSearch;
 use App\Models\User;
 use App\Models\UserRating;
 use App\Services\AdminAuditService;
+use App\Services\GDPRErasureService;
 use App\Services\MarketplaceNotificationService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
@@ -245,6 +246,24 @@ Route::get('/robots.txt', function () {
         'Content-Type' => 'text/plain; charset=UTF-8',
     ]);
 })->name('robots');
+
+Route::post('/cookie-consent', function () {
+    $payload = request()->validate([
+        'necessary' => ['nullable', 'boolean'],
+        'analytics' => ['nullable', 'boolean'],
+        'marketing' => ['nullable', 'boolean'],
+    ]);
+
+    return response()->json(['status' => 'saved'])->cookie(
+        'cookie_consent',
+        json_encode([
+            'necessary' => request()->boolean('necessary', true),
+            'analytics' => request()->boolean('analytics'),
+            'marketing' => request()->boolean('marketing'),
+        ], JSON_THROW_ON_ERROR),
+        60 * 24 * 365,
+    );
+})->name('cookie-consent');
 
 Route::get('/sitemap.xml', function () {
     $urls = [
@@ -1097,6 +1116,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('pages.watchlist.index');
     })->name('watchlist.index');
 
+    Route::get('/pracene-aukcije', function () {
+        return redirect()->route('watchlist.index');
+    })->name('watchlist.localized');
+
     // Profile
     Route::get('/profil', function () {
         $user = auth()->user()->load(['profile', 'wallet']);
@@ -1142,16 +1165,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('settings.notifications');
 
     Route::get('/postavke/privatnost', function () {
+        $profilePreferences = auth()->user()?->profile?->notification_preferences ?? [];
+
         return view('pages.settings.gdpr', [
-            'exportRequested' => false,
-            'exportReady' => false,
-            'exportReadyAt' => now()->addDay(),
-            'exportUrl' => '#',
-            'showDeleteConfirm' => false,
             'settings' => [
-                'profile_public' => true,
-                'email_notifications' => true,
-                'sms_notifications' => false,
+                'profile_public' => (bool) ($profilePreferences['profile_public'] ?? true),
+                'email_notifications' => (bool) (auth()->user()?->notification_preferences['email_messages'] ?? true),
+                'sms_notifications' => (bool) (auth()->user()?->notification_preferences['sms_enabled'] ?? false),
             ],
         ]);
     })->name('settings.gdpr');
@@ -1195,6 +1215,70 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->route('settings.notifications')->with('status', 'Postavke obavijesti su sačuvane.');
     })->name('settings.notifications.update');
+
+    Route::post('/postavke/privatnost/postavke', function () {
+        $user = auth()->user();
+
+        $user->forceFill([
+            'notification_preferences' => array_merge($user->notification_preferences ?? [], [
+                'email_messages' => request()->boolean('email_notifications', true),
+                'sms_enabled' => request()->boolean('sms_notifications'),
+            ]),
+        ])->save();
+
+        $profile = $user->profile;
+        if ($profile) {
+            $profile->update([
+                'notification_preferences' => array_merge($profile->notification_preferences ?? [], [
+                    'profile_public' => request()->boolean('profile_public', true),
+                ]),
+            ]);
+        }
+
+        return redirect()->route('settings.gdpr')->with('status', 'Postavke privatnosti su sačuvane.');
+    })->name('settings.gdpr.settings');
+
+    Route::post('/postavke/privatnost/izvoz', function () {
+        $user = auth()->user();
+
+        $payload = [
+            'exported_at' => now()->toIso8601String(),
+            'profile' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'roles' => $user->roleSummary(),
+                'primary_focus' => $user->preferredMarketplaceFocus(),
+                'created_at' => $user->created_at?->toIso8601String(),
+            ],
+            'orders_count' => Schema::hasTable('orders') ? $user->orders()->count() : 0,
+            'bids_count' => Schema::hasTable('bids') ? $user->bids()->count() : 0,
+            'saved_searches_count' => Schema::hasTable('saved_searches') ? SavedSearch::query()->where('user_id', $user->id)->count() : 0,
+            'notification_preferences' => $user->notification_preferences ?? [],
+        ];
+
+        return response()->streamDownload(function () use ($payload) {
+            echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }, 'aukcijeba-podaci-'.now()->format('Ymd_His').'.json', [
+            'Content-Type' => 'application/json; charset=UTF-8',
+        ]);
+    })->name('settings.gdpr.export');
+
+    Route::delete('/postavke/privatnost/racun', function (GDPRErasureService $service) {
+        $user = auth()->user();
+
+        if (! $service->isEligible($user)) {
+            return redirect()->route('settings.gdpr')->with('error', 'Račun trenutno nije moguće obrisati zbog otvorenih sporova ili aktivnih transakcija.');
+        }
+
+        $service->anonymise($user);
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('home')->with('status', 'Zahtjev za brisanje računa je obrađen.');
+    })->name('settings.gdpr.delete');
 
     Route::get('/obavijesti', function () {
         $user = auth()->user();
@@ -2206,6 +2290,10 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
 
         return view('pages.admin.users.index', ['adminUserInbox' => $adminUserInbox]);
     })->name('users.index');
+
+    Route::get('/kyc', function () {
+        return view('pages.admin.kyc.index');
+    })->name('kyc.index');
 
     Route::get('/korisnici/{user}', function (string $user) {
         $userRecord = Schema::hasTable('users')

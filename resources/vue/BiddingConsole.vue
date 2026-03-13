@@ -50,6 +50,7 @@ const errorMessage = ref('');
 const feedbackMessage = ref('');
 const outbidMessage = ref('');
 const showConfetti = ref(false);
+const liveFeed = ref([]);
 let stopAuctionUpdates = null;
 let privateChannel = null;
 let confettiTimeout = null;
@@ -82,11 +83,25 @@ const handleBidPlaced = (data) => {
     liveMinimumBid.value = Number(data.next_minimum_bid ?? data.current_price + 5 ?? liveCurrentPrice.value + 1);
     liveEndsAt.value = data.auction_ends_at ?? liveEndsAt.value;
     feedbackMessage.value = 'Nova ponuda je evidentirana u realnom vremenu.';
+    liveFeed.value.unshift({
+        id: `${Date.now()}-bid`,
+        label: 'Nova ponuda',
+        amount: Number(data.current_price ?? liveCurrentPrice.value),
+        meta: data.bidder_name ?? 'Aktivni licitant',
+    });
+    liveFeed.value = liveFeed.value.slice(0, 6);
 };
 
 const handleAuctionExtended = (data) => {
     liveEndsAt.value = data.new_ends_at ?? data.ends_at ?? liveEndsAt.value;
     feedbackMessage.value = 'Aukcija je produžena zbog anti-sniping pravila.';
+    liveFeed.value.unshift({
+        id: `${Date.now()}-extend`,
+        label: 'Produženje aukcije',
+        amount: null,
+        meta: 'Anti-sniping zaštita',
+    });
+    liveFeed.value = liveFeed.value.slice(0, 6);
 };
 
 const triggerConfetti = () => {
@@ -101,10 +116,23 @@ const handleAuctionEnded = (data) => {
     if (props.userId && Number(data?.winner?.id) === props.userId) {
         feedbackMessage.value = 'Aukcija je završena i pobijedili ste.';
         triggerConfetti();
+        liveFeed.value.unshift({
+            id: `${Date.now()}-won`,
+            label: 'Aukcija završena',
+            amount: liveCurrentPrice.value,
+            meta: 'Pobjednička ponuda',
+        });
         return;
     }
 
     feedbackMessage.value = 'Aukcija je završena. Dalje licitiranje je zaključano.';
+    liveFeed.value.unshift({
+        id: `${Date.now()}-ended`,
+        label: 'Aukcija završena',
+        amount: liveCurrentPrice.value,
+        meta: 'Licitiranje je zatvoreno',
+    });
+    liveFeed.value = liveFeed.value.slice(0, 6);
 };
 
 const submitBid = async () => {
@@ -141,10 +169,22 @@ const submitBid = async () => {
         }
         state.value = 'success';
         feedbackMessage.value = 'Ponuda je uspješno poslana.';
+        liveFeed.value.unshift({
+            id: `${Date.now()}-self`,
+            label: proxyEnabled.value ? 'Poslan proxy bid' : 'Poslana ponuda',
+            amount: Number(amount.value),
+            meta: proxyEnabled.value ? `Maksimum ${Number(proxyMax.value).toFixed(2)} ${props.currency}` : 'Direktna ponuda',
+        });
+        liveFeed.value = liveFeed.value.slice(0, 6);
     } catch (error) {
         state.value = 'idle';
         errorMessage.value = error.response?.data?.error?.message ?? 'Bid trenutno nije moguće poslati.';
     }
+};
+
+const submitMinimumBid = () => {
+    amount.value = Number(liveMinimumBid.value);
+    submitBid();
 };
 
 onMounted(() => {
@@ -199,13 +239,13 @@ onBeforeUnmount(() => {
             <div v-if="feedbackMessage" class="alert-success">{{ feedbackMessage }}</div>
 
             <label class="space-y-1 text-sm">
-                <span class="font-medium text-slate-700">Bid amount</span>
+                <span class="font-medium text-slate-700">Iznos ponude</span>
                 <input v-model="amount" type="number" class="input" :min="liveMinimumBid" :disabled="disabled">
             </label>
 
             <label class="inline-flex items-center gap-3 text-sm text-slate-700">
                 <input v-model="proxyEnabled" type="checkbox" class="rounded border-slate-300 text-trust-600 focus:ring-trust-500" :disabled="disabled">
-                <span>Proxy bidding</span>
+                <span>Proxy licitiranje</span>
             </label>
 
             <label v-if="proxyEnabled" class="space-y-1 text-sm">
@@ -213,11 +253,33 @@ onBeforeUnmount(() => {
                 <input v-model="proxyMax" type="number" class="input" :min="liveMinimumBid" :disabled="disabled">
             </label>
 
-            <button type="button" class="btn-primary w-full" :disabled="disabled" @click="submitBid">
-                {{ submitLabel }}
-            </button>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <button type="button" class="btn-primary w-full" :disabled="disabled" @click="submitBid">
+                    {{ submitLabel }}
+                </button>
+                <button type="button" class="btn-secondary w-full" :disabled="disabled" @click="submitMinimumBid">
+                    Licitiraj minimalno
+                </button>
+            </div>
 
             <p class="text-sm text-slate-500">Minimalni sljedeći bid: {{ liveMinimumBid.toFixed(2) }} {{ currency }}</p>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm font-medium text-slate-900">Live feed ponuda</p>
+                    <span class="text-xs uppercase tracking-[0.18em] text-slate-500">Real time</span>
+                </div>
+                <div class="mt-3 space-y-2">
+                    <div v-if="liveFeed.length === 0" class="text-sm text-slate-500">Još nema novih događaja u ovoj sesiji.</div>
+                    <div v-for="entry in liveFeed" :key="entry.id" class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2 text-sm">
+                        <div>
+                            <p class="font-medium text-slate-900">{{ entry.label }}</p>
+                            <p class="text-slate-500">{{ entry.meta }}</p>
+                        </div>
+                        <p v-if="entry.amount !== null" class="font-semibold text-slate-900">{{ Number(entry.amount).toFixed(2) }} {{ currency }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>

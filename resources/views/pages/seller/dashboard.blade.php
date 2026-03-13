@@ -1,7 +1,7 @@
 @extends('layouts.seller')
 
-@section('title', 'Seller Dashboard')
-@section('seller_heading', 'Seller Dashboard')
+@section('title', 'Prodajna kontrolna tabla')
+@section('seller_heading', 'Prodajna kontrolna tabla')
 
 @section('content')
 <section class="space-y-8">
@@ -40,7 +40,7 @@
         <div class="space-y-6">
             <x-card class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-slate-900">Seller command center</h2>
+                    <h2 class="text-xl font-semibold text-slate-900">Prodajni komandni centar</h2>
                     <a href="{{ route('notifications.index') }}" class="link">Sve obavijesti</a>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3">
@@ -56,7 +56,7 @@
             <x-card class="space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-slate-900">Operativni prioriteti</h2>
-                    <a href="{{ route('seller.orders.index') }}" class="link">Seller narudžbe</a>
+                    <a href="{{ route('seller.orders.index') }}" class="link">Prodajne narudžbe</a>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3 xl:grid-cols-8">
                     @foreach ($sellerPriorityQueue as $item)
@@ -74,14 +74,14 @@
                 <div class="space-y-3 text-sm text-slate-700">
                     @foreach ($shippingQueue as $entry)
                         <div class="rounded-2xl bg-slate-50 px-4 py-3">
-                            Order #{{ $entry['id'] }} · {{ $entry['title'] }} · {{ str_replace('_', ' ', $entry['status']) }}
+                            Narudžba #{{ $entry['id'] }} · {{ $entry['title'] }} · {{ str_replace('_', ' ', $entry['status']) }}
                         </div>
                     @endforeach
                 </div>
             </x-card>
 
             <x-card class="space-y-4">
-                <h2 class="text-xl font-semibold text-slate-900">Javni seller profil</h2>
+                <h2 class="text-xl font-semibold text-slate-900">Javni profil prodavca</h2>
                 <p class="text-sm text-slate-600">Kupci mogu vidjeti tvoju reputaciju, aktivne aukcije i ocjene na javnom profilu.</p>
                 <x-button variant="ghost" :href="route('sellers.show', ['user' => $seller->id])">Otvori javni profil</x-button>
             </x-card>

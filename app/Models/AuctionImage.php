@@ -28,10 +28,17 @@ class AuctionImage extends Model
         'url',
         'sort_order',
         'is_primary',
+        'blurhash',
+        'optimized_urls',
+        'width',
+        'height',
     ];
 
     protected $casts = [
-        'is_primary' => 'boolean',
+        'is_primary'     => 'boolean',
+        'optimized_urls' => 'array',
+        'width'          => 'integer',
+        'height'         => 'integer',
     ];
 
     /**
@@ -58,5 +65,46 @@ class AuctionImage extends Model
     public function scopeOrderBySort(Builder $query): Builder
     {
         return $query->orderBy('sort_order');
+    }
+
+    /**
+     * Return the URL for a given size preset (thumbnail|medium|large|original).
+     * Falls back to the canonical URL if optimized variant is unavailable.
+     */
+    public function getOptimizedUrl(string $preset = 'medium'): string
+    {
+        $urls = $this->optimized_urls;
+
+        if (is_array($urls) && isset($urls[$preset]) && $urls[$preset] !== '') {
+            return (string) $urls[$preset];
+        }
+
+        return $this->url;
+    }
+
+    /**
+     * Build an HTML srcset string from optimized variants.
+     *
+     * Example output:
+     *   https://cdn.example.com/img-thumbnail.webp 400w, https://cdn.example.com/img-medium.webp 800w, ...
+     */
+    public function getSrcset(): string
+    {
+        $urls = $this->optimized_urls;
+
+        if (! is_array($urls)) {
+            return $this->url;
+        }
+
+        $widths = ['thumbnail' => 400, 'medium' => 800, 'large' => 1600];
+        $parts  = [];
+
+        foreach ($widths as $size => $width) {
+            if (! empty($urls[$size])) {
+                $parts[] = "{$urls[$size]} {$width}w";
+            }
+        }
+
+        return $parts !== [] ? implode(', ', $parts) : $this->url;
     }
 }

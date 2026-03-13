@@ -10,14 +10,16 @@
 ])
 
 @php
-    $similarAuctions = \App\Models\Auction::query()
-        ->active()
-        ->where('category_id', $currentAuction->category_id ?? $categoryId)
-        ->where('id', '!=', $currentAuction->id ?? 0)
-        ->orderBy('ends_at')
-        ->limit($limit)
-        ->with(['seller', 'primaryImage'])
-        ->get();
+    $similarAuctions = \Illuminate\Support\Facades\Schema::hasTable('auctions')
+        ? \App\Models\Auction::query()
+            ->active()
+            ->where('category_id', $currentAuction->category_id ?? $categoryId)
+            ->where('id', '!=', $currentAuction->id ?? 0)
+            ->orderBy('ends_at')
+            ->limit($limit)
+            ->with(['seller', 'primaryImage'])
+            ->get()
+        : collect();
 @endphp
 
 @php

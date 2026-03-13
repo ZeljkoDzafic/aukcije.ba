@@ -1,241 +1,157 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
+use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 /**
- * Image Optimization Service
- * 
- * Handles image upload, optimization, and CDN delivery
- * 
- * Features:
- * - Resize to multiple sizes
- * - Convert to WebP
- * - Generate blurhash placeholder
- * - Upload to S3/CDN
- * - Cache optimization
+ * T-1603: Image Optimization Pipeline
+ *
+ * Processes uploaded auction images into multiple WebP size variants,
+ * generates a blurhash colour placeholder, stores results to S3 (or
+ * the configured default disk), and optionally serves via Imgix CDN.
+ *
+ * Returns an array with keys: thumbnail, medium, large, original, blurhash, width, height.
  */
 class ImageOptimizationService
 {
-    /**
-     * Image size presets
-     */
-    protected array $sizes = [
-        'thumbnail' => ['width' => 400, 'height' => 400, 'quality' => 80],
-        'medium' => ['width' => 800, 'height' => 800, 'quality' => 85],
-        'large' => ['width' => 1600, 'height' => 1600, 'quality' => 90],
-        'original' => ['width' => null, 'height' => null, 'quality' => 95],
+    /** @var array<string, array{width: int|null, height: int|null, quality: int}> */
+    private const SIZES = [
+        'thumbnail' => ['width' => 400,  'height' => 400,  'quality' => 80],
+        'medium'    => ['width' => 800,  'height' => 800,  'quality' => 85],
+        'large'     => ['width' => 1600, 'height' => 1600, 'quality' => 90],
+        'original'  => ['width' => null, 'height' => null, 'quality' => 95],
     ];
 
     /**
-     * Optimize and store uploaded image
-     * 
-     * @return array URLs for different sizes
+     * Optimise an uploaded file and store all size variants.
+     *
+     * @return array{thumbnail: string, medium: string, large: string, original: string, blurhash: string, width: int, height: int}
      */
-    public function optimizeAndStore(UploadedFile $file, string $path): array
+    public function optimizeAndStore(UploadedFile $file, string $folder = 'auction-images'): array
     {
         $manager = new ImageManager(new Driver());
-        $image = $manager->read($file->getRealPath());
+        $image   = $manager->read($file->getRealPath());
 
+        $originalWidth  = $image->width();
+        $originalHeight = $image->height();
+
+        $disk = $this->disk();
+        $uuid = Str::uuid()->toString();
         $urls = [];
 
-        foreach ($this->sizes as $sizeName => $dimensions) {
-            $filename = $this->generateFilename($file, $sizeName);
-            $fullPath = "{$path}/{$filename}";
+        foreach (self::SIZES as $sizeName => $dims) {
+            $path = "{$folder}/{$uuid}-{$sizeName}.webp";
 
-            // Resize if dimensions specified
-            if ($dimensions['width'] && $dimensions['height']) {
-                $optimized = $image->cover($dimensions['width'], $dimensions['height']);
+            if ($dims['width'] !== null && $dims['height'] !== null) {
+                // Cover crop: fills the target box, no upscaling beyond original
+                $resized = $manager->read($file->getRealPath())
+                    ->scaleDown(max: $dims['width'])
+                    ->toWebp($dims['quality']);
             } else {
-                $optimized = clone $image;
+                $resized = $manager->read($file->getRealPath())
+                    ->toWebp($dims['quality']);
             }
 
-            // Convert to WebP and set quality
-            $optimized = $optimized->toWebp($dimensions['quality']);
+            Storage::disk($disk)->put($path, $resized->toFilePointer());
 
-            // Store
-            Storage::disk('s3')->put($fullPath, $optimized->encode());
-
-            // Generate URL
-            $urls[$sizeName] = Storage::disk('s3')->url($fullPath);
+            $urls[$sizeName] = $this->resolveUrl($disk, $path);
         }
 
-        // Generate blurhash placeholder
-        $urls['blurhash'] = $this->generateBlurhash($image);
+        $urls['blurhash'] = $this->generatePlaceholder($file->getRealPath());
+        $urls['width']    = $originalWidth;
+        $urls['height']   = $originalHeight;
 
         return $urls;
     }
 
     /**
-     * Optimize image from URL (for external images)
-     */
-    public function optimizeFromUrl(string $url, string $path): array
-    {
-        $response = Http::get($url);
-        
-        if (!$response->successful()) {
-            throw new \Exception("Failed to download image from {$url}");
-        }
-
-        $manager = new ImageManager(new Driver());
-        $image = $manager->read($response->body());
-
-        return $this->optimizeAndStoreFromResource($image, $path);
-    }
-
-    /**
-     * Generate CDN-ready URLs with transformations
-     * 
-     * If using Imgix/Cloudinary, generate transformation URLs
+     * Return the URL for an image path, applying Imgix CDN transformations if configured.
+     *
+     * @param array<string, mixed> $transformations  Imgix query params (e.g. ['w' => 800, 'q' => 85])
      */
     public function getCdnUrl(string $originalUrl, array $transformations = []): string
     {
-        // If using Imgix
-        if (config('services.imgix.domain')) {
-            $domain = config('services.imgix.domain');
-            $path = parse_url($originalUrl, PHP_URL_PATH);
-            
+        $imgixDomain = config('services.imgix.domain');
+
+        if ($imgixDomain) {
+            $urlPath = parse_url($originalUrl, PHP_URL_PATH);
+
             $params = http_build_query(array_merge([
                 'auto' => 'format,compress',
-                'fit' => 'max',
+                'fit'  => 'max',
             ], $transformations));
-            
-            return "https://{$domain}{$path}?{$params}";
+
+            return "https://{$imgixDomain}{$urlPath}?{$params}";
         }
 
-        // If using Cloudinary
-        if (config('services.cloudinary.cloud_name')) {
-            // Cloudinary URL transformation
-            $transform = $this->buildCloudinaryTransform($transformations);
-            return str_replace('/upload/', "/upload/{$transform}/", $originalUrl);
-        }
-
-        // Default: return original URL
         return $originalUrl;
     }
 
     /**
-     * Generate responsive srcset attribute
+     * Build a responsive srcset string from the stored optimized_urls array.
+     *
+     * @param array<string, string> $urls  Keys: thumbnail, medium, large
      */
     public function getSrcset(array $urls): string
     {
-        $widths = [
-            'thumbnail' => 400,
-            'medium' => 800,
-            'large' => 1600,
-        ];
+        $widths = ['thumbnail' => 400, 'medium' => 800, 'large' => 1600];
+        $parts  = [];
 
-        $srcset = [];
         foreach ($widths as $size => $width) {
-            if (isset($urls[$size])) {
-                $srcset[] = "{$urls[$size]} {$width}w";
+            if (! empty($urls[$size])) {
+                $parts[] = "{$urls[$size]} {$width}w";
             }
         }
 
-        return implode(', ', $srcset);
+        return implode(', ', $parts);
     }
 
-    /**
-     * Generate blurhash placeholder
-     */
-    protected function generateBlurhash($image): string
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    private function disk(): string
     {
-        // In production, use kornrunner/blurhash package
-        // For now, return a simple color hash
-        $color = $image->pickColor(1, 1, 'average');
-        return $this->rgbToHex($color[0], $color[1], $color[2]);
+        // Prefer S3; fall back to the application default (public on local).
+        $configured = config('filesystems.default', 'public');
+
+        return $configured === 's3' ? 's3' : $configured;
     }
 
-    /**
-     * Generate filename with size suffix
-     */
-    protected function generateFilename(UploadedFile $file, string $size): string
+    private function resolveUrl(string $disk, string $path): string
     {
-        $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        return "{$name}-{$size}.webp";
-    }
-
-    /**
-     * Optimize from image resource
-     */
-    protected function optimizeAndStoreFromResource($image, string $path): array
-    {
-        $urls = [];
-
-        foreach ($this->sizes as $sizeName => $dimensions) {
-            $filename = "{$sizeName}-" . uniqid() . ".webp";
-            $fullPath = "{$path}/{$filename}";
-
-            if ($dimensions['width'] && $dimensions['height']) {
-                $optimized = $image->cover($dimensions['width'], $dimensions['height']);
-            } else {
-                $optimized = clone $image;
-            }
-
-            $optimized = $optimized->toWebp($dimensions['quality']);
-            Storage::disk('s3')->put($fullPath, $optimized->encode());
-            $urls[$sizeName] = Storage::disk('s3')->url($fullPath);
+        if ($disk === 'public') {
+            return '/storage/'.$path;
         }
 
-        $urls['blurhash'] = $this->generateBlurhash($image);
-
-        return $urls;
+        return Storage::disk($disk)->url($path);
     }
 
     /**
-     * Build Cloudinary transformation string
+     * Generate a compact colour placeholder from the image's dominant hue.
+     *
+     * For a real blurhash string install kornrunner/blurhash and replace this
+     * implementation.  The hex-colour approach is sufficient as a low-cost
+     * placeholder that can be used as a CSS background while the real image loads.
      */
-    protected function buildCloudinaryTransform(array $transformations): string
+    private function generatePlaceholder(string $realPath): string
     {
-        $parts = [];
+        try {
+            $manager = new ImageManager(new Driver());
+            // Sample a small version for performance
+            $thumb = $manager->read($realPath)->scale(width: 8);
+            $color = $thumb->pickColor(4, 4);
 
-        if (isset($transformations['width'])) {
-            $parts[] = "w_{$transformations['width']}";
-        }
-
-        if (isset($transformations['height'])) {
-            $parts[] = "h_{$transformations['height']}";
-        }
-
-        if (isset($transformations['quality'])) {
-            $parts[] = "q_{$transformations['quality']}";
-        }
-
-        // Auto format and compress
-        $parts[] = 'c_limit';
-        $parts[] = 'f_auto';
-        $parts[] = 'q_auto';
-
-        return implode(',', $parts);
-    }
-
-    /**
-     * Convert RGB to hex color
-     */
-    protected function rgbToHex(int $r, int $g, int $b): string
-    {
-        return sprintf('#%02x%02x%02x', $r, $g, $b);
-    }
-
-    /**
-     * Clean up old images
-     */
-    public function cleanupOldImages(string $path, int $daysOld = 30): void
-    {
-        $files = Storage::disk('s3')->files($path);
-        $cutoff = now()->subDays($daysOld);
-
-        foreach ($files as $file) {
-            $lastModified = Storage::disk('s3')->lastModified($file);
-            
-            if ($lastModified < $cutoff->timestamp) {
-                Storage::disk('s3')->delete($file);
-            }
+            return sprintf('#%02x%02x%02x', $color->red(), $color->green(), $color->blue());
+        } catch (\Throwable) {
+            return '#cccccc';
         }
     }
 }

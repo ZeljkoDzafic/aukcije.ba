@@ -56,8 +56,9 @@ it('renders homepage discovery blocks from live auction data', function () {
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee('Najviše praćeno')
-        ->assertSee('Uskoro ističe')
+        ->assertSee('Izdvojene aukcije')
+        ->assertSee('Najpraćenije')
+        ->assertSee('Ubrzo završava')
         ->assertSee('Najviše praćeni sat')
         ->assertSee('Uskoro ističe aukcija');
 });

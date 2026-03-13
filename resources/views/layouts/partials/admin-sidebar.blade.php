@@ -4,6 +4,7 @@
         <a href="{{ route('admin.dashboard') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Dashboard</a>
         <a href="{{ route('admin.auctions.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Aukcije</a>
         <a href="{{ route('admin.users.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Korisnici</a>
+        <a href="{{ route('admin.kyc.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">KYC pregled</a>
         <a href="{{ route('admin.categories.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Kategorije</a>
         <a href="{{ route('admin.disputes.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Sporovi</a>
         <a href="{{ route('admin.content.pages.index') }}" class="sidebar-link text-slate-200 hover:bg-slate-800 hover:text-white">Statične stranice</a>

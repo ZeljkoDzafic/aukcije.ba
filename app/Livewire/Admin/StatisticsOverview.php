@@ -42,6 +42,31 @@ class StatisticsOverview extends Component
         'trust' => [97, 98, 96, 99, 98, 99],
     ];
 
+    /** @var array<string, list<string>> */
+    public array $chartLabels = [
+        'users' => ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'],
+        'auctions' => ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'],
+        'revenue' => ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'],
+        'trust' => ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'],
+    ];
+
+    /** @var array<string, list<string>> */
+    public array $topSellerLabels = ['Prodavac A', 'Prodavac B', 'Prodavac C', 'Prodavac D'];
+
+    /** @var list<int> */
+    public array $topSellerValues = [14, 11, 9, 7];
+
+    public function rendered(): void
+    {
+        $this->dispatch('admin-analytics-update', payload: [
+            'activeTab' => $this->tab,
+            'labels' => $this->chartLabels,
+            'series' => $this->chartSeries,
+            'topSellerLabels' => $this->topSellerLabels,
+            'topSellerValues' => $this->topSellerValues,
+        ]);
+    }
+
     public function render(): View
     {
         if (Schema::hasTable('users') && Schema::hasTable('auctions') && Schema::hasTable('orders')) {
@@ -91,6 +116,24 @@ class StatisticsOverview extends Component
                     $disputeCount > 0 ? max(80, 100 - ($disputeCount * 2)) : 100,
                 ],
             ];
+
+            $topSellers = Order::query()
+                ->selectRaw('seller_id, COUNT(*) as orders_count')
+                ->whereNotNull('seller_id')
+                ->groupBy('seller_id')
+                ->orderByDesc('orders_count')
+                ->limit(4)
+                ->get();
+
+            if ($topSellers->isNotEmpty()) {
+                $this->topSellerLabels = $topSellers
+                    ->map(fn (Order $order) => User::query()->find($order->seller_id)?->name ?? 'Prodavac')
+                    ->all();
+
+                $this->topSellerValues = $topSellers
+                    ->map(fn (Order $order) => (int) $order->orders_count)
+                    ->all();
+            }
         }
 
         return view('livewire.admin.statistics-overview');

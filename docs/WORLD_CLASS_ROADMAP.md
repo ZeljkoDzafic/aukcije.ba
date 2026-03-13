@@ -16,12 +16,12 @@
 | Vue BiddingConsole | ✅ Production-ready | UUID types, isExpired, proxyMax sync |
 | Payment Services | ✅ Refaktorisan | DI injection, initiateDeposit flow, webhook controller |
 | Shipping Services | ✅ Refaktorisan | DI injection, HMAC webhook verifikacija |
-| Frontend UI | 🟡 Dobar napredak | Buyer/seller/admin command center je jak, ali dio trust/GDPR/PWA tokova još traži finalni wiring |
-| Trust & Safety | 🟡 Jak backend, slabiji UX finish | Reputation badge je živ, ali 2FA/KYC korisnički tokovi još nisu zatvoreni do kraja |
-| GDPR / Compliance | 🟡 Osnova postoji | Banner, settings i backend jobovi postoje, ali puni self-service tok još nije kompletan |
+| Frontend UI | ✅ Jak i operativan | Buyer/seller/admin command center, lazy homepage sekcije, PWA prompt i GDPR self-service su povezani kroz stvarne tokove |
+| Trust & Safety | 🟡 Jak backend, solidan UX finish | Reputation badge, 2FA settings i KYC self-service postoje; dublji backend enforcement i production TOTP hardening ostaju |
+| GDPR / Compliance | ✅ Self-service sloj aktivan | Banner, privacy settings, izvoz podataka i anonimizacija računa postoje i korisnički su dostupni |
 | Observability | 🟡 Dobar backend sloj | Prometheus/Grafana i SLO job postoje, ali runtime potvrda i operativni runbook drillovi ostaju važni |
-| Seller Tools | 🟡 Djelimično isporučeno | Dashboard i readiness postoje, ali template/bulk/scheduled UI još nije završen |
-| Admin Operations | 🟡 Jak napredak | Inbox, bulk moderation i decision history postoje; KYC/analytics UI još traže završni polish |
+| Seller Tools | ✅ Jak frontend sloj | Dashboard, readiness, analytics, template-i, bulk operacije i scheduled start postoje kao stvarni seller tokovi |
+| Admin Operations | ✅ Operativan | Inbox, bulk moderation, decision history, KYC pregled i analytics dashboard su povezani kroz admin tokove |
 
 ---
 

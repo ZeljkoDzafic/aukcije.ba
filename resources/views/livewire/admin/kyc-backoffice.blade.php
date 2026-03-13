@@ -3,7 +3,12 @@
     T-1551: Admin pregled dokumenata sa lightbox, approve/reject, status history
 --}}
 
-<div class="card">
+<div class="space-y-6">
+    @if ($statusMessage !== '')
+        <x-alert variant="success">{{ $statusMessage }}</x-alert>
+    @endif
+
+    <x-card class="space-y-6">
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-gray-900">
             KYC Verifikacije
@@ -12,7 +17,7 @@
             <span class="text-sm text-gray-600">
                 <strong>{{ $pendingKyc->count() }}</strong> na čekanju
             </span>
-            <select wire:model="statusFilter" class="input text-sm">
+            <select wire:model.live="statusFilter" class="input text-sm">
                 <option value="pending">Na čekanju</option>
                 <option value="approved">Odobreno</option>
                 <option value="rejected">Odbijeno</option>
@@ -44,12 +49,7 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button
-                            wire:click="viewDocuments({{ $kyc->id }})"
-                            class="btn-primary text-sm"
-                        >
-                            👁️ Pregledaj dokumenta
-                        </button>
+                        <x-badge variant="warning">{{ strtoupper($kyc->status) }}</x-badge>
                     </div>
                 </div>
                 
@@ -63,11 +63,8 @@
                                 class="w-full h-48 object-cover rounded-lg border border-gray-200"
                             />
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
-                                <button
-                                    wire:click="viewDocument('{{ $document->url }}')"
-                                    class="opacity-0 group-hover:opacity-100 text-white font-medium"
-                                >
-                                    🔍 Uvećaj
+                                <button wire:click="viewDocument('{{ $document->url }}')" class="opacity-0 group-hover:opacity-100 text-white font-medium">
+                                    Uvećaj
                                 </button>
                             </div>
                         </div>
@@ -83,18 +80,8 @@
                         <span>{{ count($kyc->documents) }} dokumenata</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button
-                            wire:click="approveKyc({{ $kyc->id }})"
-                            class="btn-success text-sm"
-                        >
-                            ✅ Odobri
-                        </button>
-                        <button
-                            wire:click="rejectKyc({{ $kyc->id }})"
-                            class="btn-danger text-sm"
-                        >
-                            ❌ Odbij
-                        </button>
+                        <button wire:click="approveKyc('{{ $kyc->id }}')" class="btn-success text-sm">Odobri</button>
+                        <button wire:click="rejectKyc('{{ $kyc->id }}')" class="btn-danger text-sm">Odbij</button>
                     </div>
                 </div>
             </div>
@@ -112,10 +99,7 @@
     @if($showDocumentViewer)
         <div class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
             <div class="relative max-w-6xl w-full">
-                <button
-                    wire:click="closeDocumentViewer"
-                    class="absolute -top-10 right-0 text-white hover:text-gray-300"
-                >
+                <button wire:click="closeDocumentViewer" class="absolute -top-10 right-0 text-white hover:text-gray-300">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -130,9 +114,5 @@
     @endif
     
     {{-- Pagination --}}
-    @if($pendingKyc->hasPages())
-        <div class="mt-6">
-            {{ $pendingKyc->links() }}
-        </div>
-    @endif
+    </x-card>
 </div>
