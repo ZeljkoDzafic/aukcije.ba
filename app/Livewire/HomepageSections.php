@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Livewire;
+
+use App\Services\HomepageDataService;
+use Illuminate\Contracts\View\View;
+use Livewire\Component;
+
+class HomepageSections extends Component
+{
+    /** @var list<string> */
+    public array $sections = ['featured', 'ending_soon', 'new_arrivals', 'most_watched'];
+
+    public iterable $featuredAuctions = [];
+
+    public iterable $endingSoonAuctions = [];
+
+    public iterable $newArrivalsAuctions = [];
+
+    public iterable $mostWatchedAuctions = [];
+
+    public function mount(array $sections = ['featured', 'ending_soon', 'new_arrivals', 'most_watched']): void
+    {
+        $this->sections = $sections;
+        $this->loadFeatured();
+        $this->loadEndingSoon();
+        $this->loadNewArrivals();
+        $this->loadMostWatched();
+    }
+
+    public function loadFeatured(): void
+    {
+        $this->featuredAuctions = app(HomepageDataService::class)->featured();
+    }
+
+    public function loadEndingSoon(): void
+    {
+        $this->endingSoonAuctions = app(HomepageDataService::class)->endingSoon();
+    }
+
+    public function loadNewArrivals(): void
+    {
+        $this->newArrivalsAuctions = app(HomepageDataService::class)->newArrivals();
+    }
+
+    public function loadMostWatched(): void
+    {
+        $this->mostWatchedAuctions = app(HomepageDataService::class)->mostWatched();
+    }
+
+    public function render(): View
+    {
+        return view('livewire.homepage-sections');
+    }
+}
