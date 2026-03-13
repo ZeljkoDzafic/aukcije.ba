@@ -10,6 +10,7 @@
             'category_slug' => 'elektronika',
             'current_price' => 1250.00,
             'minimum_bid' => 1255.00,
+            'reserve_price' => null,
             'ends_at' => now()->addDays(3),
             'location' => 'Sarajevo',
             'condition' => 'Polovno, odlično',
@@ -31,6 +32,7 @@
             'category_slug' => 'elektronika',
             'current_price' => 1250.00,
             'minimum_bid' => 1255.00,
+            'reserve_price' => null,
             'ends_at' => now()->addDays(3),
             'location' => 'Sarajevo',
             'condition' => 'Polovno, odlično',
@@ -120,14 +122,14 @@
 
             <x-card class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-slate-900">Seller informacije</h2>
-                    <x-badge variant="trust">Verified seller</x-badge>
+                    <h2 class="text-xl font-semibold text-slate-900">Informacije o prodavcu</h2>
+                    <x-seller-reputation-badge :seller="property_exists($auction, 'seller') && $auction->seller ? $auction->seller : (object) ['name' => $auction->seller_name, 'trust_score' => (float) $auction->seller_rating, 'created_at' => now()]" size="sm" />
                 </div>
                 <div class="flex items-center gap-4">
                     <x-avatar :name="$auction->seller_name" size="lg" />
                     <div>
                         <a href="{{ ! empty($auction->seller_id) ? route('sellers.show', ['user' => $auction->seller_id]) : '#' }}" class="font-semibold text-slate-900 transition hover:text-trust-700">{{ $auction->seller_name }}</a>
-                        <p class="text-sm text-slate-600">{{ $auction->seller_rating }} rating · {{ $auction->seller_sales }} prodaja · {{ $auction->seller_location }}</p>
+                        <p class="text-sm text-slate-600">{{ $auction->seller_rating }} ocjena · {{ $auction->seller_sales }} prodaja · {{ $auction->seller_location }}</p>
                     </div>
                 </div>
             </x-card>
@@ -136,6 +138,7 @@
         <div class="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <x-card class="space-y-5">
                 <x-price-display :amount="$auction->current_price" />
+                <x-reserve-price-badge :auction="$auction" />
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-sm text-slate-600">
                         <span>Aukcija završava za</span>
@@ -196,5 +199,7 @@
             @endforeach
         </div>
     </div>
+
+    <x-similar-auctions-section :current-auction="$auction" />
 </section>
 @endsection

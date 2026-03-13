@@ -1280,9 +1280,9 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1150 | SellerReputationBadge | 🟢 Codex | ⏳ TODO | Badge sa tooltip: fulfilment rate, avg response time, disputes. Na auction detail i seller profilu. |
-| T-1151 | 2FA Enrollment UI | 🟢 Codex | ⏳ TODO | Livewire wizard: QR kod → unos koda → backup codes. |
-| T-1152 | KYC Status Dashboard | 🟢 Codex | ⏳ TODO | Buyer/seller vidi nivo, šta fali, CTA za upload dokumenta. |
+| T-1150 | SellerReputationBadge | 🟢 Codex | ✅ DONE | Badge komponenta je uvezana na auction detail i javni profil prodavca, sa trust tooltip signalima. |
+| T-1151 | 2FA Enrollment UI | 🟢 Codex | 🟡 PARTIAL | UI view postoji, ali puni enrollment/settings flow još traži završno povezivanje. |
+| T-1152 | KYC Status Dashboard | 🟢 Codex | 🟡 PARTIAL | Status dashboard view postoji, ali puni upload/verifikacioni tok još nije zatvoren. |
 
 ---
 
@@ -1304,11 +1304,11 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1250 | HomepageSections | 🟢 Codex | ⏳ TODO | 4 Livewire sekcije (featured, ending_soon, new_arrivals, most_watched) sa lazy loadingom. |
-| T-1251 | SavedSearchUI | 🟢 Codex | ⏳ TODO | "Sačuvaj ovu pretragu" sa bell iconom. Livewire: prikaz, brisanje, toggle notifikacija. |
-| T-1252 | SellerDirectory | 🟢 Codex | ⏳ TODO | Javna stranica `/sellers`: profili, filter po kategoriji, sort po reputaciji. |
-| T-1253 | CategoryLandingPages | 🟢 Codex | ⏳ TODO | Blade template za `/kategorije/{slug}` sa hero sekcijom, top artiklima, SEO copy. |
-| T-1254 | ReservePriceBadge | 🟢 Codex | ⏳ TODO | BiddingConsole badge "Rezervna cijena dostignuta" / "???" ovisno o seller podešavanju. |
+| T-1250 | HomepageSections | 🟢 Codex | 🟡 PARTIAL | Homepage sada ima featured, ending soon i most watched blokove na stvarnim podacima, ali nije još prebačeno na lazy Livewire sekcije i new arrivals blok. |
+| T-1251 | SavedSearchUI | 🟢 Codex | ✅ DONE | Spremanje pretrage, pregled, brisanje i toggle alerta su implementirani u korisničkom toku. |
+| T-1252 | SellerDirectory | 🟢 Codex | ✅ DONE | Javna stranica `/prodavci` sada ima profile, pretragu, filter po kategoriji i sortiranje. |
+| T-1253 | CategoryLandingPages | 🟢 Codex | ✅ DONE | Kategorijske stranice imaju hero sadržaj, podkategorije, listing i SEO copy. |
+| T-1254 | ReservePriceBadge | 🟢 Codex | ✅ DONE | Reserve badge komponenta je uvezana na auction detail sa statusnim prikazom. |
 
 ---
 
@@ -1332,7 +1332,7 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1350 | SellerAnalyticsDashboard | 🟢 Codex | ⏳ TODO | Livewire: GMV chart, sell-through, top artikli, dispute rate. Period 7d/30d/90d. |
+| T-1350 | SellerAnalyticsDashboard | 🟢 Codex | 🟡 PARTIAL | Analytics UI view postoji, ali puni route/page integration i finalni chart flow još nisu zatvoreni. |
 | T-1351 | AuctionTemplateUI | 🟢 Codex | ⏳ TODO | Sačuvaj aukciju kao template. Kreiraj novu iz template-a. Livewire wizard. |
 | T-1352 | BulkOperationsUI | 🟢 Codex | ⏳ TODO | Seller checklist sa bulk publish/end/clone. Confirm modal. |
 | T-1353 | ScheduledStartPicker | 🟢 Codex | ⏳ TODO | DateTimePicker u CreateAuctionWizard koraku 3. |
@@ -1357,12 +1357,12 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
 | T-1450 | LiveBidFeedComponent | 🟢 Codex | ⏳ TODO | Vue komponenta: posljednjih 10 bidova real-time (Echo listener). Animirani feed. |
-| T-1451 | PWAManifest | 🟢 Codex | ⏳ TODO | `manifest.json`, service worker za offline cache, install prompt. |
+| T-1451 | PWAManifest | 🟢 Codex | 🟡 PARTIAL | Manifest je dodat u layout i public root, ali service worker/install prompt još nisu zatvoreni. |
 | T-1452 | MobileOneTapBid | 🟢 Codex | ⏳ TODO | Quick bid dugme na mobilnom (minimum_bid). Haptic feedback. |
-| T-1453 | BlurhashPlaceholders | 🟢 Codex | ⏳ TODO | Blurhash placeholder dok se slike učitavaju u listingu. |
-| T-1454 | SimilarAuctionsSection | 🟢 Codex | ⏳ TODO | Na auction detail: "Slične aukcije" (ista kategorija, active, sort by ends_at). |
-| T-1455 | CookieConsentBanner | 🟢 Codex | ⏳ TODO | GDPR cookie consent: necessary, analytics, marketing kategorije. |
-| T-1456 | GDPRSettingsUI | 🟢 Codex | ⏳ TODO | Na profilu: "Preuzmi podatke" i "Izbriši račun" sa potvrdom. |
+| T-1453 | BlurhashPlaceholders | 🟢 Codex | 🟡 PARTIAL | Komponenta i image optimization osnovа postoje, ali listing još nije sistemski prebačen na blurhash render. |
+| T-1454 | SimilarAuctionsSection | 🟢 Codex | ✅ DONE | Similar auctions sekcija je uvezana na auction detail. |
+| T-1455 | CookieConsentBanner | 🟢 Codex | 🟡 PARTIAL | Cookie consent banner postoji i uključen je u layout, ali puni consent/runtime governance sloj traži finalizaciju. |
+| T-1456 | GDPRSettingsUI | 🟢 Codex | 🟡 PARTIAL | GDPR settings stranica postoji i povezana je s profilom, ali izvozi/brisanje još nisu puni završeni korisnički tokovi. |
 
 ---
 
@@ -1384,9 +1384,9 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1550 | AdminBulkModerationUI | 🟢 Codex | ⏳ TODO | Moderation queue sa checkbox selekcijom, bulk approve/reject, inline preview. |
-| T-1551 | KYCBackofficeUI | 🟢 Codex | ⏳ TODO | Admin pregled dokumenata sa lightbox, approve/reject, status history. |
-| T-1552 | AdminAnalyticsUI | 🟢 Codex | ⏳ TODO | Dashboard sa Chart.js: GMV trend, user growth, auction conversion. Period selector. |
+| T-1550 | AdminBulkModerationUI | 🟢 Codex | ✅ DONE | Moderation queue ima checkbox selekciju, bulk akcije, note i decision history. |
+| T-1551 | KYCBackofficeUI | 🟢 Codex | 🟡 PARTIAL | KYC backoffice UI view postoji, ali nije još punom mjerom povezan kao finalni admin workflow ekran. |
+| T-1552 | AdminAnalyticsUI | 🟢 Codex | 🟡 PARTIAL | Analytics UI view i chart skeleton postoje, ali nisu završno spojeni na glavni admin page flow. |
 
 ---
 
@@ -1398,10 +1398,10 @@ Svi ostali taskovi mogu raditi paralelno oko ovog kritičnog puta.
 
 | ID | Task | Agent | Status | Opis |
 |----|------|-------|--------|------|
-| T-1600 | HorizonQueueConfig | 🔵 Qwen | ⏳ TODO | Horizon: `default` (8 workers), `notifications` (4), `high` za bids (2, prioritet). Alert za failed jobs > 10. |
-| T-1601 | SLOMonitoringJob | 🔵 Qwen | ⏳ TODO | Periodični job: mjeri p99 za bidding/search/checkout. Grafana metrika. Alert p99 > 500ms. |
+| T-1600 | HorizonQueueConfig | 🔵 Qwen | ✅ DONE | Queue config, Horizon runtime i deploy/restart tokovi su implementirani u config/docker/deploy sloju. |
+| T-1601 | SLOMonitoringJob | 🔵 Qwen | ✅ DONE | SLO monitoring job i Prometheus/Grafana wiring postoje u aplikacionom i docker observability sloju. |
 | T-1602 | QueryOptimizationAudit | 🟣 Claude | ✅ DONE | Telescope N+1 audit. Dodati eager loads gdje nedostaju. |
-| T-1603 | ImageOptimizationPipeline | 🔵 Qwen | ⏳ TODO | `spatie/laravel-medialibrary` + Imgix URL transformacije (width, webp, quality). CDN-ready. |
+| T-1603 | ImageOptimizationPipeline | 🔵 Qwen | 🟡 PARTIAL | Image optimization servis i Imgix-ready URL logika postoje, ali puni media pipeline još nije svuda uvezan. |
 
 ---
 

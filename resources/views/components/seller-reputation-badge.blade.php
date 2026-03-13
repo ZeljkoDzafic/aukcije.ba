@@ -6,6 +6,11 @@
 @props(['seller', 'size' => 'md'])
 
 @php
+    $trustScore = (float) ($seller->trust_score ?? 0);
+    $isVerifiedSeller = method_exists($seller, 'hasRole') ? $seller->hasRole('verified_seller') : false;
+    $memberSince = $seller->created_at instanceof \Illuminate\Support\Carbon
+        ? $seller->created_at->format('M Y')
+        : now()->format('M Y');
     $sizeClasses = [
         'sm' => 'w-8 h-8 text-xs',
         'md' => 'w-12 h-12 text-sm',
@@ -13,17 +18,17 @@
     ];
     
     $badgeColor = match(true) {
-        $seller->trust_score >= 4.5 => 'bg-green-500',
-        $seller->trust_score >= 4.0 => 'bg-blue-500',
-        $seller->trust_score >= 3.5 => 'bg-yellow-500',
-        $seller->trust_score >= 3.0 => 'bg-orange-500',
+        $trustScore >= 4.5 => 'bg-green-500',
+        $trustScore >= 4.0 => 'bg-blue-500',
+        $trustScore >= 3.5 => 'bg-yellow-500',
+        $trustScore >= 3.0 => 'bg-orange-500',
         default => 'bg-red-500',
     };
     
     $badgeIcon = match(true) {
-        $seller->trust_score >= 4.5 => '🏆',
-        $seller->trust_score >= 4.0 => '⭐',
-        $seller->trust_score >= 3.5 => '✓',
+        $trustScore >= 4.5 => '🏆',
+        $trustScore >= 4.0 => '⭐',
+        $trustScore >= 3.5 => '✓',
         default => '⚠',
     };
 @endphp
@@ -39,7 +44,7 @@
     </div>
     
     {{-- Verified Badge --}}
-    @if($seller->hasRole('verified_seller'))
+    @if($isVerifiedSeller)
         <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs">
             ✓
         </div>
@@ -61,7 +66,7 @@
         <div class="border-b border-gray-200 pb-2 mb-2">
             <h4 class="font-semibold text-gray-900">{{ $seller->name }}</h4>
             <p class="text-xs text-gray-500">
-                {{ $seller->hasRole('verified_seller') ? 'Verifikovani prodavac' : 'Prodavac' }}
+                {{ $isVerifiedSeller ? 'Verifikovani prodavac' : 'Prodavac' }}
             </p>
         </div>
         
@@ -72,13 +77,13 @@
                 <span class="text-gray-600">Reputacija</span>
                 <div class="flex items-center">
                     @for($i = 1; $i <= 5; $i++)
-                        @if($i <= round($seller->trust_score))
+                        @if($i <= round($trustScore))
                             <span class="text-yellow-500">★</span>
                         @else
                             <span class="text-gray-300">★</span>
                         @endif
                     @endfor
-                    <span class="ml-2 font-semibold text-gray-900">{{ number_format($seller->trust_score, 1) }}</span>
+                    <span class="ml-2 font-semibold text-gray-900">{{ number_format($trustScore, 1) }}</span>
                 </div>
             </div>
             
@@ -111,7 +116,7 @@
         
         {{-- Member Since --}}
         <div class="border-t border-gray-200 mt-3 pt-3 text-xs text-gray-500 text-center">
-            Član od {{ $seller->created_at->format('M Y') }}
+            Član od {{ $memberSince }}
         </div>
         
         {{-- Arrow --}}

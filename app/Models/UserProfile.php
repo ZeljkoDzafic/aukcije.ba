@@ -49,6 +49,8 @@ class UserProfile extends Model
         'website_url',
         'social_links',
         'notification_preferences',
+        'preferred_language',
+        'primary_marketplace_focus',
         'language',
         'currency',
         'timezone',

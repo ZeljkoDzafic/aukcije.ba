@@ -41,6 +41,8 @@ class CreateAuctionWizard extends Component
 
     public string $buyNowPrice = '';
 
+    public string $startsAt = '';
+
     public int $durationDays = 7;
 
     /** @var list<int> */
@@ -84,6 +86,7 @@ class CreateAuctionWizard extends Component
                 $this->startPrice = (string) $auction->start_price;
                 $this->reservePrice = (string) ($auction->reserve_price ?? '');
                 $this->buyNowPrice = (string) ($auction->buy_now_price ?? '');
+                $this->startsAt = $auction->starts_at?->format('Y-m-d\TH:i') ?? '';
                 $this->durationDays = (int) ($auction->duration_days ?? 7);
                 $this->shippingMethod = (string) ($auction->shipping_method ?? '');
                 $this->shippingPrice = (string) ($auction->shipping_cost ?? '');
@@ -181,6 +184,7 @@ class CreateAuctionWizard extends Component
             'startPrice'   => ['required', 'numeric', 'min:0.01'],
             'durationDays' => ['required', 'integer', 'in:1,3,5,7,10,14'],
             'shippingPrice' => ['nullable', 'numeric', 'min:0'],
+            'startsAt' => ['nullable', 'date'],
         ]);
 
         if ($status === 'active' && count($this->imageUrls) === 0) {
@@ -197,6 +201,10 @@ class CreateAuctionWizard extends Component
             return;
         }
 
+        $scheduledStartAt = $this->startsAt !== '' ? now()->createFromFormat('Y-m-d\TH:i', $this->startsAt) : null;
+        $scheduledStatus = $scheduledStartAt && $status === 'active' && $scheduledStartAt->isFuture() ? 'scheduled' : $status;
+        $endAt = ($scheduledStartAt ?? now())->copy()->addDays($this->durationDays);
+
         $payload = [
             'title'         => $this->title,
             'description'   => $this->description,
@@ -208,6 +216,7 @@ class CreateAuctionWizard extends Component
             'type'          => 'standard',
             'duration_days' => $this->durationDays,
             'auto_extension' => true,
+            'starts_at'     => $scheduledStartAt,
         ];
 
         if ($this->auctionId) {
@@ -221,13 +230,14 @@ class CreateAuctionWizard extends Component
 
             $auction->update(array_merge($payload, [
                 'current_price'     => (float) $this->startPrice,
-                'status'            => $status,
+                'status'            => $scheduledStatus,
                 'shipping_available' => true,
                 'shipping_method'   => $this->shippingMethod ?: null,
                 'shipping_cost'     => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
                 'location_city'     => $this->location ?: null,
-                'ends_at'           => now()->addDays($this->durationDays),
-                'original_end_at'   => now()->addDays($this->durationDays),
+                'starts_at'         => $scheduledStartAt,
+                'ends_at'           => $endAt,
+                'original_end_at'   => $endAt,
             ]));
         } else {
             try {
@@ -239,16 +249,20 @@ class CreateAuctionWizard extends Component
             }
 
             $auction->update([
+                'status'             => $scheduledStatus,
                 'shipping_available' => true,
                 'shipping_method'    => $this->shippingMethod ?: null,
                 'shipping_cost'      => $this->shippingPrice !== '' ? (float) $this->shippingPrice : null,
                 'location_city'      => $this->location ?: null,
+                'starts_at'          => $scheduledStartAt,
+                'ends_at'            => $endAt,
+                'original_end_at'    => $endAt,
             ]);
 
             $this->auctionId = $auction->id;
         }
 
-        if ($status === 'active') {
+        if ($status === 'active' && $scheduledStatus !== 'scheduled') {
             $auction = app(AuctionService::class)->publishAuction($auction);
         }
 

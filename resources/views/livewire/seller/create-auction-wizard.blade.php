@@ -52,12 +52,14 @@
                 @endforelse
             </div>
         @elseif ($step === 3)
-            <div class="grid gap-4 sm:grid-cols-3">
+            <div class="grid gap-4 sm:grid-cols-4">
                 <x-input wire:model.live="startPrice" name="start_price" type="number" label="Startna cijena" />
                 <x-input wire:model.live="reservePrice" name="reserve_price" type="number" label="Reserve cijena" />
                 <x-input wire:model.live="buyNowPrice" name="buy_now" type="number" label="Kupi odmah" />
+                <x-input wire:model.live="startsAt" name="starts_at" type="datetime-local" label="Planirani početak" />
             </div>
             <x-select wire:model.live="durationDays" name="duration_days" label="Trajanje aukcije" :options="collect($durationOptions)->mapWithKeys(fn($d) => [$d => $d.' '.($d === 1 ? 'dan' : 'dana')])->all()" />
+            <p class="text-sm text-slate-500">Ako postaviš budući termin početka, objava ide u zakazani status i aktivira se automatski.</p>
         @elseif ($step === 4)
             <div class="grid gap-4 sm:grid-cols-2">
                 <x-select wire:model.live="shippingMethod" name="shipping_method" label="Dostava" :options="['' => 'Odaberi dostavu', 'euroexpress' => 'EuroExpress', 'postexpress' => 'PostExpress', 'bhposta' => 'BH Pošta', 'pickup' => 'Lično preuzimanje']" />
@@ -71,6 +73,10 @@
                 <div>
                     <p class="price-label">Trajanje</p>
                     <p class="price">{{ $durationDays }} {{ $durationDays === 1 ? 'dan' : 'dana' }}</p>
+                </div>
+                <div>
+                    <p class="price-label">Početak</p>
+                    <p class="price">{{ $startsAt !== '' ? \Illuminate\Support\Carbon::parse($startsAt)->format('d.m.Y. H:i') : 'odmah po objavi' }}</p>
                 </div>
                 <div>
                     <p class="price-label">Dostava</p>

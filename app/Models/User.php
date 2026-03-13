@@ -601,12 +601,40 @@ class User extends Authenticatable
     {
         $labels = collect($this->marketplaceRoles())->map(function (string $role): string {
             return match ($role) {
-                'super_admin' => 'super admin',
-                'verified_seller' => 'verified seller',
+                'super_admin' => 'super administrator',
+                'verified_seller' => 'verifikovani prodavac',
+                'seller' => 'prodavac',
+                'buyer' => 'kupac',
+                'moderator' => 'moderator',
+                'admin' => 'administrator',
                 default => str_replace('_', ' ', $role),
             };
         });
 
         return $labels->implode(', ');
+    }
+
+    public function preferredMarketplaceFocus(): string
+    {
+        $focus = $this->profile?->primary_marketplace_focus;
+
+        if (in_array($focus, ['buyer', 'seller'], true)) {
+            return $focus;
+        }
+
+        return $this->hasAnyRole(['seller', 'verified_seller']) ? 'seller' : 'buyer';
+    }
+
+    public function preferredHomeRoute(): string
+    {
+        if ($this->hasAnyRole(['super_admin', 'admin', 'moderator'])) {
+            return 'admin.dashboard';
+        }
+
+        if ($this->preferredMarketplaceFocus() === 'seller' && $this->hasAnyRole(['seller', 'verified_seller'])) {
+            return 'seller.dashboard';
+        }
+
+        return 'dashboard';
     }
 }

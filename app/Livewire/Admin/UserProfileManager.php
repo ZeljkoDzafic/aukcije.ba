@@ -18,6 +18,8 @@ class UserProfileManager extends Component
 
     public string $statusMessage = '';
 
+    public string $adminNote = 'Admin operativna bilješka za korisnički profil.';
+
     public function moderate(string $action): void
     {
         $user = $this->getUser();
@@ -40,7 +42,10 @@ class UserProfileManager extends Component
                 'action' => $action,
                 'target_type' => 'user',
                 'target_id' => $user->id,
-                'metadata' => ['email' => $user->email],
+                'metadata' => [
+                    'email' => $user->email,
+                    'note' => $this->adminNote !== '' ? $this->adminNote : null,
+                ],
             ]);
         }
 

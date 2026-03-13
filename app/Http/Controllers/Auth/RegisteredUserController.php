@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
@@ -29,8 +30,17 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:buyer,seller'],
+            'role' => ['nullable', 'in:buyer,seller'],
+            'marketplace_focus' => ['nullable', 'in:buyer,seller'],
         ]);
+
+        $focus = $request->string('marketplace_focus')->toString();
+        if (! in_array($focus, ['buyer', 'seller'], true)) {
+            $focus = $request->string('role')->toString();
+        }
+        if (! in_array($focus, ['buyer', 'seller'], true)) {
+            $focus = 'buyer';
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -40,21 +50,31 @@ class RegisteredUserController extends Controller
 
         $user->assignRole('buyer');
 
-        if ($request->role === 'seller') {
+        if ($focus === 'seller') {
             $user->assignRole('seller');
         }
 
-        // Create profile
-        UserProfile::create(['user_id' => $user->id, 'full_name' => $request->name]);
+        $profilePayload = [
+            'user_id' => $user->id,
+            'full_name' => $request->name,
+        ];
 
-        // Create wallet
+        if (Schema::hasColumn('user_profiles', 'preferred_language')) {
+            $profilePayload['preferred_language'] = 'sr';
+        }
+
+        if (Schema::hasColumn('user_profiles', 'primary_marketplace_focus')) {
+            $profilePayload['primary_marketplace_focus'] = $focus;
+        }
+
+        UserProfile::create($profilePayload);
+
         Wallet::create(['user_id' => $user->id]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Redirect based on role
-        return redirect()->intended($request->role === 'seller' ? '/seller/dashboard' : '/dashboard');
+        return redirect()->intended(route($user->preferredHomeRoute()));
     }
 }

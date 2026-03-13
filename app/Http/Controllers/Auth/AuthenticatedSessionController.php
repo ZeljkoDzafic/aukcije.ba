@@ -25,14 +25,7 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        if ($user->hasRole(['super_admin', 'moderator'])) {
-            return redirect()->intended('/admin');
-        }
-        if ($user->hasAnyRole(['seller', 'verified_seller'])) {
-            return redirect()->intended('/seller/dashboard');
-        }
-
-        return redirect()->intended('/dashboard');
+        return redirect()->intended(route($user->preferredHomeRoute()));
     }
 
     public function destroy(Request $request): RedirectResponse

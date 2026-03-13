@@ -1,7 +1,7 @@
 {
     "name": "Aukcije.ba",
     "short_name": "Aukcije",
-    "description": "Regionalna aukcijska platforma za tržište Balkana",
+    "description": "Regionalna aukcijska platforma za kupovinu i prodaju kroz licitacije",
     "start_url": "/dashboard",
     "display": "standalone",
     "background_color": "#f3f4f6",
@@ -62,41 +62,41 @@
             "src": "/screenshots/home.png",
             "sizes": "1280x720",
             "type": "image/png",
-            "label": "Homepage"
+            "label": "Početna"
         },
         {
             "src": "/screenshots/auction-detail.png",
             "sizes": "1280x720",
             "type": "image/png",
-            "label": "Auction Detail"
+            "label": "Detalj aukcije"
         }
     ],
     "categories": ["shopping", "finance", "lifestyle"],
-    "lang": "bs-BA",
+    "lang": "sr-Latn-BA",
     "dir": "ltr",
     "prefer_related_applications": false,
     "related_applications": [],
     "scope": "/",
     "shortcuts": [
         {
-            "name": "Browse Auctions",
-            "short_name": "Auctions",
-            "description": "Browse all active auctions",
+            "name": "Pregledaj aukcije",
+            "short_name": "Aukcije",
+            "description": "Pregled svih aktivnih aukcija",
             "url": "/aukcije",
             "icons": [{ "src": "/icons/auctions.png", "sizes": "192x192" }]
         },
         {
-            "name": "Create Auction",
-            "short_name": "Sell",
-            "description": "Create a new auction",
+            "name": "Objavi aukciju",
+            "short_name": "Prodaja",
+            "description": "Kreiranje nove aukcije",
             "url": "/seller/aukcije/nova",
             "icons": [{ "src": "/icons/sell.png", "sizes": "192x192" }]
         },
         {
-            "name": "Watchlist",
-            "short_name": "Watchlist",
-            "description": "View your watchlist",
-            "url": "/watchlist",
+            "name": "Praćene aukcije",
+            "short_name": "Praćenje",
+            "description": "Pregled aukcija koje pratiš",
+            "url": "/pracene-aukcije",
             "icons": [{ "src": "/icons/watchlist.png", "sizes": "192x192" }]
         }
     ],

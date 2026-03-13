@@ -843,8 +843,21 @@ Route::get('/prodavci/{user}', function (string $user) {
 Route::get('/prodavci', function () {
     $search = request()->string('q')->toString();
     $sort = request()->string('sort')->toString() ?: 'reputation';
+    $activeCategory = request()->string('category')->toString();
 
     $sellers = collect();
+    $categories = collect();
+
+    if (Schema::hasTable('categories')) {
+        $categories = Category::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['name', 'slug'])
+            ->map(fn (Category $category) => [
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ]);
+    }
 
     if (Schema::hasTable('users')) {
         $sellers = User::query()
@@ -857,6 +870,9 @@ Route::get('/prodavci', function () {
                             ->where('city', 'like', '%'.$search.'%')
                             ->orWhere('bio', 'like', '%'.$search.'%'));
                 });
+            })
+            ->when($activeCategory !== '', function ($query) use ($activeCategory) {
+                $query->whereHas('auctions.category', fn ($categoryQuery) => $categoryQuery->where('slug', $activeCategory));
             })
             ->get()
             ->map(function (User $seller): array {
@@ -888,6 +904,8 @@ Route::get('/prodavci', function () {
         'sellers' => $sellers,
         'search' => $search,
         'sort' => $sort,
+        'categories' => $categories,
+        'activeCategory' => $activeCategory,
     ]);
 })->name('sellers.index');
 
@@ -1092,12 +1110,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'country' => $user->profile?->country,
             'phone' => $user->phone,
             'role_summary' => method_exists($user, 'roleSummary') ? $user->roleSummary() : 'buyer',
+            'primary_focus' => method_exists($user, 'preferredMarketplaceFocus') ? $user->preferredMarketplaceFocus() : 'buyer',
+            'primary_focus_label' => (method_exists($user, 'preferredMarketplaceFocus') ? $user->preferredMarketplaceFocus() : 'buyer') === 'seller' ? 'Prodaja' : 'Kupovina',
             'kyc_level' => $user->kycLevel(),
             'trust_score' => number_format((float) $user->trust_score, 1),
             'wallet_balance' => number_format((float) ($user->wallet?->balance ?? 0), 2, ',', '.').' BAM',
             'ratings_count' => $ratingsCount,
             'seller_badge' => $user->getTrustBadge(),
             'active_seller_auctions' => $activeSellerAuctions,
+            'can_sell' => $user->hasAnyRole(['seller', 'verified_seller']),
         ];
 
         return view('pages.profile.index', ['profile' => $profile]);
@@ -1119,6 +1140,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return view('pages.settings.notifications', ['preferences' => $preferences]);
     })->name('settings.notifications');
+
+    Route::get('/postavke/privatnost', function () {
+        return view('pages.settings.gdpr', [
+            'exportRequested' => false,
+            'exportReady' => false,
+            'exportReadyAt' => now()->addDay(),
+            'exportUrl' => '#',
+            'showDeleteConfirm' => false,
+            'settings' => [
+                'profile_public' => true,
+                'email_notifications' => true,
+                'sms_notifications' => false,
+            ],
+        ]);
+    })->name('settings.gdpr');
+
+    Route::get('/postavke/sigurnost', function () {
+        return view('pages.settings.security');
+    })->name('settings.security');
+
+    Route::get('/postavke/verifikacija', function () {
+        return view('pages.settings.verification');
+    })->name('settings.verification');
 
     Route::post('/postavke/obavijesti', function () {
         $user = auth()->user();
@@ -1529,6 +1573,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('searches.index')->with('status', 'Pretraga je spremljena i alert je uključen.');
     })->name('searches.store');
 
+    Route::patch('/moje-pretrage/{search}', function (SavedSearch $search) {
+        abort_unless($search->user_id === auth()->id(), 403);
+
+        $search->forceFill([
+            'alert_enabled' => ! (bool) $search->alert_enabled,
+        ])->save();
+
+        return back()->with('status', $search->alert_enabled ? 'Alert je uključen.' : 'Alert je isključen.');
+    })->name('searches.toggle');
+
     Route::delete('/moje-pretrage/{search}', function (SavedSearch $search) {
         abort_unless($search->user_id === auth()->id(), 403);
         $search->delete();
@@ -1685,6 +1739,56 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
 
         return view('pages.seller.dashboard', compact('stats', 'activeAuctions', 'shippingQueue', 'seller', 'sellerCommandCenter', 'sellerPriorityQueue'));
     })->name('dashboard');
+
+    Route::get('/analitika', function () {
+        $seller = auth()->user();
+        $period = request()->string('period')->toString() ?: '30d';
+        $days = match ($period) {
+            '7d' => 7,
+            '90d' => 90,
+            default => 30,
+        };
+
+        $gmv = Schema::hasTable('orders')
+            ? (float) $seller->soldOrders()->where('created_at', '>=', now()->subDays($days))->sum('seller_payout')
+            : 0.0;
+
+        $topItems = Schema::hasTable('orders')
+            ? Auction::query()
+                ->where('seller_id', $seller->id)
+                ->with(['category', 'primaryImage'])
+                ->withCount(['orders as sold_count'])
+                ->limit(5)
+                ->get()
+                ->map(function (Auction $auction) {
+                    $auction->total_revenue = (float) $auction->orders()->sum('seller_payout');
+                    $auction->avg_price = (float) $auction->orders()->avg('seller_payout');
+
+                    return $auction;
+                })
+            : collect();
+
+        return view('pages.seller.analytics', [
+            'period' => $period,
+            'gmv' => $gmv,
+            'gmvChange' => 8,
+            'sellThroughRate' => 62.5,
+            'sellThroughChange' => 4,
+            'avgDaysToSell' => 5,
+            'avgDaysChange' => -1,
+            'disputeRate' => 2.1,
+            'disputeChange' => -0.3,
+            'topItems' => $topItems,
+        ]);
+    })->name('analytics');
+
+    Route::get('/template-i', function () {
+        return view('pages.seller.templates.index');
+    })->name('templates.index');
+
+    Route::get('/bulk-operacije', function () {
+        return view('pages.seller.operations.index');
+    })->name('operations.index');
 
     // Create Auction
     Route::get('/aukcije/nova', function () {
@@ -2024,7 +2128,46 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
             }
         }
 
-        return view('pages.admin.dashboard', compact('stats', 'priorities', 'activity'));
+        $operationsInbox = collect([
+            [
+                'label' => 'KYC queue',
+                'value' => Schema::hasTable('user_verifications') ? DB::table('user_verifications')->where('status', 'pending')->count() : 0,
+                'hint' => 'Korisnici koji čekaju ručni pregled dokumenata.',
+                'href' => route('admin.users.index'),
+            ],
+            [
+                'label' => 'Moderacija aukcija',
+                'value' => Schema::hasTable('auctions') ? DB::table('auctions')->whereIn('status', ['reported', 'pending_review'])->count() : 0,
+                'hint' => 'Aukcije označene za ručnu provjeru sadržaja.',
+                'href' => route('admin.auctions.index'),
+            ],
+            [
+                'label' => 'Otvoreni sporovi',
+                'value' => Schema::hasTable('disputes') ? DB::table('disputes')->whereIn('status', ['open', 'escalated', 'in_review'])->count() : 0,
+                'hint' => 'Slučajevi koji traže moderatorsku odluku ili dodatni dokaz.',
+                'href' => route('admin.disputes.index'),
+            ],
+        ]);
+
+        $ctaQueue = collect([
+            [
+                'title' => 'Pregledaj KYC zahtjeve',
+                'description' => 'Najstariji pending zahtjevi i force review slučajevi.',
+                'href' => route('admin.users.index'),
+            ],
+            [
+                'title' => 'Otvori moderation queue',
+                'description' => 'Reported i pending review aukcije sa prioritetom.',
+                'href' => route('admin.auctions.index'),
+            ],
+            [
+                'title' => 'Riješi dispute queue',
+                'description' => 'Otvoreni i eskalirani sporovi koji traže odluku.',
+                'href' => route('admin.disputes.index'),
+            ],
+        ]);
+
+        return view('pages.admin.dashboard', compact('stats', 'priorities', 'activity', 'operationsInbox', 'ctaQueue'));
     })->name('dashboard');
 
     Route::get('/aktivnost', function () {
@@ -2043,11 +2186,57 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
 
     // Users
     Route::get('/korisnici', function () {
-        return view('pages.admin.users.index');
+        $adminUserInbox = collect([
+            [
+                'label' => 'KYC pending',
+                'value' => Schema::hasTable('user_verifications') ? DB::table('user_verifications')->where('status', 'pending')->count() : 0,
+                'hint' => 'Dokumenti i verifikacije čekaju pregled.',
+            ],
+            [
+                'label' => 'Seller force review',
+                'value' => Schema::hasTable('admin_logs') ? DB::table('admin_logs')->where('action', 'force-kyc-review')->count() : 0,
+                'hint' => 'Korisnici koje je tim označio za dodatni KYC pregled.',
+            ],
+            [
+                'label' => 'Banned / suspendovani',
+                'value' => Schema::hasTable('users') ? DB::table('users')->whereNotNull('banned_at')->count() : 0,
+                'hint' => 'Nalozi koji su pod restrikcijom ili blokadom.',
+            ],
+        ]);
+
+        return view('pages.admin.users.index', ['adminUserInbox' => $adminUserInbox]);
     })->name('users.index');
 
-    Route::get('/korisnici/{user}', function () {
-        return view('pages.admin.users.show');
+    Route::get('/korisnici/{user}', function (string $user) {
+        $userRecord = Schema::hasTable('users')
+            ? User::query()->with(['wallet', 'roles'])->find($user)
+            : null;
+
+        $decisionHistory = collect();
+        $kycQueue = collect();
+
+        if (Schema::hasTable('admin_logs')) {
+            $decisionHistory = AdminLog::query()
+                ->with('admin')
+                ->where('target_type', 'user')
+                ->where('target_id', $userRecord?->id ?? $user)
+                ->latest('created_at')
+                ->limit(10)
+                ->get();
+        }
+
+        if ($userRecord && Schema::hasTable('user_verifications')) {
+            $kycQueue = \App\Models\UserVerification::query()
+                ->where('user_id', $userRecord->id)
+                ->latest('updated_at')
+                ->get();
+        }
+
+        return view('pages.admin.users.show', [
+            'userRecord' => $userRecord,
+            'decisionHistory' => $decisionHistory,
+            'kycQueue' => $kycQueue,
+        ]);
     })->name('users.show');
 
     Route::get('/sadrzaj/stranice', function () {
@@ -2177,11 +2366,48 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
 
     // Auctions
     Route::get('/aukcije', function () {
-        return view('pages.admin.auctions.index');
+        $moderationInbox = collect([
+            [
+                'label' => 'Pending review',
+                'value' => Schema::hasTable('auctions') ? DB::table('auctions')->where('status', 'pending_review')->count() : 0,
+                'hint' => 'Aukcije koje čekaju moderatorsku odluku.',
+            ],
+            [
+                'label' => 'Reported',
+                'value' => Schema::hasTable('auctions') ? DB::table('auctions')->where('status', 'reported')->count() : 0,
+                'hint' => 'Listingi označeni zbog sumnjivog sadržaja ili prijave.',
+            ],
+            [
+                'label' => 'Featured nadzor',
+                'value' => Schema::hasTable('auctions') ? DB::table('auctions')->where('is_featured', true)->count() : 0,
+                'hint' => 'Istaknute aukcije koje treba periodično provjeriti.',
+            ],
+        ]);
+
+        return view('pages.admin.auctions.index', ['moderationInbox' => $moderationInbox]);
     })->name('auctions.index');
 
-    Route::get('/aukcije/{auction}', function () {
-        return view('pages.admin.auctions.show');
+    Route::get('/aukcije/{auction}', function (string $auction) {
+        $auctionRecord = Schema::hasTable('auctions')
+            ? Auction::query()->with(['seller', 'category'])->find($auction)
+            : null;
+
+        $decisionHistory = collect();
+
+        if (Schema::hasTable('admin_logs')) {
+            $decisionHistory = AdminLog::query()
+                ->with('admin')
+                ->where('target_type', 'auction')
+                ->where('target_id', $auctionRecord?->id ?? $auction)
+                ->latest('created_at')
+                ->limit(10)
+                ->get();
+        }
+
+        return view('pages.admin.auctions.show', [
+            'auctionRecord' => $auctionRecord,
+            'decisionHistory' => $decisionHistory,
+        ]);
     })->name('auctions.show');
 
     // Categories
@@ -2191,11 +2417,85 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
 
     // Disputes
     Route::get('/sporovi', function () {
-        return view('pages.admin.disputes.index');
+        $disputes = collect([
+            [
+                'id' => 'D-91',
+                'order' => 'A-881',
+                'reason' => 'item_not_as_described',
+                'status' => 'open',
+                'summary' => 'Kupac traži partial refund',
+                'href' => route('admin.disputes.show', ['dispute' => 91]),
+                'cta' => 'Otvori slučaj',
+            ],
+        ]);
+
+        if (Schema::hasTable('disputes')) {
+            $query = \App\Models\Dispute::query()->with('order')->latest();
+
+            $databaseDisputes = $query->get()->map(function (\App\Models\Dispute $dispute): array {
+                $orderId = $dispute->order?->id ?? $dispute->order_id;
+
+                return [
+                    'id' => str($dispute->id)->upper()->substr(0, 8),
+                    'order' => str((string) $orderId)->upper()->substr(0, 8),
+                    'reason' => (string) $dispute->reason,
+                    'status' => (string) $dispute->status,
+                    'summary' => $dispute->description ?: 'Spor je otvoren i čeka moderatorsku odluku.',
+                    'href' => route('admin.disputes.show', ['dispute' => $dispute->id]),
+                    'cta' => in_array((string) $dispute->status, ['open', 'escalated', 'in_review'], true) ? 'Riješi sada' : 'Pregled',
+                ];
+            });
+
+            if ($databaseDisputes->isNotEmpty()) {
+                $disputes = $databaseDisputes;
+            }
+        }
+
+        $disputeInbox = collect([
+            [
+                'label' => 'Otvoreni',
+                'value' => $disputes->filter(fn (array $item) => in_array($item['status'], ['open', 'escalated', 'in_review'], true))->count(),
+                'hint' => 'Sporovi koji traže moderatorsku reakciju.',
+            ],
+            [
+                'label' => 'Eskalirani',
+                'value' => $disputes->filter(fn (array $item) => $item['status'] === 'escalated')->count(),
+                'hint' => 'Slučajevi sa povišenim rizikom ili nezadovoljstvom.',
+            ],
+            [
+                'label' => 'Zatvoreni',
+                'value' => $disputes->filter(fn (array $item) => in_array($item['status'], ['resolved', 'closed'], true))->count(),
+                'hint' => 'Već obrađeni slučajevi za naknadni audit.',
+            ],
+        ]);
+
+        return view('pages.admin.disputes.index', [
+            'disputes' => $disputes,
+            'disputeInbox' => $disputeInbox,
+        ]);
     })->name('disputes.index');
 
-    Route::get('/sporovi/{dispute}', function () {
-        return view('pages.admin.disputes.show');
+    Route::get('/sporovi/{dispute}', function (string $dispute) {
+        $disputeRecord = Schema::hasTable('disputes')
+            ? \App\Models\Dispute::query()->with(['order.auction', 'order.shipment'])->find($dispute)
+            : null;
+
+        $decisionHistory = collect();
+
+        if (Schema::hasTable('admin_logs')) {
+            $decisionHistory = AdminLog::query()
+                ->with('admin')
+                ->where('target_type', 'dispute')
+                ->where('target_id', $disputeRecord?->id ?? $dispute)
+                ->latest('created_at')
+                ->limit(10)
+                ->get();
+        }
+
+        return view('pages.admin.disputes.show', [
+            'disputeRecord' => $disputeRecord,
+            'decisionHistory' => $decisionHistory,
+        ]);
     })->name('disputes.show');
 
     // Statistics

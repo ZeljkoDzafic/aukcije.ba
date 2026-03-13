@@ -7,13 +7,22 @@
     <div class="space-y-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Seller directory</p>
+                <p class="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Direktorij prodavaca</p>
                 <h1 class="mt-2 text-4xl font-semibold text-slate-900">Provjereni i aktivni prodavači</h1>
-                <p class="mt-3 max-w-3xl text-slate-600">Kupci mogu pregledati reputaciju, aktivnost i javni profil prodavača prije licitiranja.</p>
+                <p class="mt-3 max-w-3xl text-slate-600">Prije licitiranja možeš pregledati reputaciju, aktivnost, kategorije i javni profil prodavca.</p>
             </div>
 
-            <form method="GET" action="{{ route('sellers.index') }}" class="grid gap-3 sm:grid-cols-[1fr_220px]">
+            <form method="GET" action="{{ route('sellers.index') }}" class="grid gap-3 sm:grid-cols-[1fr_220px_220px]">
                 <x-input name="q" label="Pretraga" :value="$search" placeholder="Ime, grad ili bio" />
+                <label class="block text-sm font-medium text-slate-700">
+                    Kategorija
+                    <select name="category" class="input mt-2">
+                        <option value="">Sve kategorije</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category['slug'] }}" @selected($activeCategory === $category['slug'])>{{ $category['name'] }}</option>
+                        @endforeach
+                    </select>
+                </label>
                 <label class="block text-sm font-medium text-slate-700">
                     Sortiranje
                     <select name="sort" class="input mt-2">

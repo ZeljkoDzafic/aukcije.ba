@@ -14,6 +14,8 @@
         <x-button variant="ghost" wire:click="moderate('reset-password')">Reset lozinke</x-button>
     </div>
 
+    <x-input wire:model.live="adminNote" name="admin_note" type="textarea" label="Admin decision note" />
+
     @if ($user)
         <x-data-table :headers="['Sekcija', 'Vrijednost']">
             <tr class="table-row"><td class="px-4 py-3">Aktivne aukcije</td><td class="px-4 py-3">{{ $user->auctions->count() }}</td></tr>

@@ -18,11 +18,40 @@ class AuctionModeration extends Component
 
     public string $feedback = '';
 
-    /** @var list<array{id: string, title: string, status: string, seller: string}> */
+    public string $bulkNote = 'Moderatorska bulk odluka nakon pregleda queue-a.';
+
+    /** @var list<string> */
+    public array $selectedAuctionIds = [];
+
+    /** @var list<array{id: string, title: string, status: string, seller: string, latest_note?: string|null}> */
     public array $auctions = [
-        ['id' => '1', 'title' => 'Rolex Datejust 36', 'status' => 'reported', 'seller' => 'Amar Hadžić'],
-        ['id' => '2', 'title' => 'iPhone 15 Pro', 'status' => 'pending review', 'seller' => 'Lana R.'],
+        ['id' => '1', 'title' => 'Rolex Datejust 36', 'status' => 'reported', 'seller' => 'Aleksa K.', 'latest_note' => 'Prijava zbog netačnog opisa.'],
+        ['id' => '2', 'title' => 'iPhone 15 Pro', 'status' => 'pending review', 'seller' => 'Nika R.', 'latest_note' => 'Čeka završnu potvrdu.'],
     ];
+
+    public function toggleSelection(string $auctionId): void
+    {
+        if (in_array($auctionId, $this->selectedAuctionIds, true)) {
+            $this->selectedAuctionIds = array_values(array_filter(
+                $this->selectedAuctionIds,
+                fn (string $selectedId): bool => $selectedId !== $auctionId
+            ));
+
+            return;
+        }
+
+        $this->selectedAuctionIds[] = $auctionId;
+    }
+
+    public function selectVisible(): void
+    {
+        $this->selectedAuctionIds = $this->visibleAuctions->pluck('id')->values()->all();
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selectedAuctionIds = [];
+    }
 
     public function applyAction(int $auctionId, string $action): void
     {
@@ -44,7 +73,10 @@ class AuctionModeration extends Component
                     $action,
                     'auction',
                     $model->id,
-                    ['title' => $model->title]
+                    [
+                        'title' => $model->title,
+                        'note' => $this->bulkNote !== '' ? $this->bulkNote : null,
+                    ]
                 );
 
                 $this->feedback = "Akcija '{$action}' izvršena za aukciju {$model->title}.";
@@ -58,15 +90,17 @@ class AuctionModeration extends Component
 
     public function applyBulk(string $action): void
     {
-        $visibleIds = $this->getVisibleAuctionsProperty()->pluck('id')->all();
+        $selectedIds = $this->selectedAuctionIds !== []
+            ? $this->selectedAuctionIds
+            : $this->getVisibleAuctionsProperty()->pluck('id')->all();
 
-        if ($visibleIds === []) {
+        if ($selectedIds === []) {
             $this->feedback = 'Nema aukcija za bulk akciju.';
 
             return;
         }
 
-        foreach ($visibleIds as $auctionId) {
+        foreach ($selectedIds as $auctionId) {
             if ($action === 'approve-pending' && $this->filter !== 'pending review') {
                 continue;
             }
@@ -75,22 +109,61 @@ class AuctionModeration extends Component
                 continue;
             }
 
+            $auction = Schema::hasTable('auctions') ? Auction::query()->find($auctionId) : null;
+
+            if ($auction) {
+                match ($action) {
+                    'approve-pending' => $auction->update(['status' => 'active']),
+                    'cancel-expired' => $auction->update(['status' => 'cancelled']),
+                    'feature-selected' => $auction->update(['is_featured' => true]),
+                    default => null,
+                };
+
+                app(AdminAuditService::class)->record(
+                    Auth::id(),
+                    $action,
+                    'auction',
+                    $auction->id,
+                    [
+                        'title' => $auction->title,
+                        'note' => $this->bulkNote,
+                    ]
+                );
+
+                continue;
+            }
+
             $this->applyAction((int) $auctionId, $action === 'approve-pending' ? 'approve' : 'cancel');
         }
 
-        $this->feedback = $action === 'approve-pending'
-            ? 'Bulk approve je izvršen nad aukcijama na čekanju.'
-            : 'Bulk cancel je izvršen nad vidljivim aukcijama.';
+        $this->clearSelection();
+
+        $this->feedback = match ($action) {
+            'approve-pending' => 'Bulk approve je izvršen nad odabranim aukcijama na čekanju.',
+            'feature-selected' => 'Bulk feature je izvršen nad odabranim aukcijama.',
+            default => 'Bulk cancel je izvršen nad odabranim aukcijama.',
+        };
     }
 
     /**
-     * @return Collection<int, array{id: string, title: string, status: string, seller: string}>
+     * @return Collection<int, array{id: string, title: string, status: string, seller: string, latest_note?: string|null}>
      */
     public function getVisibleAuctionsProperty(): Collection
     {
         $auctions = collect($this->auctions);
 
         if (Schema::hasTable('auctions')) {
+            $latestNotes = collect();
+
+            if (Schema::hasTable('admin_logs')) {
+                $latestNotes = \App\Models\AdminLog::query()
+                    ->where('target_type', 'auction')
+                    ->latest('created_at')
+                    ->get()
+                    ->groupBy('target_id')
+                    ->map(fn (Collection $entries): ?string => $entries->first()?->metadata['note'] ?? null);
+            }
+
             $databaseAuctions = Auction::query()
                 ->with('seller')
                 ->limit(20)
@@ -100,6 +173,7 @@ class AuctionModeration extends Component
                     'title' => $auction->title,
                     'status' => strtolower((string) $auction->status),
                     'seller' => $auction->seller?->name ?? 'Nepoznato',
+                    'latest_note' => $latestNotes->get($auction->id),
                 ]);
 
             if ($databaseAuctions->isNotEmpty()) {

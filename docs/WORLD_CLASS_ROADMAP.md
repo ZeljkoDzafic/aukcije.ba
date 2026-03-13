@@ -16,12 +16,12 @@
 | Vue BiddingConsole | ✅ Production-ready | UUID types, isExpired, proxyMax sync |
 | Payment Services | ✅ Refaktorisan | DI injection, initiateDeposit flow, webhook controller |
 | Shipping Services | ✅ Refaktorisan | DI injection, HMAC webhook verifikacija |
-| Frontend UI | 🔴 In progress | Livewire/Blade skeletons postoje, trebaju backend hookup |
-| Trust & Safety | 🟡 Osnova | Shill detection heuristike nedostaju, fraud scoring nije implementiran |
-| GDPR / Compliance | 🔴 Kritično | Data export, erasure, cookie consent nisu implementirani |
-| Observability | 🟡 Osnova | Prometheus/Grafana setup postoji, alerting pravila nedostaju |
-| Seller Tools | 🔴 Nedostaje | Analytics, bulk ops, template-i, scheduled start time |
-| Admin Operations | 🔴 In progress | Moderation UI skeleti postoje, bulk akcije nedostaju |
+| Frontend UI | 🟡 Dobar napredak | Buyer/seller/admin command center je jak, ali dio trust/GDPR/PWA tokova još traži finalni wiring |
+| Trust & Safety | 🟡 Jak backend, slabiji UX finish | Reputation badge je živ, ali 2FA/KYC korisnički tokovi još nisu zatvoreni do kraja |
+| GDPR / Compliance | 🟡 Osnova postoji | Banner, settings i backend jobovi postoje, ali puni self-service tok još nije kompletan |
+| Observability | 🟡 Dobar backend sloj | Prometheus/Grafana i SLO job postoje, ali runtime potvrda i operativni runbook drillovi ostaju važni |
+| Seller Tools | 🟡 Djelimično isporučeno | Dashboard i readiness postoje, ali template/bulk/scheduled UI još nije završen |
+| Admin Operations | 🟡 Jak napredak | Inbox, bulk moderation i decision history postoje; KYC/analytics UI još traže završni polish |
 
 ---
 
@@ -161,6 +161,33 @@
 | T-1601 | SLOMonitoringJob | Periodični job koji mjeri p99 response time za bidding API, search API i checkout. Šalje metriku na Grafana. Alert ako p99 > 500ms. |
 | T-1602 | QueryOptimizationAudit | Telescope/Debugbar audit svih N+1 upita. Dodati `->with()` eager loads gdje nedostaju. |
 | T-1603 | ImageOptimizationPipeline | `spatie/laravel-medialibrary` sa Imgix URL transformacijama (width, format=webp, quality). CDN-ready URL generation. |
+
+---
+
+## Dodatni World-Class Gapovi (March 2026 audit)
+
+Ovo nisu više MVP ili osnovni production taskovi, nego stvari koje platformu dižu na vrh regionalnog tržišta:
+
+- **Regionalni jezik i neutralan UX sloj**
+  - Dosljedna ijekavica latinica kroz cijeli proizvod
+  - Uklanjanje lokalno osjetljivih demo imena, placeholder adresa i miješanog buyer/seller engleskog jezika
+  - Jedinstven glossary: kupac, prodavac, licitacija, obavještenja, pregled
+- **Role preference onboarding**
+  - Jedan nalog mora prirodno podržati kupovinu i prodaju
+  - Registracija treba da bira samo primarni fokus, ne da djeluje kao odvajanje dva svijeta
+  - Login/dashboard redirect i onboarding CTA-jevi trebaju pratiti taj fokus
+- **Trust explanation layer**
+  - Nije dovoljno imati trust score i badge; korisnik mora razumjeti zašto je prodavac pouzdan
+  - Tooltip, breakdown i reputacioni signali trebaju biti dosljedni na listingu, detailu i seller profilu
+- **Media quality layer**
+  - Svaki listing treba fallback sliku, blurhash/loading stanje, kvalitetan crop i CDN-ready transformacije
+  - Seller readiness treba upozoravati na loš opis, manjak slika i slabe trust signale
+- **Operational polish**
+  - Notification centar, dispute detail i command center već postoje, ali sljedeći nivo je automation + jasni CTA prioriteti po korisničkom tipu
+  - Admin, buyer i seller moraju imati isti kvalitet “šta dalje” guidance-a
+- **Compliance self-service**
+  - GDPR export, account erasure, cookie consent i 2FA ne smiju ostati samo backend capability ili view skeleton
+  - Korisnik mora samostalno završiti tok bez ručne podrške
 
 ---
 

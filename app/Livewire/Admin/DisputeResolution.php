@@ -6,6 +6,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Dispute;
 use App\Models\DisputeMessage;
+use App\Services\AdminAuditService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -53,6 +54,15 @@ class DisputeResolution extends Component
                 }
 
                 $dispute->update($payload);
+
+                app(AdminAuditService::class)->record(
+                    Auth::id(),
+                    'resolve-dispute',
+                    'dispute',
+                    $dispute->id,
+                    ['resolution' => $action]
+                );
+
                 $this->feedback = "Spor '{$dispute->id}' je riješen akcijom: {$action}.";
 
                 return;
@@ -76,6 +86,14 @@ class DisputeResolution extends Component
                 'is_from_admin' => true,
             ]);
         }
+
+        app(AdminAuditService::class)->record(
+            Auth::id(),
+            'dispute-admin-message',
+            'dispute',
+            $this->disputeId,
+            ['message' => $this->message]
+        );
 
         $this->messages[] = [
             'author' => 'Admin',

@@ -28,6 +28,14 @@ it('allows authenticated users to save a search and view it later', function () 
         ->assertOk()
         ->assertSee('Rolex')
         ->assertSee('Alert uključen');
+
+    $search = SavedSearch::query()->where('user_id', $user->id)->firstOrFail();
+
+    $this->actingAs($user)
+        ->patch(route('searches.toggle', ['search' => $search->id]))
+        ->assertSessionHas('status');
+
+    expect($search->fresh()->alert_enabled)->toBeFalse();
 });
 
 it('renders homepage discovery blocks from live auction data', function () {

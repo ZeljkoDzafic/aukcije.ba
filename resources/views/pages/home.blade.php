@@ -163,6 +163,23 @@
     </div>
 </section>
 
+<section class="bg-white">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between gap-4">
+            <div>
+                <p class="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Novo u ponudi</p>
+                <h2 class="mt-2 text-3xl font-semibold text-slate-900">Svježe objavljene aukcije</h2>
+                <p class="mt-2 max-w-2xl text-slate-600">Ovaj blok vuče odvojeni homepage data sloj i osvježava se bez oslanjanja na statične fallbacke.</p>
+            </div>
+            <a href="{{ route('auctions.index', ['sort' => 'newest']) }}" class="link">Nove aukcije</a>
+        </div>
+
+        <div class="mt-8">
+            @livewire('homepage-sections', ['sections' => ['new_arrivals']])
+        </div>
+    </div>
+</section>
+
 <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
     <div class="grid gap-6 lg:grid-cols-3">
         <x-card class="space-y-3">

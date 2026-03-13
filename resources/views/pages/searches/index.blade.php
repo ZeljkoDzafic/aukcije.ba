@@ -37,6 +37,11 @@
 
                         <div class="flex flex-wrap items-center gap-3">
                             <a href="{{ route('search', ['q' => $search->query, 'category' => $search->category_slug]) }}" class="link">Otvori pretragu</a>
+                            <form method="POST" action="{{ route('searches.toggle', ['search' => $search->id]) }}">
+                                @csrf
+                                @method('PATCH')
+                                <x-button variant="ghost">{{ $search->alert_enabled ? 'Isključi alert' : 'Uključi alert' }}</x-button>
+                            </form>
                             <form method="POST" action="{{ route('searches.destroy', ['search' => $search->id]) }}">
                                 @csrf
                                 @method('DELETE')

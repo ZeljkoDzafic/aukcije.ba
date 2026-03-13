@@ -18,6 +18,9 @@
         'commission' => '107,00 BAM',
         'payout' => '2.033,00 BAM',
         'tracking_number' => 'EE123456789BA',
+        'payment_deadline_at' => null,
+        'dispute_status' => null,
+        'dispute_reason' => null,
     ];
 @endphp
 <section class="space-y-8">
@@ -81,6 +84,15 @@
                     @endforeach
                 </div>
             </x-card>
+
+            @if ($order->dispute_reason)
+                <x-card class="space-y-3">
+                    <h2 class="text-xl font-semibold text-slate-900">Spor signal</h2>
+                    <div class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-slate-700">
+                        Razlog spora: {{ str_replace('_', ' ', (string) $order->dispute_reason) }}
+                    </div>
+                </x-card>
+            @endif
         </div>
 
         <div class="space-y-6">

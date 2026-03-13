@@ -22,18 +22,9 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                // Redirect based on user role
                 $user = Auth::guard($guard)->user();
 
-                if ($user->hasAnyRole(['admin', 'super_admin', 'moderator'])) {
-                    return redirect()->route('admin.dashboard');
-                }
-
-                if ($user->hasAnyRole(['seller', 'verified_seller'])) {
-                    return redirect()->route('seller.dashboard');
-                }
-
-                return redirect()->route('dashboard');
+                return redirect()->route($user->preferredHomeRoute());
             }
         }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="sr-Latn-BA">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,7 +32,7 @@
 <body class="min-h-screen bg-gray-50">
     {{-- Skip to main content for accessibility --}}
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:rounded-lg focus:shadow-lg">
-        Skip to main content
+        Preskoči na glavni sadržaj
     </a>
 
     {{-- Header --}}
@@ -46,6 +46,9 @@
     {{-- Footer --}}
     @include('layouts.partials.footer')
 
+    {{-- Cookie Consent --}}
+    <x-cookie-consent-banner />
+
     {{-- Toast Notifications --}}
     @include('layouts.partials.toast')
 
@@ -54,5 +57,13 @@
 
     {{-- Vue Components --}}
     @vite(['resources/vue/app.js'])
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(function () {});
+            });
+        }
+    </script>
 </body>
 </html>

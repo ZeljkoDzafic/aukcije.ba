@@ -16,6 +16,9 @@
                         <h1 class="text-3xl font-semibold text-slate-900">{{ $seller->name }}</h1>
                         <p class="text-slate-600">{{ ucfirst(method_exists($seller, 'roleSummary') ? $seller->roleSummary() : 'seller') }} · {{ $sellerStats['city'] }}</p>
                     </div>
+                    <div class="ml-auto">
+                        <x-seller-reputation-badge :seller="$seller" size="sm" />
+                    </div>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-3">
                     <div class="rounded-2xl bg-slate-50 px-4 py-3">

@@ -20,6 +20,10 @@
         ->get();
 @endphp
 
+@php
+    $currentCategory = $currentAuction && property_exists($currentAuction, 'category') ? $currentAuction->category : null;
+@endphp
+
 @if($similarAuctions->count() > 0)
     <section class="mt-12">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">
@@ -91,13 +95,13 @@
         </div>
         
         {{-- View All Link --}}
-        @if($currentAuction->category)
+        @if($currentCategory)
             <div class="mt-6 text-center">
                 <a 
-                    href="{{ route('categories.show', $currentAuction->category) }}"
+                    href="{{ route('categories.show', $currentCategory) }}"
                     class="btn-outline inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                 >
-                    Pogledaj sve iz kategorije "{{ $currentAuction->category->name }}"
+                    Pogledaj sve iz kategorije "{{ $currentCategory->name }}"
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
