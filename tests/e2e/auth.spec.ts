@@ -6,8 +6,8 @@
  */
 
 import { test, expect } from './fixtures/test-fixtures';
-import { LoginPage } from '../pages/LoginPage';
-import { RegisterPage } from '../pages/RegisterPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 test.describe('Authentication', () => {
     let loginPage: LoginPage;

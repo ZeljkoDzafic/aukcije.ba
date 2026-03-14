@@ -5,10 +5,10 @@
  * Real browser smoke coverage for launch-critical surfaces.
  */
 
-import { test, expect } from '../fixtures/test-fixtures';
-import { LoginPage } from '../pages/LoginPage';
-import { AuctionListPage } from '../pages/AuctionListPage';
-import { AuctionDetailPage } from '../pages/AuctionDetailPage';
+import { test, expect } from './fixtures/test-fixtures';
+import { LoginPage } from './pages/LoginPage';
+import { AuctionListPage } from './pages/AuctionListPage';
+import { AuctionDetailPage } from './pages/AuctionDetailPage';
 
 test.describe('Critical User Flows', () => {
     test('Buyer smoke: login → search → open auction → inspect bid panel', async ({ page }) => {
