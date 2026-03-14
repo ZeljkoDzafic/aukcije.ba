@@ -26,16 +26,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libbz2-dev \
     libreadline-dev \
     libxslt1-dev \
-    libmagickwand-dev \
-    libjpeg-dev \
-    libfreetype-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libwebp-dev \
     libxpm-dev \
+    libpq-dev \
     zip \
     unzip \
     nodejs \
     npm \
-    default-mysql-client \
     postgresql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
