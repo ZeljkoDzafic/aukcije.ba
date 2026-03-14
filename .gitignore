@@ -101,7 +101,6 @@ temp/
 composer.lock
 
 # NPM
-package-lock.json
 yarn.lock
 
 # Translations
