@@ -14,8 +14,7 @@ ARG GROUP_ID=1000
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Sarajevo
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     libpng-dev \
@@ -28,6 +27,10 @@ RUN apt-get update && apt-get install -y \
     libreadline-dev \
     libxslt1-dev \
     libmagickwand-dev \
+    libjpeg-dev \
+    libfreetype-dev \
+    libwebp-dev \
+    libxpm-dev \
     zip \
     unzip \
     nodejs \
@@ -54,8 +57,7 @@ RUN docker-php-ext-configure intl \
     && docker-php-ext-install soap \
     && docker-php-ext-install xsl
 
-# Install Imagick
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagickwand-dev \
     && rm -rf /var/lib/apt/lists/* \
     && pecl install imagick \
