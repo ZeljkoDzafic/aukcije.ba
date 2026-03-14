@@ -5,25 +5,27 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Auction;
 use App\Models\Message;
+use App\Models\User;
+use App\Support\MessageThreadBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Schema;
 
 class MessageController extends Controller
 {
+    public function __construct(
+        private readonly MessageThreadBuilder $threadBuilder = new MessageThreadBuilder,
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
         if (! Schema::hasTable('messages')) {
-            return response()->json(['success' => true, 'data' => []]);
+            return response()->json(['success' => true, 'data' => [], 'selected_thread' => null, 'messages' => []]);
         }
 
-        // TODO: Replace flat list with conversation threads grouped by (other_party, auction_id).
-        //       Each thread: other_user{id,name,avatar}, auction{id,title}, last_message,
-        //       unread_count, last_message_at. Paginate (20 threads/page).
-        // TODO: Add GET /user/messages/{otherUserId}?auction_id= to load a single thread.
-        // TODO: Add POST /user/messages/{message}/read to mark a thread read.
-        // TODO: Broadcast new messages via private user channel so inbox updates in real-time.
         $messages = Message::query()
             ->with(['sender', 'receiver', 'auction'])
             ->where(function ($query) use ($request) {
@@ -31,16 +33,68 @@ class MessageController extends Controller
                     ->orWhere('receiver_id', $request->user()->id);
             })
             ->latest('created_at')
-            ->paginate(50);
+            ->get();
 
-        return response()->json(['success' => true, 'data' => $messages->items()]);
+        $threads = $this->threadBuilder->build($messages, $request->user());
+        $selectedThread = $threads->firstWhere('thread_key', $request->string('thread')->toString()) ?? $threads->first();
+        $threadMessages = $this->threadBuilder->messagesForThread($messages, $request->user(), $selectedThread);
+
+        if ($selectedThread) {
+            Message::query()
+                ->whereIn('id', $threadMessages->where('receiver_id', $request->user()->id)->where('is_read', false)->pluck('id'))
+                ->update(['is_read' => true]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $threads->values()->all(),
+            'selected_thread' => $selectedThread,
+            'messages' => $threadMessages->values()->all(),
+        ]);
+    }
+
+    public function showThread(Request $request, string $otherUserId): JsonResponse
+    {
+        if (! Schema::hasTable('messages')) {
+            return response()->json(['success' => true, 'data' => null, 'messages' => []]);
+        }
+
+        abort_unless(User::query()->whereKey($otherUserId)->exists(), 404);
+
+        $auctionId = $request->string('auction_id')->toString() ?: null;
+        $threadKey = $this->threadBuilder->threadKey($auctionId, $otherUserId);
+
+        $messages = Message::query()
+            ->with(['sender', 'receiver', 'auction'])
+            ->where(function ($query) use ($request) {
+                $query->where('sender_id', $request->user()->id)
+                    ->orWhere('receiver_id', $request->user()->id);
+            })
+            ->latest('created_at')
+            ->get();
+
+        $threads = $this->threadBuilder->build($messages, $request->user());
+        $selectedThread = $threads->firstWhere('thread_key', $threadKey);
+        abort_if(! $selectedThread, 404);
+
+        $threadMessages = $this->threadBuilder->messagesForThread($messages, $request->user(), $selectedThread);
+
+        Message::query()
+            ->whereIn('id', $threadMessages->where('receiver_id', $request->user()->id)->where('is_read', false)->pluck('id'))
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $selectedThread,
+            'messages' => $threadMessages->values()->all(),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'receiver_id' => ['required', 'string'],
-            'auction_id' => ['nullable', 'string'],
+            'receiver_id' => ['required', 'string', Rule::exists(User::class, 'id')],
+            'auction_id' => ['nullable', 'string', Rule::exists(Auction::class, 'id')],
             'content' => ['required', 'string', 'max:5000'],
         ]);
 
@@ -51,10 +105,16 @@ class MessageController extends Controller
             ], 201);
         }
 
-        // TODO: Validate that receiver_id belongs to a real user (exists:users,id).
-        // TODO: Prevent users from messaging themselves.
-        // TODO: Fire a NewMessageEvent that broadcasts to the receiver's private channel
-        //       so the inbox badge updates without a page refresh.
+        if ($validated['receiver_id'] === $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ne možete poslati poruku samom sebi.',
+                'errors' => [
+                    'receiver_id' => ['Ne možete poslati poruku samom sebi.'],
+                ],
+            ], 422);
+        }
+
         $message = Message::query()->create([
             'sender_id' => $request->user()->id,
             'receiver_id' => $validated['receiver_id'],
@@ -67,5 +127,19 @@ class MessageController extends Controller
             'success' => true,
             'data' => $message->load(['sender', 'receiver']),
         ], 201);
+    }
+
+    public function markRead(Request $request, Message $message): JsonResponse
+    {
+        abort_unless($message->receiver_id === $request->user()->id || $message->sender_id === $request->user()->id, 403);
+
+        if (! $message->is_read && $message->receiver_id === $request->user()->id) {
+            $message->update(['is_read' => true]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $message->fresh(),
+        ]);
     }
 }

@@ -15,9 +15,29 @@
     $trackingNumber = $disputeRecord?->order?->shipment?->tracking_number ?? 'EE123456789BA';
 @endphp
 <section class="space-y-8">
+    <div class="panel-hero-muted">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <p class="panel-kicker">Dispute detail</p>
+                <h1 class="mt-2 text-3xl font-semibold text-slate-900">{{ $disputeTitle }}</h1>
+                <p class="mt-2 max-w-2xl text-slate-600">{{ $disputeDescription }}</p>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="panel-metric">
+                    <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Status</p>
+                    <p class="mt-2 text-lg font-semibold text-slate-900">{{ $disputeStatus }}</p>
+                </div>
+                <div class="panel-metric">
+                    <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Order</p>
+                    <p class="mt-2 text-lg font-semibold text-slate-900">#{{ str((string) $orderId)->upper()->substr(0, 8) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="grid gap-8 xl:grid-cols-[1fr_0.9fr]">
         <div class="space-y-6">
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm uppercase tracking-[0.18em] text-slate-500">Dispute #{{ str((string) ($disputeRecord?->id ?? 'D-91'))->upper()->substr(0, 8) }}</p>
@@ -28,28 +48,28 @@
                 <p class="text-slate-600">{{ $disputeDescription }}</p>
             </x-card>
 
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Timeline</h2>
                 <div class="space-y-3">
                     @foreach (['Spor otvoren', 'Dokazi dodani', 'Seller odgovorio', 'Čeka odluku moderatora'] as $event)
-                        <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{{ $event }}</div>
+                        <div class="panel-subtle-card text-sm text-slate-700">{{ $event }}</div>
                     @endforeach
                 </div>
             </x-card>
 
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Komunikacija</h2>
                 <div class="space-y-3">
-                    <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">Kupac: “Opis je bio optimističan, tražim refund od 250 BAM.”</div>
-                    <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">Seller: “Spreman sam na djelimičan refund nakon pregleda fotografija.”</div>
+                    <div class="panel-subtle-card text-sm text-slate-700">Kupac: “Opis je bio optimističan, tražim refund od 250 BAM.”</div>
+                    <div class="panel-subtle-card text-sm text-slate-700">Seller: “Spreman sam na djelimičan refund nakon pregleda fotografija.”</div>
                 </div>
             </x-card>
 
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Decision history</h2>
                 <div class="space-y-3">
                     @forelse ($decisionHistory as $entry)
-                        <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        <div class="panel-subtle-card text-sm text-slate-700">
                             <span class="font-semibold text-slate-900">{{ strtoupper($entry->action) }}</span>
                             · {{ $entry->admin?->name ?? 'Admin' }}
                             · {{ $entry->created_at?->format('d.m.Y. H:i') }}
@@ -61,14 +81,14 @@
                             @endif
                         </div>
                     @empty
-                        <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">Još nema zabilježenih moderatorskih odluka za ovaj spor.</div>
+                        <div class="panel-subtle-card text-sm text-slate-600">Još nema zabilježenih moderatorskih odluka za ovaj spor.</div>
                     @endforelse
                 </div>
             </x-card>
         </div>
 
         <div class="space-y-6">
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Order detalji</h2>
                 <x-data-table :headers="['Polje', 'Vrijednost']">
                     <tr class="table-row"><td class="px-4 py-3">Order</td><td class="px-4 py-3">#{{ str((string) $orderId)->upper()->substr(0, 8) }}</td></tr>

@@ -13,36 +13,28 @@ export class AuctionDetailPage {
     readonly countdownTimer: Locator;
     readonly bidInput: Locator;
     readonly bidButton: Locator;
-    readonly proxyBidCheckbox: Locator;
     readonly proxyBidInput: Locator;
     readonly watchlistButton: Locator;
-    readonly shareButton: Locator;
-    readonly imageGallery: Locator;
     readonly description: Locator;
     readonly sellerInfo: Locator;
     readonly bidHistory: Locator;
-    readonly bidHistoryItems: Locator;
     readonly errorMessage: Locator;
     readonly successMessage: Locator;
 
     constructor(page: Page) {
         this.page = page;
         this.title = page.locator('h1');
-        this.priceDisplay = page.locator('[data-testid="current-price"]');
-        this.countdownTimer = page.locator('[data-testid="countdown-timer"]');
+        this.priceDisplay = page.locator('text=Trenutna cijena').first();
+        this.countdownTimer = page.locator('text=Vrijeme do kraja').first();
         this.bidInput = page.locator('input[name="bid_amount"]');
-        this.bidButton = page.locator('button:has-text("LICITIRAJ")');
-        this.proxyBidCheckbox = page.locator('input[name="proxy_bid"]');
-        this.proxyBidInput = page.locator('input[name="max_bid_amount"]');
-        this.watchlistButton = page.locator('button:has-text("Watchlist")');
-        this.shareButton = page.locator('button:has-text("Podijeli")');
-        this.imageGallery = page.locator('[data-testid="image-gallery"]');
-        this.description = page.locator('[data-testid="description"]');
-        this.sellerInfo = page.locator('[data-testid="seller-info"]');
-        this.bidHistory = page.locator('[data-testid="bid-history"]');
-        this.bidHistoryItems = page.locator('[data-testid="bid-item"]');
-        this.errorMessage = page.locator('.alert-danger, .error-message');
-        this.successMessage = page.locator('.alert-success, .success-message');
+        this.bidButton = page.locator('button:has-text("Licitiraj odmah")');
+        this.proxyBidInput = page.locator('input[name="proxy_max"]');
+        this.watchlistButton = page.locator('button:has-text("Dodaj u praćenje")');
+        this.description = page.locator('text=Opis artikla').first();
+        this.sellerInfo = page.locator('text=Informacije o prodavcu').first();
+        this.bidHistory = page.locator('text=Pregled bidova').first();
+        this.errorMessage = page.locator('.text-red-600, [role="alert"]');
+        this.successMessage = page.locator('.text-emerald-700, .text-green-700, [data-flash-message]');
     }
 
     async goto(auctionId: string) {
@@ -55,7 +47,7 @@ export class AuctionDetailPage {
     }
 
     async placeProxyBid(maxAmount: number) {
-        await this.proxyBidCheckbox.check();
+        await this.page.getByLabel('Uključi proxy bidding').check();
         await this.proxyBidInput.fill(maxAmount.toString());
         await this.bidButton.click();
     }
@@ -69,12 +61,7 @@ export class AuctionDetailPage {
     }
 
     async getBidCount(): Promise<number> {
-        return await this.bidHistoryItems.count();
-    }
-
-    async getLatestBid(): Promise<string> {
-        const firstBid = this.bidHistoryItems.first();
-        return await firstBid.locator('[data-testid="bid-amount"]').textContent() || '';
+        return await this.page.locator('text=BAM').count();
     }
 
     async getTimeRemaining(): Promise<string> {
@@ -98,6 +85,6 @@ export class AuctionDetailPage {
     }
 
     async getSellerName(): Promise<string> {
-        return await this.sellerInfo.locator('[data-testid="seller-name"]').textContent() || '';
+        return await this.page.locator('a[href*="/prodavaci/"], a[href*="/sellers/"]').first().textContent() || '';
     }
 }

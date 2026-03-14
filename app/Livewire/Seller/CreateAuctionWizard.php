@@ -9,6 +9,7 @@ use App\Models\AuctionImage;
 use App\Models\Category;
 use App\Services\AuctionService;
 use App\Services\ImageOptimizationService;
+use App\Support\HtmlSanitizer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -234,7 +235,7 @@ class CreateAuctionWizard extends Component
 
         $payload = [
             'title'         => $this->title,
-            'description'   => $this->description,
+            'description'   => app(HtmlSanitizer::class)->sanitize($this->description),
             'category_id'   => $this->categoryId ?: Category::query()->value('id'),
             'start_price'   => (float) $this->startPrice,
             'reserve_price' => $this->reservePrice !== '' ? (float) $this->reservePrice : null,

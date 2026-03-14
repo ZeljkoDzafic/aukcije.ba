@@ -88,13 +88,17 @@ Admin:
 Email: admin@aukcije.ba
 Password: AdminPassword123!
 
-Seller (Verified):
+Seller:
 Email: seller@test.com
 Password: Password123!
 
 Buyer:
 Email: buyer@test.com
 Password: Password123!
+
+Additional test access:
+Email: test.superadmin@aukcije.ba
+Password: Test12345!
 ```
 
 ---

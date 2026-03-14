@@ -30,31 +30,6 @@ return [
         'Illuminate\Validation\ValidationException',
     ],
 
-    // Don't report these users
-    'ignore_users' => [
-        // Don't report errors from these user IDs
-    ],
-
-    // Breadcrumbs
-    'breadcrumbs' => [
-        // Capture SQL queries
-        'sql_queries' => true,
-        // Capture cache operations
-        'cache' => true,
-        // Capture logs
-        'logs' => true,
-        // Capture HTTP client requests
-        'http_client_requests' => true,
-        // Capture queue jobs
-        'queue_jobs' => true,
-    ],
-
-    // Context
-    'context' => [
-        // Add Laravel context
-        'laravel' => true,
-    ],
-
     // Before send callback
     'before_send' => function ($event) {
         // Add custom context

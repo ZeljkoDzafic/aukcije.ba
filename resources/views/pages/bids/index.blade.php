@@ -5,15 +5,18 @@
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
     <div class="space-y-6">
-        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-                <h1 class="text-3xl font-semibold text-slate-900">Moje licitacije</h1>
-                <p class="mt-2 text-sm text-slate-600">Pregled svih aukcija na kojima učestvujete, sa jasnim statusom i brzim ulazom na detalj.</p>
+        <div class="panel-hero-muted">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <p class="panel-kicker">Bidding desk</p>
+                    <h1 class="mt-2 text-3xl font-semibold text-slate-900">Moje licitacije</h1>
+                    <p class="mt-2 max-w-2xl text-sm text-slate-600">Pregled svih aukcija na kojima učestvuješ, sa jasnim statusom i brzim ulazom na detalj.</p>
+                </div>
+                <x-button :href="route('auctions.index')" variant="ghost">Istraži nove aukcije</x-button>
             </div>
-            <x-button :href="route('auctions.index')" variant="ghost">Istraži nove aukcije</x-button>
         </div>
 
-        <x-card class="space-y-4">
+        <x-card class="panel-shell space-y-4">
             <div class="flex flex-wrap gap-3">
                 @foreach ($filters as $filter)
                     <a
@@ -28,7 +31,7 @@
 
             <div class="grid gap-4 lg:grid-cols-2">
                 @forelse ($bids as $bid)
-                    <a href="{{ route('auctions.show', ['auction' => $bid['id']]) }}" class="block rounded-3xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
+                    <a href="{{ route('auctions.show', ['auction' => $bid['id']]) }}" class="panel-shell-soft block transition hover:-translate-y-0.5 hover:border-slate-300">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{{ $bid['category'] }}</p>
@@ -41,15 +44,15 @@
                         </div>
 
                         <div class="mt-5 grid gap-3 sm:grid-cols-3">
-                            <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                            <div class="panel-subtle-card">
                                 <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Vaša ponuda</p>
                                 <p class="mt-1 text-base font-semibold text-slate-900">{{ number_format($bid['your_bid'], 2, ',', '.') }} BAM</p>
                             </div>
-                            <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                            <div class="panel-subtle-card">
                                 <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Trenutno</p>
                                 <p class="mt-1 text-base font-semibold text-slate-900">{{ number_format($bid['price'], 2, ',', '.') }} BAM</p>
                             </div>
-                            <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                            <div class="panel-subtle-card">
                                 <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Aktivnost</p>
                                 <p class="mt-1 text-base font-semibold text-slate-900">{{ $bid['bids'] }} ponuda · {{ $bid['watchers'] }} prati</p>
                             </div>

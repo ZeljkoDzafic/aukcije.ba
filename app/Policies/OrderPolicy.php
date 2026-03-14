@@ -19,12 +19,12 @@ class OrderPolicy
     public function ship(User $user, Order $order): bool
     {
         return $user->id === $order->seller_id
-            && $order->status === 'payment_received';
+            && in_array($order->status, ['paid', 'awaiting_shipment'], true);
     }
 
     public function dispute(User $user, Order $order): bool
     {
         return ($user->id === $order->buyer_id || $user->id === $order->seller_id)
-            && in_array($order->status, ['payment_received', 'shipped', 'delivered']);
+            && in_array($order->status, ['paid', 'awaiting_shipment', 'shipped', 'delivered'], true);
     }
 }

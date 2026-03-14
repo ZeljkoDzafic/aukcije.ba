@@ -15,7 +15,13 @@
                 <x-input wire:model.live="title" name="title" label="Naslov aukcije" placeholder="Rolex Oyster Perpetual 39" />
                 <x-select wire:model.live="categoryId" name="category" label="Kategorija" :options="$categoryOptions" />
             </div>
-            <x-input wire:model.live="description" name="description" type="textarea" label="Opis artikla" hint="Jasno opiši stanje, dodatke i eventualne nedostatke.">Vrlo dobro očuvan sat sa originalnom kutijom.</x-input>
+            <x-wysiwyg-editor
+                wire:model.live="description"
+                name="description"
+                label="Opis artikla"
+                :value="$description !== '' ? $description : 'Vrlo dobro očuvan sat sa originalnom kutijom.'"
+                hint="Koristi podnaslove, liste i linkove za stanje, dodatke, porijeklo i uslove dostave."
+            />
         @elseif ($step === 2)
             <x-alert variant="info">Možeš dodati do 10 URL-ova slika i promijeniti njihov redoslijed prije objave.</x-alert>
             @error('imageUrls')

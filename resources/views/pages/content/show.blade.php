@@ -16,8 +16,8 @@
             @endif
         </div>
 
-        <x-card class="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-700 prose-strong:text-slate-900">
-            {!! $page->body !!}
+        <x-card>
+            <x-rich-text :html="$page->body" />
         </x-card>
     </article>
 </section>

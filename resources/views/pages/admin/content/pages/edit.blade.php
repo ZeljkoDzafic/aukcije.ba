@@ -19,7 +19,12 @@
             </div>
 
             <x-input name="excerpt" label="Sažetak" :value="old('excerpt', $page->excerpt)" />
-            <x-input name="body" type="textarea" label="Sadržaj" :value="old('body', $page->body)" />
+            <x-wysiwyg-editor
+                name="body"
+                label="Sadržaj"
+                :value="old('body', $page->body)"
+                hint="Podržani su naslovi, bold, italic, liste, citati i linkovi."
+            />
 
             <div class="flex gap-3">
                 <x-button type="submit">Sačuvaj stranicu</x-button>

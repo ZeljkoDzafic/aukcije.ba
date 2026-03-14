@@ -19,18 +19,40 @@ use App\Models\UserRating;
 use App\Services\AdminAuditService;
 use App\Services\GDPRErasureService;
 use App\Services\MarketplaceNotificationService;
+use App\Support\HtmlSanitizer;
+use App\Support\MessageThreadBuilder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes - Public Pages
 |--------------------------------------------------------------------------
 */
+
+Route::get('/placanje/uspjeh', function (Request $request) {
+    $target = route('wallet.index');
+    $query = array_filter([
+        'deposit' => $request->string('deposit')->value() ?: 'success',
+    ]);
+
+    return redirect()->to($target.'?'.http_build_query($query));
+})->name('payment.success');
+
+Route::get('/placanje/otkazano', function (Request $request) {
+    $target = route('wallet.index');
+    $query = array_filter([
+        'deposit' => $request->string('deposit')->value() ?: 'cancelled',
+    ]);
+
+    return redirect()->to($target.'?'.http_build_query($query));
+})->name('payment.cancel');
 
 // Homepage
 Route::get('/', function () {
@@ -1479,6 +1501,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Messages
     Route::get('/poruke', function () {
         $user = auth()->user();
+        $threadBuilder = app(MessageThreadBuilder::class);
 
         $threads = collect();
         $selectedThread = null;
@@ -1493,56 +1516,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->latest('created_at')
                 ->get();
 
-            $threads = $messages
-                ->groupBy(function (Message $message) use ($user): string {
-                    $otherParticipantId = $message->sender_id === $user->id
-                        ? ($message->receiver_id ?? 'guest')
-                        : ($message->sender_id ?? 'guest');
-
-                    return implode(':', [
-                        $message->auction_id ?? 'general',
-                        $otherParticipantId,
-                    ]);
-                })
-                ->map(function ($conversation, string $threadKey) use ($user) {
-                    /** @var Message $latest */
-                    $latest = $conversation->first();
-                    $otherParticipant = $latest->sender_id === $user->id ? $latest->receiver : $latest->sender;
-                    $unreadCount = $conversation
-                        ->where('receiver_id', $user->id)
-                        ->where('is_read', false)
-                        ->count();
-
-                    return [
-                        'thread_key' => $threadKey,
-                        'other_user_id' => $otherParticipant?->id,
-                        'contact' => $otherParticipant?->name ?? $otherParticipant?->email ?? 'Marketplace korisnik',
-                        'auction_id' => $latest->auction?->id,
-                        'auction_title' => $latest->auction?->title ?? 'Opća komunikacija',
-                        'auction_image' => $latest->auction?->primaryImage?->url,
-                        'last_message' => $latest->content,
-                        'last_message_at' => $latest->created_at?->diffForHumans() ?? 'upravo sada',
-                        'unread_count' => $unreadCount,
-                        'message_count' => $conversation->count(),
-                        'action_required' => $unreadCount > 0 && $latest->sender_id !== $user->id,
-                    ];
-                })
-                ->values();
+            $threads = $threadBuilder->build($messages, $user);
 
             $selectedThreadKey = request()->string('thread')->toString();
             $selectedThread = $threads->firstWhere('thread_key', $selectedThreadKey) ?? $threads->first();
             $systemThreadNote = null;
 
             if ($selectedThread) {
-                $threadMessages = $messages
-                    ->filter(function (Message $message) use ($selectedThread, $user): bool {
-                        $otherParticipantId = $message->sender_id === $user->id ? $message->receiver_id : $message->sender_id;
-
-                        return (string) ($message->auction_id ?? '') === (string) ($selectedThread['auction_id'] ?? '')
-                            && (string) $otherParticipantId === (string) ($selectedThread['other_user_id'] ?? '');
-                    })
-                    ->sortBy('created_at')
-                    ->values();
+                $threadMessages = $threadBuilder->messagesForThread($messages, $user, $selectedThread);
 
                 if ($selectedThread['auction_id']) {
                     $systemThreadNote = "Sistemska poruka: komunikacija je povezana sa aukcijom '{$selectedThread['auction_title']}'. Sve izmjene statusa narudžbe i isporuke pratite kroz narudžbe i obavijesti.";
@@ -1564,17 +1545,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/poruke', function () {
         $user = auth()->user();
+        $threadBuilder = app(MessageThreadBuilder::class);
 
         abort_unless($user && Schema::hasTable('messages'), 404);
 
         $validated = request()->validate([
-            'receiver_id' => ['required', 'string'],
-            'auction_id' => ['nullable', 'string'],
+            'receiver_id' => ['required', 'string', Rule::exists(User::class, 'id')],
+            'auction_id' => ['nullable', 'string', Rule::exists(Auction::class, 'id')],
             'content' => ['required', 'string', 'max:5000'],
             'attachment_name' => ['nullable', 'string', 'max:255'],
             'attachment_url' => ['nullable', 'url', 'max:5000'],
             'attachment_file' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,pdf,webp'],
         ]);
+
+        if ($validated['receiver_id'] === $user->id) {
+            return back()
+                ->withErrors(['receiver_id' => 'Ne možete poslati poruku samom sebi.'])
+                ->withInput();
+        }
 
         $attachmentName = $validated['attachment_name'] ?? null;
         $attachmentUrl = $validated['attachment_url'] ?? null;
@@ -1620,10 +1608,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             );
         }
 
-        $threadKey = implode(':', [
-            $validated['auction_id'] ?: 'general',
-            $validated['receiver_id'],
-        ]);
+        $threadKey = $threadBuilder->threadKey($validated['auction_id'] ?: null, $validated['receiver_id']);
 
         return redirect()->route('messages.index', ['thread' => $threadKey])
             ->with('status', 'Poruka je poslana.');
@@ -2170,7 +2155,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin|moderator'])->grou
     Route::delete('/feature-flags/{flag}', [FeatureFlagController::class, 'destroy'])->name('admin.feature-flags.destroy');
 });
 
-Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:super_admin|moderator'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
     Route::get('/dashboard', function () {
         $stats = [
@@ -2383,7 +2368,7 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
                 'title' => $validated['title'],
                 'page_type' => $validated['page_type'],
                 'excerpt' => $validated['excerpt'] ?? null,
-                'body' => $validated['body'],
+                'body' => app(HtmlSanitizer::class)->sanitize($validated['body']),
                 'is_published' => (bool) ($validated['is_published'] ?? false),
                 'published_at' => ($validated['is_published'] ?? false) ? now() : null,
             ]
@@ -2443,7 +2428,7 @@ Route::middleware(['auth', 'role:admin|moderator'])->prefix('admin')->name('admi
             [
                 'title' => $validated['title'],
                 'excerpt' => $validated['excerpt'] ?? null,
-                'body' => $validated['body'],
+                'body' => app(HtmlSanitizer::class)->sanitize($validated['body']),
                 'is_published' => (bool) ($validated['is_published'] ?? false),
                 'published_at' => ($validated['is_published'] ?? false) ? now() : null,
             ]

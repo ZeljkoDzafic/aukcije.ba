@@ -16,7 +16,11 @@
     @livewireStyles
     @stack('scripts')
 </head>
-<body class="min-h-screen bg-slate-50">
+<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.10),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_transparent_30%),linear-gradient(180deg,_#f8fafc_0%,_#fdfdf8_50%,_#f8fafc_100%)]">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg">
+        Preskoči na glavni sadržaj
+    </a>
+
     <div class="flex min-h-screen">
         @include('layouts.partials.seller-sidebar')
 

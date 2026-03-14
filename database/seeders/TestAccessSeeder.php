@@ -16,6 +16,8 @@ class TestAccessSeeder extends Seeder
 {
     private const PASSWORD = 'Test12345!';
 
+    private const DOCS_PASSWORD = 'Password123!';
+
     public function run(): void
     {
         $users = [
@@ -64,6 +66,18 @@ class TestAccessSeeder extends Seeder
                 'phone' => '+38761111004',
             ],
             [
+                'roles' => ['buyer', 'seller'],
+                'name' => 'Demo Seller',
+                'email' => 'seller@test.com',
+                'city' => 'Sarajevo',
+                'wallet' => 600,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 2,
+                'phone' => '+38761111014',
+                'password' => self::DOCS_PASSWORD,
+            ],
+            [
                 'roles' => ['buyer'],
                 'name' => 'Test Buyer',
                 'email' => 'test.buyer@aukcije.ba',
@@ -73,6 +87,18 @@ class TestAccessSeeder extends Seeder
                 'phone_verified' => true,
                 'kyc_level' => 1,
                 'phone' => '+38761111005',
+            ],
+            [
+                'roles' => ['buyer'],
+                'name' => 'Demo Buyer',
+                'email' => 'buyer@test.com',
+                'city' => 'Mostar',
+                'wallet' => 350,
+                'email_verified' => true,
+                'phone_verified' => true,
+                'kyc_level' => 1,
+                'phone' => '+38761111015',
+                'password' => self::DOCS_PASSWORD,
             ],
             [
                 'roles' => ['buyer'],
@@ -105,7 +131,7 @@ class TestAccessSeeder extends Seeder
                 ['email' => $definition['email']],
                 [
                     'name' => $definition['name'],
-                    'password' => Hash::make(self::PASSWORD),
+                    'password' => Hash::make($definition['password'] ?? self::PASSWORD),
                     'phone' => $definition['phone'],
                     'email_verified_at' => $definition['email_verified'] ? now() : null,
                     'phone_verified_at' => $definition['phone_verified'] ? now() : null,

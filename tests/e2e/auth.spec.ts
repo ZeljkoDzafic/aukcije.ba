@@ -2,10 +2,10 @@
  * ===================================
  * AUTH E2E TESTS
  * ===================================
- * Test authentication flows
+ * Real auth flows against the live UI.
  */
 
-import { test, expect } from '../fixtures/test-fixtures';
+import { test, expect } from './fixtures/test-fixtures';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 
@@ -21,47 +21,40 @@ test.describe('Authentication', () => {
     test.describe('Login', () => {
         test('should display login page', async ({ page }) => {
             await loginPage.goto();
-            await expect(loginPage).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Prijavi se na svoj račun' })).toBeVisible();
             await expect(loginPage.emailInput).toBeVisible();
             await expect(loginPage.passwordInput).toBeVisible();
             await expect(loginPage.submitButton).toBeVisible();
         });
 
-        test('should login successfully with valid credentials', async ({ page }) => {
-            await loginPage.login('buyer@test.com', 'Password123!');
+        test('should login successfully with valid buyer credentials', async ({ page }) => {
+            await loginPage.loginAsBuyer();
             await page.waitForURL('/dashboard');
             await expect(page).toHaveURL('/dashboard');
         });
 
-        test('should show error with invalid credentials', async ({ page }) => {
+        test('should show error with invalid credentials', async () => {
             await loginPage.login('invalid@test.com', 'wrongpassword');
             await expect(loginPage.errorMessage).toBeVisible();
-        });
-
-        test('should redirect to dashboard after login', async ({ page }) => {
-            await loginPage.loginAsBuyer();
-            await page.waitForURL('/dashboard');
-            await expect(page.locator('h1')).toContainText('Dashboard');
         });
 
         test('should redirect seller to seller dashboard', async ({ page }) => {
             await loginPage.loginAsSeller();
             await page.waitForURL('/seller/dashboard');
-            await expect(page.locator('h1')).toContainText('Seller Dashboard');
+            await expect(page.getByRole('heading', { name: 'Prodajna kontrolna tabla' })).toBeVisible();
         });
 
         test('should redirect admin to admin panel', async ({ page }) => {
             await loginPage.loginAsAdmin();
             await page.waitForURL('/admin/dashboard');
-            await expect(page.locator('h1')).toContainText('Admin Dashboard');
+            await expect(page.getByRole('heading', { name: 'Admin Dashboard' })).toBeVisible();
         });
     });
 
     test.describe('Register', () => {
         test('should display register page', async ({ page }) => {
             await registerPage.goto();
-            await expect(registerPage).toBeVisible();
-            await expect(registerPage.typeSelect).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Registruj novi račun' })).toBeVisible();
             await expect(registerPage.nameInput).toBeVisible();
             await expect(registerPage.emailInput).toBeVisible();
         });
@@ -75,28 +68,29 @@ test.describe('Authentication', () => {
         test('should register as seller', async ({ page }) => {
             const email = `seller_${Date.now()}@test.com`;
             await registerPage.registerAsSeller('New Seller', email, 'Password123!');
-            await page.waitForURL(/\/dashboard|\/verify-email|\/kyc/);
+            await page.waitForURL(/\/seller\/dashboard|\/dashboard|\/verify-email/);
         });
 
-        test('should show validation errors for empty fields', async ({ page }) => {
+        test('should show validation errors for empty fields', async () => {
             await registerPage.goto();
             await registerPage.submitButton.click();
             const errors = await registerPage.getValidationErrors();
             expect(errors.length).toBeGreaterThan(0);
         });
 
-        test('should show error for duplicate email', async ({ page }) => {
+        test('should show error for duplicate email', async () => {
             await registerPage.registerAsBuyer('Test User', 'buyer@test.com', 'Password123!');
             await expect(registerPage.errorMessage).toBeVisible();
         });
 
         test('should show error for password mismatch', async ({ page }) => {
             await registerPage.goto();
-            await registerPage.typeSelect.selectOption('buyer');
+            await page.locator('input[name="marketplace_focus"][value="buyer"]').check();
             await registerPage.nameInput.fill('Test User');
             await registerPage.emailInput.fill('test@test.com');
             await registerPage.passwordInput.fill('Password123!');
             await registerPage.passwordConfirmationInput.fill('DifferentPassword123!');
+            await registerPage.termsCheckbox.check();
             await registerPage.submitButton.click();
             const errors = await registerPage.getValidationErrors();
             expect(errors.join(' ')).toContain('lozinka');
@@ -105,10 +99,10 @@ test.describe('Authentication', () => {
 
     test.describe('Logout', () => {
         test('should logout successfully', async ({ authenticatedBuyer, page }) => {
-            // Already logged in via fixture
-            await page.click('button:has-text("Odjavi se")');
-            await page.waitForURL('/login');
-            await expect(loginPage).toBeVisible();
+            void authenticatedBuyer;
+            await loginPage.logout();
+            await page.waitForURL('/');
+            await expect(page.getByRole('link', { name: 'Prijava' }).first()).toBeVisible();
         });
     });
 

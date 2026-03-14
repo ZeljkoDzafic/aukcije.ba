@@ -1,5 +1,5 @@
 <div class="space-y-6">
-    <x-card class="space-y-4">
+    <x-card class="panel-shell space-y-4">
         <div class="grid gap-4 md:grid-cols-4">
             <x-input wire:model.live.debounce.300ms="search" name="search" label="Pretraga" placeholder="Ime ili email" />
             <x-select wire:model.live="role" name="role" label="Rola" :options="['' => 'Sve role', 'buyer' => 'Buyer', 'seller' => 'Seller', 'verified seller' => 'Verified Seller', 'moderator' => 'Moderator', 'super admin' => 'Super Admin']" />
@@ -22,7 +22,7 @@
         @endif
     </x-card>
 
-    <x-card class="space-y-4">
+    <x-card class="panel-shell space-y-4">
         <x-data-table :headers="['Izbor', 'Korisnik', 'Rola', 'KYC', 'Tier', 'Napomena', 'Akcije']">
             @foreach ($this->filteredUsers as $user)
                 <tr class="table-row">

@@ -5,7 +5,7 @@
             <span>Aukcije.ba</span>
         </a>
 
-        <nav class="hidden items-center gap-2 md:flex">
+        <nav aria-label="Main navigation" class="hidden items-center gap-2 md:flex">
             <a href="{{ route('auctions.index') }}" class="nav-link">Aukcije</a>
             <a href="{{ route('categories.index') }}" class="nav-link">Kategorije</a>
             <a href="{{ route('search') }}" class="nav-link">Pretraga</a>
@@ -19,7 +19,7 @@
     </div>
 
     <div x-show="open" x-transition class="border-t border-slate-200 bg-white md:hidden">
-        <nav class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
+        <nav aria-label="Mobile navigation" class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
             <a href="{{ route('auctions.index') }}" class="nav-link">Aukcije</a>
             <a href="{{ route('categories.index') }}" class="nav-link">Kategorije</a>
             <a href="{{ route('search') }}" class="nav-link">Pretraga</a>

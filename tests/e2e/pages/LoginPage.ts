@@ -11,7 +11,6 @@ export class LoginPage {
     readonly emailInput: Locator;
     readonly passwordInput: Locator;
     readonly submitButton: Locator;
-    readonly googleLoginButton: Locator;
     readonly registerLink: Locator;
     readonly forgotPasswordLink: Locator;
     readonly errorMessage: Locator;
@@ -21,10 +20,9 @@ export class LoginPage {
         this.emailInput = page.locator('input[name="email"]');
         this.passwordInput = page.locator('input[name="password"]');
         this.submitButton = page.locator('button[type="submit"]');
-        this.googleLoginButton = page.locator('button:has-text("Google")');
         this.registerLink = page.locator('a:has-text("Registruj se")');
         this.forgotPasswordLink = page.locator('a:has-text("Zaboravili ste lozinku")');
-        this.errorMessage = page.locator('.alert-danger, .error-message');
+        this.errorMessage = page.locator('.text-red-600, [role="alert"]');
     }
 
     async goto() {
@@ -48,6 +46,10 @@ export class LoginPage {
 
     async loginAsAdmin() {
         await this.login('admin@aukcije.ba', 'AdminPassword123!');
+    }
+
+    async logout() {
+        await this.page.getByRole('button', { name: 'Odjava' }).first().click();
     }
 
     async getErrorMessage(): Promise<string> {

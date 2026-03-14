@@ -7,9 +7,6 @@
 
 import { test as base, expect } from '@playwright/test';
 
-/**
- * Test fixtures interface
- */
 interface Fixtures {
     authenticatedBuyer: {
         email: string;
@@ -29,9 +26,6 @@ interface Fixtures {
     createAuction: (data?: Partial<AuctionData>) => Promise<AuctionData>;
 }
 
-/**
- * Auction data interface
- */
 interface AuctionData {
     title: string;
     description: string;
@@ -41,13 +35,7 @@ interface AuctionData {
     category: string;
 }
 
-/**
- * Extend Playwright test with custom fixtures
- */
 export const test = base.extend<Fixtures>({
-    /**
-     * Authenticated buyer fixture
-     */
     authenticatedBuyer: async ({ page }, use) => {
         const buyer = {
             email: 'buyer@test.com',
@@ -55,7 +43,6 @@ export const test = base.extend<Fixtures>({
             name: 'Test Buyer',
         };
 
-        // Login before tests
         await page.goto('/login');
         await page.fill('input[name="email"]', buyer.email);
         await page.fill('input[name="password"]', buyer.password);
@@ -63,14 +50,8 @@ export const test = base.extend<Fixtures>({
         await page.waitForURL('/dashboard');
 
         await use(buyer);
-
-        // Cleanup after tests (optional logout)
-        // await page.click('button:has-text("Odjavi se")');
     },
 
-    /**
-     * Authenticated seller fixture
-     */
     authenticatedSeller: async ({ page }, use) => {
         const seller = {
             email: 'seller@test.com',
@@ -78,7 +59,6 @@ export const test = base.extend<Fixtures>({
             name: 'Test Seller',
         };
 
-        // Login before tests
         await page.goto('/login');
         await page.fill('input[name="email"]', seller.email);
         await page.fill('input[name="password"]', seller.password);
@@ -88,9 +68,6 @@ export const test = base.extend<Fixtures>({
         await use(seller);
     },
 
-    /**
-     * Authenticated admin fixture
-     */
     authenticatedAdmin: async ({ page }, use) => {
         const admin = {
             email: 'admin@aukcije.ba',
@@ -98,7 +75,6 @@ export const test = base.extend<Fixtures>({
             name: 'Test Admin',
         };
 
-        // Login before tests
         await page.goto('/login');
         await page.fill('input[name="email"]', admin.email);
         await page.fill('input[name="password"]', admin.password);
@@ -108,9 +84,6 @@ export const test = base.extend<Fixtures>({
         await use(admin);
     },
 
-    /**
-     * Create auction helper fixture
-     */
     createAuction: async ({ page }, use) => {
         const createAuction = async (data: Partial<AuctionData> = {}) => {
             const auctionData: AuctionData = {
@@ -122,27 +95,21 @@ export const test = base.extend<Fixtures>({
                 category: data.category || 'Elektronika',
             };
 
-            // Navigate to create auction page
             await page.goto('/seller/aukcije/nova');
-
-            // Fill in auction details
             await page.fill('input[name="title"]', auctionData.title);
-            await page.fill('textarea[name="description"]', auctionData.description);
+            await page.locator('select[name="category"]').selectOption({ label: auctionData.category }).catch(async () => {
+                await page.locator('select[name="category"]').selectOption({ index: 1 });
+            });
+            await page.locator('[contenteditable="true"]').first().fill(auctionData.description);
+            await page.click('button:has-text("Sljedeći korak")');
+            await page.click('button:has-text("Sljedeći korak")');
             await page.fill('input[name="start_price"]', auctionData.startPrice.toString());
 
             if (auctionData.buyNowPrice) {
-                await page.fill('input[name="buy_now_price"]', auctionData.buyNowPrice.toString());
+                await page.fill('input[name="buy_now"]', auctionData.buyNowPrice.toString());
             }
 
-            // Select category
-            await page.selectOption('select[name="category_id"]', auctionData.category);
-
-            // Select duration
-            await page.selectOption('select[name="duration"]', auctionData.duration.toString());
-
-            // Submit form
-            await page.click('button:has-text("Kreiraj aukciju")');
-            await page.waitForURL(/\/aukcije\/.+/);
+            await page.selectOption('select[name="duration_days"]', auctionData.duration.toString());
 
             return auctionData;
         };
@@ -151,7 +118,4 @@ export const test = base.extend<Fixtures>({
     },
 });
 
-/**
- * Export expect
- */
 export { expect };

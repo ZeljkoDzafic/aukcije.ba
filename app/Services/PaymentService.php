@@ -221,9 +221,13 @@ class PaymentService
 
         $status = $this->mapWebhookStatus($gatewayName, $data['status'] ?? '');
 
+        if ($payment->status === $status && $payment->gateway_response === $data) {
+            return;
+        }
+
         $payment->update(['status' => $status, 'gateway_response' => $data]);
 
-        if ($status === 'success') {
+        if ($status === 'success' && $payment->order && ! $payment->order->isPaid()) {
             $payment->order->markAsPaid($payment);
         }
     }

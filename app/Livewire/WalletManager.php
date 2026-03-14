@@ -46,7 +46,7 @@ class WalletManager extends Component
                 Auth::user(),
                 (float) $this->depositAmount,
                 $this->gateway,
-                url('/user/wallet')
+                route('wallet.index')
             );
 
             if (! $result['success']) {

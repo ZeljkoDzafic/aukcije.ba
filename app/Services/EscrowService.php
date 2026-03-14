@@ -35,6 +35,10 @@ class EscrowService
                     throw new InsufficientFundsException($total, (float) $wallet->balance);
                 }
 
+                if ($wallet->frozen) {
+                    throw new \RuntimeException('Wallet is frozen');
+                }
+
                 // Deduct from available balance and add to escrow_balance
                 $wallet->decrement('balance', $total);
                 $wallet->increment('escrow_balance', $total);
@@ -50,7 +54,7 @@ class EscrowService
                     'description' => "Escrow hold za narudžbu #{$order->id}",
                 ]);
             });
-        } catch (InsufficientFundsException) {
+        } catch (InsufficientFundsException|\RuntimeException) {
             return false;
         }
 
@@ -126,6 +130,15 @@ class EscrowService
      */
     public function refundBuyer(Order $order, float $amount): bool
     {
+        if ($amount <= 0) {
+            return false;
+        }
+
+        $buyerWallet = $this->walletService->getWallet($order->buyer);
+        if ($buyerWallet->escrow_balance < $amount) {
+            return false;
+        }
+
         DB::transaction(function () use ($order, $amount) {
             $buyerWallet = $this->walletService->getWallet($order->buyer);
 

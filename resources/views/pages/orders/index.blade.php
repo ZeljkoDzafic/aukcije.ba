@@ -5,13 +5,15 @@
 @section('content')
 <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
     <div class="space-y-6">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <p class="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Kupac</p>
-                <h1 class="mt-2 text-3xl font-semibold text-slate-900">Moje narudžbe</h1>
-                <p class="mt-2 text-slate-600">Status plaćanja, dostave i povezana aukcija na jednom mjestu.</p>
+        <div class="panel-hero-muted">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="panel-kicker">Kupac</p>
+                    <h1 class="mt-2 text-3xl font-semibold text-slate-900">Moje narudžbe</h1>
+                    <p class="mt-2 max-w-2xl text-slate-600">Status plaćanja, dostave i sporova na jednoj operativnoj tabli.</p>
+                </div>
+                <x-button variant="ghost" :href="route('auctions.index')">Nazad na aukcije</x-button>
             </div>
-            <a href="{{ route('auctions.index') }}" class="link">Nazad na aukcije</a>
         </div>
 
         @if ($orders->isEmpty())
@@ -19,7 +21,7 @@
         @else
             <div class="grid gap-4">
                 @foreach ($orders as $order)
-                    <x-card class="space-y-4">
+                    <x-card class="panel-shell space-y-4">
                         <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                             <div class="flex gap-4">
                                 <div class="h-20 w-20 overflow-hidden rounded-2xl bg-slate-100">
@@ -68,7 +70,7 @@
                         </div>
 
                         <div class="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-                            <div class="space-y-3 rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-700">
+                            <div class="panel-subtle-card space-y-3 text-sm text-slate-700">
                                 <p class="font-medium text-slate-900">Operativni status</p>
                                 @if ($order->payment_deadline_at && $order->status === 'pending_payment')
                                     <p>Rok plaćanja: {{ $order->payment_deadline_at->format('d.m.Y. H:i') }}</p>
@@ -86,17 +88,17 @@
                             <div class="space-y-3">
                                 <p class="font-medium text-slate-900">Timeline</p>
                                 <div class="grid gap-2 text-sm text-slate-700">
-                                    <div class="rounded-2xl bg-slate-50 px-4 py-3">Narudžba kreirana · {{ $order->created_at?->format('d.m.Y. H:i') }}</div>
+                                    <div class="panel-subtle-card">Narudžba kreirana · {{ $order->created_at?->format('d.m.Y. H:i') }}</div>
                                     @if ($order->paid_at)
-                                        <div class="rounded-2xl bg-slate-50 px-4 py-3">Plaćanje evidentirano · {{ $order->paid_at->format('d.m.Y. H:i') }}</div>
+                                        <div class="panel-subtle-card">Plaćanje evidentirano · {{ $order->paid_at->format('d.m.Y. H:i') }}</div>
                                     @endif
                                     @if ($order->shipment?->status_label)
-                                        <div class="rounded-2xl bg-slate-50 px-4 py-3">Pošiljka · {{ $order->shipment->status_label }}</div>
+                                        <div class="panel-subtle-card">Pošiljka · {{ $order->shipment->status_label }}</div>
                                     @elseif ($order->shipment?->status)
-                                        <div class="rounded-2xl bg-slate-50 px-4 py-3">Pošiljka · {{ $order->shipment->status }}</div>
+                                        <div class="panel-subtle-card">Pošiljka · {{ $order->shipment->status }}</div>
                                     @endif
                                     @if ($order->dispute)
-                                        <div class="rounded-2xl bg-red-50 px-4 py-3">Spor otvoren · {{ $order->dispute->status }}</div>
+                                        <div class="rounded-[1.5rem] bg-red-50 px-4 py-4">Spor otvoren · {{ $order->dispute->status }}</div>
                                     @endif
                                 </div>
                             </div>

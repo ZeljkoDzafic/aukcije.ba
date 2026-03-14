@@ -291,6 +291,21 @@ describe('DisputeService', function () {
         expect(true)->toBeTrue();
     });
 
+    it('does not create duplicate active disputes for the same order', function () {
+        $buyer = User::factory()->buyer()->create();
+        $seller = User::factory()->seller()->create();
+        $order = Order::factory()->paid()->create([
+            'buyer_id' => $buyer->id,
+            'seller_id' => $seller->id,
+        ]);
+
+        $first = $this->disputeService->openDispute($order, $buyer, 'not_received', 'First dispute');
+        $second = $this->disputeService->openDispute($order, $buyer, 'not_received', 'Second dispute');
+
+        expect($second->id)->toBe($first->id);
+        expect(Dispute::query()->where('order_id', $order->id)->count())->toBe(1);
+    });
+
     it('adds evidence to dispute', function () {
         $dispute = Dispute::factory()->create();
         $user = User::factory()->buyer()->create();

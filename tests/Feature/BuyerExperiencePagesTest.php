@@ -122,6 +122,12 @@ it('renders watchlist, messages and buyer orders from database', function () {
         'attachment_file' => UploadedFile::fake()->create('specifikacija.pdf', 64, 'application/pdf'),
     ])->assertRedirect();
 
+    $this->post(route('messages.store'), [
+        'receiver_id' => $buyer->id,
+        'auction_id' => $auction->id,
+        'content' => 'Self message should fail.',
+    ])->assertSessionHasErrors('receiver_id');
+
     $this->get(route('messages.index'))
         ->assertOk()
         ->assertSee('Detaljna galerija')

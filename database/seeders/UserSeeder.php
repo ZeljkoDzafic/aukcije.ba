@@ -12,29 +12,43 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    private const ADMIN_PASSWORD = 'AdminPassword123!';
+
+    private const DEFAULT_PASSWORD = 'Password123!';
+
     public function run(): void
     {
         // 1 Super Admin
-        $admin = User::create([
-            'name' => 'Admin Aukcije',
-            'email' => 'admin@aukcije.ba',
-            'password' => Hash::make('password'),
-            'email_verified_at' => now(),
-        ]);
-        UserProfile::create(['user_id' => $admin->id, 'full_name' => 'Admin Aukcije', 'city' => 'Sarajevo']);
-        Wallet::create(['user_id' => $admin->id]);
+        $admin = User::query()->updateOrCreate(
+            ['email' => 'admin@aukcije.ba'],
+            [
+                'name' => 'Admin Aukcije',
+                'password' => Hash::make(self::ADMIN_PASSWORD),
+                'email_verified_at' => now(),
+            ]
+        );
+        UserProfile::query()->updateOrCreate(
+            ['user_id' => $admin->id],
+            ['full_name' => 'Admin Aukcije', 'city' => 'Sarajevo']
+        );
+        Wallet::query()->updateOrCreate(['user_id' => $admin->id], ['balance' => 0]);
         $admin->assignRole('super_admin');
 
         // 2 Moderators
         foreach (['Moderator Jedan', 'Moderator Dva'] as $i => $name) {
-            $mod = User::create([
-                'name' => $name,
-                'email' => "moderator{$i}@aukcije.ba",
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]);
-            UserProfile::create(['user_id' => $mod->id, 'full_name' => $name, 'city' => 'Mostar']);
-            Wallet::create(['user_id' => $mod->id]);
+            $mod = User::query()->updateOrCreate(
+                ['email' => "moderator{$i}@aukcije.ba"],
+                [
+                    'name' => $name,
+                    'password' => Hash::make(self::DEFAULT_PASSWORD),
+                    'email_verified_at' => now(),
+                ]
+            );
+            UserProfile::query()->updateOrCreate(
+                ['user_id' => $mod->id],
+                ['full_name' => $name, 'city' => 'Mostar']
+            );
+            Wallet::query()->updateOrCreate(['user_id' => $mod->id], ['balance' => 0]);
             $mod->assignRole('moderator');
         }
 
@@ -48,14 +62,19 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($sellers as $s) {
-            $user = User::create([
-                'name' => $s['name'],
-                'email' => $s['email'],
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]);
-            UserProfile::create(['user_id' => $user->id, 'full_name' => $s['name'], 'city' => $s['city']]);
-            Wallet::create(['user_id' => $user->id, 'balance' => rand(100, 500)]);
+            $user = User::query()->updateOrCreate(
+                ['email' => $s['email']],
+                [
+                    'name' => $s['name'],
+                    'password' => Hash::make(self::DEFAULT_PASSWORD),
+                    'email_verified_at' => now(),
+                ]
+            );
+            UserProfile::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                ['full_name' => $s['name'], 'city' => $s['city']]
+            );
+            Wallet::query()->updateOrCreate(['user_id' => $user->id], ['balance' => rand(100, 500)]);
             $user->assignRole($s['verified'] ? 'verified_seller' : 'seller');
         }
 
@@ -74,14 +93,19 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($buyers as $b) {
-            $user = User::create([
-                'name' => $b['name'],
-                'email' => $b['email'],
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]);
-            UserProfile::create(['user_id' => $user->id, 'full_name' => $b['name'], 'city' => $b['city']]);
-            Wallet::create(['user_id' => $user->id, 'balance' => rand(50, 300)]);
+            $user = User::query()->updateOrCreate(
+                ['email' => $b['email']],
+                [
+                    'name' => $b['name'],
+                    'password' => Hash::make(self::DEFAULT_PASSWORD),
+                    'email_verified_at' => now(),
+                ]
+            );
+            UserProfile::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                ['full_name' => $b['name'], 'city' => $b['city']]
+            );
+            Wallet::query()->updateOrCreate(['user_id' => $user->id], ['balance' => rand(50, 300)]);
             $user->assignRole('buyer');
         }
 

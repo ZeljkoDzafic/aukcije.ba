@@ -4,14 +4,22 @@
 
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-2xl space-y-8">
-        <div class="space-y-3 text-center">
-            <x-badge variant="trust">Jedan nalog, obje uloge</x-badge>
-            <h1 class="text-3xl font-semibold text-slate-900">Registruj novi račun</h1>
-            <p class="text-slate-600">Na jednom nalogu možeš kupovati i prodavati. Ovdje samo biraš šta ćeš pretežno koristiti na početku.</p>
+    <div class="mx-auto grid max-w-6xl gap-8 xl:grid-cols-[0.95fr_1.05fr]">
+        <div class="market-sheen rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.14),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.15),_transparent_26%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-8 shadow-sm">
+            <div class="space-y-4">
+                <x-badge variant="trust">Jedan nalog, obje uloge</x-badge>
+                <h1 class="text-4xl font-semibold text-slate-900">Registruj novi račun</h1>
+                <p class="text-slate-600">Na jednom nalogu možeš kupovati i prodavati. Registracija je sada dio istog marketplace jezika, sa jasnijim buyer/seller izborom i manje generičkim onboardingom.</p>
+            </div>
+
+            <div class="mt-8 grid gap-4">
+                <div class="rounded-2xl bg-emerald-50 px-4 py-4 text-sm text-emerald-900">Buyer dashboard, seller studio i wallet žive na istom računu.</div>
+                <div class="rounded-2xl bg-sky-50 px-4 py-4 text-sm text-sky-900">Seller onboarding može početi odmah, bez otvaranja drugog profila.</div>
+                <div class="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-900">Kasnije možeš širiti nalog sa verifikacijom, ratingom i prodajnim trust signalima.</div>
+            </div>
         </div>
 
-        <x-card class="space-y-6">
+        <x-card class="market-sheen space-y-6 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
             <form method="POST" action="{{ route('register') }}" class="space-y-6">
                 @csrf
                 <div class="grid gap-4 sm:grid-cols-2">

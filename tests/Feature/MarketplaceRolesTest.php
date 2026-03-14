@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\Auction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
@@ -56,4 +58,37 @@ it('preserves buyer access when admin grants seller access', function () {
 
     expect($user->hasRole('buyer'))->toBeTrue()
         ->and($user->hasRole('seller'))->toBeTrue();
+});
+
+it('allows super admin access to admin web and api surfaces', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('super_admin');
+
+    $this->actingAs($admin)
+        ->get(route('admin.dashboard'))
+        ->assertOk();
+
+    Sanctum::actingAs($admin);
+
+    $this->getJson('/api/v1/admin/users')
+        ->assertOk();
+});
+
+it('blocks buyers from seller-only web and api surfaces', function () {
+    $buyer = User::factory()->buyer()->create();
+    $auction = Auction::factory()->active()->create();
+
+    $this->actingAs($buyer)
+        ->get(route('seller.dashboard'))
+        ->assertRedirect(route('dashboard'));
+
+    Sanctum::actingAs($buyer);
+
+    $this->postJson('/api/v1/seller/auctions', [
+        'title' => 'Blocked seller attempt',
+        'description' => 'Should not work',
+        'category_id' => $auction->category_id,
+        'start_price' => 100,
+        'duration_days' => 7,
+    ])->assertForbidden();
 });

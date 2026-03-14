@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Message;
+use App\Models\Auction;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Wallet;
@@ -107,5 +108,77 @@ it('stores and lists authenticated messages', function () {
     $this->getJson('/api/v1/user/messages')
         ->assertOk()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.content', 'Pozdrav, da li je artikal dostupan?');
+        ->assertJsonPath('data.0.contact', $receiver->name)
+        ->assertJsonPath('messages.0.content', 'Pozdrav, da li je artikal dostupan?');
+
+    $message = Message::query()->firstOrFail();
+
+    $this->getJson("/api/v1/user/messages/{$receiver->id}")
+        ->assertOk()
+        ->assertJsonPath('data.other_user_id', $receiver->id)
+        ->assertJsonPath('messages.0.id', $message->id);
+});
+
+it('rejects messaging yourself through the api', function () {
+    $user = User::factory()->create();
+
+    Sanctum::actingAs($user);
+
+    $this->postJson('/api/v1/user/messages', [
+        'receiver_id' => $user->id,
+        'content' => 'Test self message',
+    ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['receiver_id']);
+
+    expect(Message::query()->count())->toBe(0);
+});
+
+it('marks message as read through the api', function () {
+    $sender = User::factory()->create();
+    $receiver = User::factory()->create();
+
+    $message = Message::query()->create([
+        'sender_id' => $sender->id,
+        'receiver_id' => $receiver->id,
+        'content' => 'Nepročitana poruka',
+        'is_read' => false,
+    ]);
+
+    Sanctum::actingAs($receiver);
+
+    $this->postJson("/api/v1/user/messages/{$message->id}/read")
+        ->assertOk()
+        ->assertJsonPath('data.is_read', true);
+
+    expect($message->fresh()->is_read)->toBeTrue();
+});
+
+it('keeps watchlist counters consistent when adding and removing auctions', function () {
+    $user = User::factory()->create();
+    $auction = Auction::factory()->active()->create([
+        'watchers_count' => 0,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $this->postJson("/api/v1/watchlist/{$auction->id}")
+        ->assertOk()
+        ->assertJsonPath('watchers_count', 1);
+
+    $this->postJson("/api/v1/watchlist/{$auction->id}")
+        ->assertOk()
+        ->assertJsonPath('watchers_count', 1);
+
+    expect($auction->fresh()->watchers_count)->toBe(1);
+
+    $this->deleteJson("/api/v1/watchlist/{$auction->id}")
+        ->assertOk()
+        ->assertJsonPath('watchers_count', 0);
+
+    $this->deleteJson("/api/v1/watchlist/{$auction->id}")
+        ->assertOk()
+        ->assertJsonPath('watchers_count', 0);
+
+    expect($auction->fresh()->watchers_count)->toBe(0);
 });

@@ -5,9 +5,34 @@
 
 @section('content')
 <section class="space-y-8">
+    <div class="panel-hero">
+        <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+            <div class="space-y-4">
+                <p class="panel-kicker">Seller performance</p>
+                <div>
+                    <h2 class="text-3xl font-semibold text-white sm:text-4xl">Prodajni studio za objavu, fulfilment i reputaciju.</h2>
+                    <p class="mt-3 max-w-2xl text-sm text-slate-200 sm:text-base">U prvi plan sam izvukao aukcije koje traže reakciju, shipping red i seller signal koji kupci vide na storefrontu.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <x-button :href="route('seller.auctions.create')">Nova aukcija</x-button>
+                    <x-button variant="ghost" :href="route('seller.orders.index')" class="border-white/20 bg-white/10 text-white hover:bg-white/15">Narudžbe</x-button>
+                </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+                @foreach ($sellerCommandCenter->take(4) as $item)
+                    <a href="{{ $item['href'] }}" class="panel-metric transition hover:bg-white/15">
+                        <p class="text-xs uppercase tracking-[0.24em] text-slate-300">{{ $item['label'] }}</p>
+                        <p class="mt-2 text-2xl font-semibold text-white">{{ $item['value'] }}</p>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         @foreach ($stats as $stat)
-            <x-card>
+            <x-card class="panel-shell-soft market-sheen">
                 <p class="text-sm text-slate-500">{{ $stat['label'] }}</p>
                 <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $stat['value'] }}</p>
             </x-card>
@@ -15,7 +40,7 @@
     </div>
 
     <div class="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-        <x-card class="space-y-4">
+        <x-card class="panel-shell space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-semibold text-slate-900">Aktivne aukcije</h2>
                 <x-badge variant="trust">{{ strtoupper($seller->getTier()['name'] ?? 'free') }} tier</x-badge>
@@ -38,14 +63,14 @@
         </x-card>
 
         <div class="space-y-6">
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-slate-900">Prodajni komandni centar</h2>
                     <a href="{{ route('notifications.index') }}" class="link">Sve obavijesti</a>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3">
                     @foreach ($sellerCommandCenter as $item)
-                        <a href="{{ $item['href'] }}" class="rounded-2xl bg-slate-50 px-4 py-4 transition hover:bg-slate-100">
+                        <a href="{{ $item['href'] }}" class="panel-subtle-card transition hover:bg-slate-100">
                             <p class="text-sm text-slate-500">{{ $item['label'] }}</p>
                             <p class="mt-1 text-xl font-semibold text-slate-900">{{ $item['value'] }}</p>
                         </a>
@@ -53,14 +78,14 @@
                 </div>
             </x-card>
 
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-slate-900">Operativni prioriteti</h2>
                     <a href="{{ route('seller.orders.index') }}" class="link">Prodajne narudžbe</a>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3 xl:grid-cols-8">
                     @foreach ($sellerPriorityQueue as $item)
-                        <a href="{{ $item['href'] }}" class="rounded-2xl border border-slate-200 px-4 py-4 transition hover:border-slate-300 hover:bg-slate-50">
+                        <a href="{{ $item['href'] }}" class="panel-shell-soft p-4 transition hover:-translate-y-0.5 hover:border-slate-300">
                             <p class="text-sm text-slate-500">{{ $item['label'] }}</p>
                             <p class="mt-1 text-xl font-semibold text-slate-900">{{ $item['value'] }}</p>
                         </a>
@@ -68,19 +93,19 @@
                 </div>
             </x-card>
 
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Narudžbe za slanje</h2>
                 <x-alert variant="warning">{{ $shippingQueue->count() }} narudžbe traže operativnu pažnju.</x-alert>
                 <div class="space-y-3 text-sm text-slate-700">
                     @foreach ($shippingQueue as $entry)
-                        <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                        <div class="panel-subtle-card">
                             Narudžba #{{ $entry['id'] }} · {{ $entry['title'] }} · {{ str_replace('_', ' ', $entry['status']) }}
                         </div>
                     @endforeach
                 </div>
             </x-card>
 
-            <x-card class="space-y-4">
+            <x-card class="panel-shell space-y-4">
                 <h2 class="text-xl font-semibold text-slate-900">Javni profil prodavca</h2>
                 <p class="text-sm text-slate-600">Kupci mogu vidjeti tvoju reputaciju, aktivne aukcije i ocjene na javnom profilu.</p>
                 <x-button variant="ghost" :href="route('sellers.show', ['user' => $seller->id])">Otvori javni profil</x-button>

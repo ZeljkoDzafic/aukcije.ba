@@ -13,40 +13,67 @@ class WatchlistController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        // TODO: Add pagination (20/page) — power users can have hundreds of watched auctions.
-        // TODO: Include primaryImage, minimum_bid, time_remaining, and is_ending_soon flag.
-        // TODO: Add ?filter=active|ended query param support.
         $data = $request->user()
             ->watchlist()
             ->with(['category', 'primaryImage'])
             ->latest('auction_watchers.created_at')
-            ->paginate(20);
+            ->paginate(20)
+            ->through(function (Auction $auction): array {
+                return [
+                    'id' => $auction->id,
+                    'title' => $auction->title,
+                    'status' => $auction->status,
+                    'current_price' => $auction->current_price,
+                    'minimum_bid' => $auction->minimum_bid,
+                    'watchers_count' => $auction->watchers_count,
+                    'time_remaining' => $auction->time_remaining,
+                    'is_ending_soon' => $auction->ends_at?->isFuture() && $auction->ends_at->diffInHours(now()) <= 24,
+                    'category' => $auction->category ? [
+                        'id' => $auction->category->id,
+                        'name' => $auction->category->name,
+                    ] : null,
+                    'primary_image' => $auction->primaryImage?->url,
+                ];
+            });
 
-        return response()->json(['success' => true, 'data' => $data->items()]);
+        return response()->json([
+            'success' => true,
+            'data' => $data->items(),
+            'meta' => [
+                'current_page' => $data->currentPage(),
+                'per_page' => $data->perPage(),
+                'total' => $data->total(),
+            ],
+        ]);
     }
 
     public function add(Request $request, Auction $auction): JsonResponse
     {
-        $request->user()->watchlist()->syncWithoutDetaching([$auction->id]);
+        $attached = $request->user()->watchlist()->syncWithoutDetaching([$auction->id]);
 
-        // TODO: Increment auction watchers_count atomically:
-        //       $auction->increment('watchers_count')  (currently relies on watchers()->count() which hits DB again)
+        if (! empty($attached['attached'])) {
+            $auction->increment('watchers_count');
+        }
+
         return response()->json([
             'success' => true,
             'auction_id' => $auction->id,
-            'watchers_count' => $auction->watchers()->count(),
+            'watchers_count' => $auction->fresh()->watchers_count,
         ]);
     }
 
     public function remove(Request $request, Auction $auction): JsonResponse
     {
-        $request->user()->watchlist()->detach($auction->id);
+        $removed = $request->user()->watchlist()->detach($auction->id);
 
-        // TODO: Decrement auction watchers_count atomically:
-        //       $auction->decrement('watchers_count')
+        if ($removed > 0 && $auction->watchers_count > 0) {
+            $auction->decrement('watchers_count');
+        }
+
         return response()->json([
             'success' => true,
             'auction_id' => $auction->id,
+            'watchers_count' => $auction->fresh()->watchers_count,
         ]);
     }
 }

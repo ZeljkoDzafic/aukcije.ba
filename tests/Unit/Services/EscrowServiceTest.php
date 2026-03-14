@@ -193,11 +193,9 @@ describe('EscrowService', function () {
         ]);
         Wallet::factory()->create(['user_id' => $buyer->id, 'balance' => 200, 'frozen' => true]);
 
-        // Note: Current implementation doesn't check frozen status in holdFunds
-        // This would need to be added for full coverage
         $result = $this->escrowService->holdFunds($order);
 
-        expect($result)->toBeTrue(); // Funds held even if frozen (may need adjustment)
+        expect($result)->toBeFalse();
     });
 
     it('releases funds to seller minus commission', function () {
@@ -264,6 +262,20 @@ describe('EscrowService', function () {
         expect($result)->toBeTrue();
         expect($buyer->wallet->fresh()->balance)->toBe(50.0);
         expect($buyer->wallet->fresh()->escrow_balance)->toBe(50.0);
+    });
+
+    it('rejects refund larger than escrow balance', function () {
+        $buyer = User::factory()->create();
+        $order = Order::factory()->create([
+            'buyer_id' => $buyer->id,
+            'total_amount' => 100,
+        ]);
+        Wallet::factory()->create(['user_id' => $buyer->id, 'escrow_balance' => 25]);
+
+        $result = $this->escrowService->refundBuyer($order, 50);
+
+        expect($result)->toBeFalse();
+        expect($buyer->wallet->fresh()->escrow_balance)->toBe(25.0);
     });
 
     it('auto-releases after 14 days', function () {

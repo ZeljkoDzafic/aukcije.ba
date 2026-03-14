@@ -19,7 +19,12 @@
             </label>
 
             <x-input name="excerpt" label="Sažetak" :value="old('excerpt', $article->excerpt)" />
-            <x-input name="body" type="textarea" label="Sadržaj vijesti" :value="old('body', $article->body)" />
+            <x-wysiwyg-editor
+                name="body"
+                label="Sadržaj vijesti"
+                :value="old('body', $article->body)"
+                hint="Koristi formatirani tekst za lead, podnaslove, liste i linkove ka objavama."
+            />
 
             <div class="flex gap-3">
                 <x-button type="submit">Sačuvaj vijest</x-button>

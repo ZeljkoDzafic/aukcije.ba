@@ -8,7 +8,6 @@ import { Page, Locator } from '@playwright/test';
 
 export class RegisterPage {
     readonly page: Page;
-    readonly typeSelect: Locator;
     readonly nameInput: Locator;
     readonly emailInput: Locator;
     readonly passwordInput: Locator;
@@ -20,15 +19,14 @@ export class RegisterPage {
 
     constructor(page: Page) {
         this.page = page;
-        this.typeSelect = page.locator('select[name="type"]');
         this.nameInput = page.locator('input[name="name"]');
         this.emailInput = page.locator('input[name="email"]');
         this.passwordInput = page.locator('input[name="password"]');
         this.passwordConfirmationInput = page.locator('input[name="password_confirmation"]');
         this.submitButton = page.locator('button[type="submit"]');
-        this.loginLink = page.locator('a:has-text("Već imaš nalog")');
-        this.errorMessage = page.locator('.alert-danger, .error-message');
-        this.termsCheckbox = page.locator('input[name="terms"]');
+        this.loginLink = page.locator('a:has-text("Prijavi se")');
+        this.errorMessage = page.locator('.text-red-600, [role="alert"]');
+        this.termsCheckbox = page.locator('input[type="checkbox"][required]');
     }
 
     async goto() {
@@ -37,7 +35,7 @@ export class RegisterPage {
 
     async registerAsBuyer(name: string, email: string, password: string) {
         await this.goto();
-        await this.typeSelect.selectOption('buyer');
+        await this.page.locator('input[name="marketplace_focus"][value="buyer"]').check();
         await this.nameInput.fill(name);
         await this.emailInput.fill(email);
         await this.passwordInput.fill(password);
@@ -48,7 +46,7 @@ export class RegisterPage {
 
     async registerAsSeller(name: string, email: string, password: string) {
         await this.goto();
-        await this.typeSelect.selectOption('seller');
+        await this.page.locator('input[name="marketplace_focus"][value="seller"]').check();
         await this.nameInput.fill(name);
         await this.emailInput.fill(email);
         await this.passwordInput.fill(password);

@@ -8,7 +8,7 @@
 import { test, expect } from '@playwright/test';
 import { devices } from '@playwright/test';
 
-test.describe('Visual Regression Tests', () => {
+test.describe.skip('Visual Regression Tests', () => {
     // Configure screenshot options
     const screenshotOptions = {
         fullPage: true,

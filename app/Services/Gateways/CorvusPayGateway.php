@@ -52,7 +52,7 @@ class CorvusPayGateway implements PaymentGatewayInterface
                 'signature' => $signature,
                 'success_url' => $data['success_url'] ?? route('payment.success'),
                 'cancel_url' => $data['cancel_url'] ?? route('payment.cancel'),
-                'notify_url' => route('webhooks.corvuspay'),
+                'notify_url' => route('webhooks.payment', ['gateway' => 'corvuspay']),
                 'locale' => $data['locale'] ?? 'hr',
             ];
 

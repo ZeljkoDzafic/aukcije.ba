@@ -21,7 +21,7 @@
             <div wire:poll.30s="loadFeatured" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @if($loaded['featured'] && count($featuredAuctions) > 0)
                     @foreach($featuredAuctions as $auction)
-                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
+                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :seller="$auction->seller?->name" badge="Izdvojeno" badge-variant="trust" cta-label="Pogledaj detalj" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
                     @endforeach
                 @else
                     @for ($i = 0; $i < 4; $i++)
@@ -47,7 +47,7 @@
             <div wire:poll.10s="loadEndingSoon" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @if($loaded['ending_soon'] && count($endingSoonAuctions) > 0)
                     @foreach($endingSoonAuctions as $auction)
-                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
+                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :seller="$auction->seller?->name" badge="Uskoro pada čekić" badge-variant="warning" cta-label="Licitiraj sada" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
                     @endforeach
                 @else
                     @for ($i = 0; $i < 4; $i++)
@@ -73,7 +73,7 @@
             <div wire:poll.60s="loadNewArrivals" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @if($loaded['new_arrivals'] && count($newArrivalsAuctions) > 0)
                     @foreach($newArrivalsAuctions as $auction)
-                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
+                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :seller="$auction->seller?->name" badge="Novo u ponudi" badge-variant="success" cta-label="Provjeri listing" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
                     @endforeach
                 @else
                     @for ($i = 0; $i < 4; $i++)
@@ -99,7 +99,7 @@
             <div wire:poll.60s="loadMostWatched" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @if($loaded['most_watched'] && count($mostWatchedAuctions) > 0)
                     @foreach($mostWatchedAuctions as $auction)
-                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
+                        <x-auction-card :title="$auction->title" :category="$auction->category?->name ?? 'Bez kategorije'" :price="$auction->current_price" :bids="$auction->bids_count" :watchers="$auction->watchers_count" :location="$auction->location_city ?? $auction->location ?? 'Nepoznato'" :time="$auction->time_remaining" :seller="$auction->seller?->name" badge="Najviše prati" badge-variant="secondary" cta-label="Vidi zašto je tražena" :image-url="$auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->images->first()?->url ?? null" :srcset="$auction->primaryImage?->getSrcset()" :blurhash="$auction->primaryImage?->blurhash" :href="route('auctions.show', ['auction' => $auction->id])" />
                     @endforeach
                 @else
                     @for ($i = 0; $i < 4; $i++)

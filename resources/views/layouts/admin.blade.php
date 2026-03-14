@@ -22,7 +22,11 @@
     {{-- Scripts --}}
     @stack('scripts')
 </head>
-<body class="min-h-screen bg-gray-100">
+<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.10),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(245,158,11,0.10),_transparent_28%),linear-gradient(180deg,_#eef4ff_0%,_#f8fafc_48%,_#f3f6fb_100%)]">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg">
+        Preskoči na glavni sadržaj
+    </a>
+
     <div class="flex h-screen overflow-hidden">
         {{-- Admin Sidebar --}}
         @include('layouts.partials.admin-sidebar')
@@ -33,7 +37,7 @@
             @include('layouts.partials.admin-header')
 
             {{-- Main Content --}}
-            <main id="main-content" class="flex-1 overflow-y-auto p-6">
+            <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 @yield('content')
             </main>
         </div>

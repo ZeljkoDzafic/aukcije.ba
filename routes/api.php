@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CourierWebhookController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SellerDirectoryController;
@@ -36,6 +37,10 @@ Route::prefix('v1')->group(function () {
     // Courier webhook callbacks — no auth, signature verified in controller
     Route::post('/webhooks/courier/{courier}', [CourierWebhookController::class, 'handle'])
         ->name('webhooks.courier')
+        ->withoutMiddleware(['auth:sanctum']);
+
+    Route::post('/webhooks/payment/{gateway}', [PaymentWebhookController::class, 'handle'])
+        ->name('webhooks.payment')
         ->withoutMiddleware(['auth:sanctum']);
 
     Route::get('/health', function () {
@@ -118,7 +123,9 @@ Route::prefix('v1')->group(function () {
 
         // Messages
         Route::get('/user/messages', [MessageController::class, 'index']);
+        Route::get('/user/messages/{otherUserId}', [MessageController::class, 'showThread']);
         Route::post('/user/messages', [MessageController::class, 'store']);
+        Route::post('/user/messages/{message}/read', [MessageController::class, 'markRead']);
     });
 
     /*
@@ -161,7 +168,7 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware(['auth:sanctum', 'role:admin|moderator', 'audit.trail'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:super_admin|moderator', 'audit.trail'])->prefix('admin')->group(function () {
 
         // Users
         Route::get('/users', [App\Http\Controllers\Api\Admin\UserController::class, 'index']);

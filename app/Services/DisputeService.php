@@ -24,6 +24,15 @@ class DisputeService
     public function openDispute(Order $order, User $opener, string $reason, string $description): Dispute
     {
         return DB::transaction(function () use ($order, $opener, $reason, $description) {
+            $existingDispute = Dispute::query()
+                ->where('order_id', $order->id)
+                ->whereIn('status', ['open', 'in_review'])
+                ->first();
+
+            if ($existingDispute) {
+                return $existingDispute;
+            }
+
             $dispute = Dispute::create([
                 'order_id' => $order->id,
                 'opened_by_id' => $opener->id,
@@ -66,6 +75,10 @@ class DisputeService
 
     public function resolve(Dispute $dispute, string $resolution, User $resolver): bool
     {
+        if ($dispute->status === 'resolved') {
+            return true;
+        }
+
         DB::transaction(function () use ($dispute, $resolution, $resolver) {
             $dispute->update([
                 'status' => 'resolved',

@@ -9,30 +9,22 @@ import { Page, Locator } from '@playwright/test';
 export class AuctionListPage {
     readonly page: Page;
     readonly searchInput: Locator;
-    readonly searchButton: Locator;
     readonly categoryFilter: Locator;
     readonly priceMinInput: Locator;
     readonly priceMaxInput: Locator;
     readonly sortSelect: Locator;
     readonly auctionCards: Locator;
-    readonly gridViewButton: Locator;
-    readonly listViewButton: Locator;
-    readonly filterButton: Locator;
     readonly clearFiltersButton: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        this.searchInput = page.locator('input[name="search"]');
-        this.searchButton = page.locator('button:has-text("Pretraži")');
+        this.searchInput = page.locator('input[name="query"]');
         this.categoryFilter = page.locator('select[name="category"]');
         this.priceMinInput = page.locator('input[name="price_min"]');
         this.priceMaxInput = page.locator('input[name="price_max"]');
         this.sortSelect = page.locator('select[name="sort"]');
-        this.auctionCards = page.locator('[data-testid="auction-card"]');
-        this.gridViewButton = page.locator('button[aria-label="Grid view"]');
-        this.listViewButton = page.locator('button[aria-label="List view"]');
-        this.filterButton = page.locator('button:has-text("Filteri")');
-        this.clearFiltersButton = page.locator('button:has-text("Resetuj")');
+        this.auctionCards = page.locator('.auction-card');
+        this.clearFiltersButton = page.locator('button:has-text("Reset")');
     }
 
     async goto() {
@@ -41,7 +33,7 @@ export class AuctionListPage {
 
     async search(query: string) {
         await this.searchInput.fill(query);
-        await this.searchButton.click();
+        await this.searchInput.press('Tab');
     }
 
     async filterByCategory(category: string) {
@@ -51,7 +43,7 @@ export class AuctionListPage {
     async filterByPriceRange(min: number, max: number) {
         await this.priceMinInput.fill(min.toString());
         await this.priceMaxInput.fill(max.toString());
-        await this.searchButton.click();
+        await this.priceMaxInput.press('Tab');
     }
 
     async sortBy(sortOption: string) {
@@ -71,7 +63,7 @@ export class AuctionListPage {
     }
 
     async clickAuctionByTitle(title: string) {
-        await this.page.locator(`[data-testid="auction-card"]:has-text("${title}")`).click();
+        await this.page.locator(`.auction-card:has-text("${title}") a[aria-label*="Otvori aukciju"]`).first().click();
     }
 
     async isVisible(): Promise<boolean> {

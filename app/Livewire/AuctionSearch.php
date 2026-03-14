@@ -40,6 +40,13 @@ class AuctionSearch extends Component
     /** @var array<string, string> */
     public array $categoryOptions = [];
 
+    public function resetFilters(): void
+    {
+        $this->reset(['query', 'category', 'location', 'priceMin', 'priceMax', 'condition']);
+        $this->sort = 'ending_soon';
+        $this->resetPage();
+    }
+
     public function updatedQuery(): void
     {
         $this->resetPage();
@@ -109,9 +116,13 @@ class AuctionSearch extends Component
                 $results = $builder->paginate(20);
             } else {
                 $query = Auction::query()
-                    ->with(['category', 'primaryImage'])
+                    ->with(['category', 'primaryImage', 'seller:id,name'])
                     ->active()
-                    ->when($this->query !== '', fn ($q) => $q->where('title', 'like', '%'.$this->query.'%'))
+                    ->when($this->query !== '', fn ($q) => $q->where(function ($subQuery) {
+                        $subQuery
+                            ->where('title', 'like', '%'.$this->query.'%')
+                            ->orWhere('description', 'like', '%'.$this->query.'%');
+                    }))
                     ->when($this->category !== '', fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $this->category)))
                     ->when($this->priceMin !== null, fn ($q) => $q->where('current_price', '>=', $this->priceMin))
                     ->when($this->priceMax !== null, fn ($q) => $q->where('current_price', '<=', $this->priceMax))
@@ -142,15 +153,16 @@ class AuctionSearch extends Component
                     'image_url' => $auction->primaryImage?->getOptimizedUrl('medium') ?? $auction->primaryImage?->url,
                     'image_srcset' => $auction->primaryImage?->getSrcset(),
                     'image_blurhash' => $auction->primaryImage?->blurhash,
+                    'seller' => $auction->seller?->name,
                 ]),
             ]);
         }
 
         // Fallback demo data when DB tables don't exist yet (local dev / CI without migrations)
         $demoResults = collect([
-            ['id' => 'demo-1', 'title' => 'Samsung Galaxy S24 Ultra', 'category' => 'Elektronika', 'price' => 1250.00, 'bids' => 14, 'watchers' => 32, 'location' => 'Sarajevo', 'time' => '2d 04h', 'image_url' => null],
-            ['id' => 'demo-2', 'title' => 'Sony WH-1000XM5', 'category' => 'Audio', 'price' => 480.00, 'bids' => 11, 'watchers' => 17, 'location' => 'Banja Luka', 'time' => '5h 12m', 'image_url' => null],
-            ['id' => 'demo-3', 'title' => 'Vintage Leica M3', 'category' => 'Foto oprema', 'price' => 2750.00, 'bids' => 19, 'watchers' => 44, 'location' => 'Tuzla', 'time' => '1d 18h', 'image_url' => null],
+            ['id' => 'demo-1', 'title' => 'Samsung Galaxy S24 Ultra', 'category' => 'Elektronika', 'price' => 1250.00, 'bids' => 14, 'watchers' => 32, 'location' => 'Sarajevo', 'time' => '2d 04h', 'image_url' => null, 'seller' => 'Tech Seller'],
+            ['id' => 'demo-2', 'title' => 'Sony WH-1000XM5', 'category' => 'Audio', 'price' => 480.00, 'bids' => 11, 'watchers' => 17, 'location' => 'Banja Luka', 'time' => '5h 12m', 'image_url' => null, 'seller' => 'Audio Hub'],
+            ['id' => 'demo-3', 'title' => 'Vintage Leica M3', 'category' => 'Foto oprema', 'price' => 2750.00, 'bids' => 19, 'watchers' => 44, 'location' => 'Tuzla', 'time' => '1d 18h', 'image_url' => null, 'seller' => 'Retro Lens'],
         ]);
 
         return view('livewire.auction-search', ['results' => $demoResults]);

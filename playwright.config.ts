@@ -111,8 +111,8 @@ export default defineConfig({
     outputDir: 'playwright-report/results/',
 
     // Run setup before all tests
-    globalSetup: require.resolve('./tests/e2e/helpers/global-setup'),
+    globalSetup: './tests/e2e/helpers/global-setup.ts',
 
     // Run teardown after all tests
-    globalTeardown: require.resolve('./tests/e2e/helpers/global-teardown'),
+    globalTeardown: './tests/e2e/helpers/global-teardown.ts',
 });
