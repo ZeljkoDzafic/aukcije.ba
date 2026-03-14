@@ -45,17 +45,24 @@ RUN pecl install redis \
     && docker-php-ext-enable redis xdebug
 
 # Install PHP extensions (core, no extra configure needed)
-RUN docker-php-ext-install -j$(nproc) pdo_pgsql pgsql mbstring exif bcmath zip soap xsl
-
-# Install intl (requires configure)
-RUN docker-php-ext-configure intl && docker-php-ext-install -j$(nproc) intl
-
-# Install GD (requires configure with image format paths)
-RUN docker-php-ext-configure gd \
-        --with-freetype=/usr/include/freetype2 \
-        --with-jpeg=/usr \
-        --with-webp=/usr \
-    && docker-php-ext-install -j$(nproc) gd
+# Install PHP extensions
+RUN docker-php-ext-configure intl \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+        --with-xpm \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_pgsql \
+        pgsql \
+        mbstring \
+        exif \
+        bcmath \
+        gd \
+        zip \
+        intl \
+        soap \
+        xsl
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagickwand-dev \
