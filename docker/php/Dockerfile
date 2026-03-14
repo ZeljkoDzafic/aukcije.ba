@@ -73,10 +73,10 @@ RUN groupadd --gid ${GROUP_ID} docker \
 WORKDIR /var/www/html
 
 # Copy PHP configuration
-COPY ./php.ini /usr/local/etc/php/conf.d/php.ini
+COPY ./docker/php/php.ini /usr/local/etc/php/conf.d/php.ini
 
 # Copy entrypoint script
-COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose port 9000 for PHP-FPM

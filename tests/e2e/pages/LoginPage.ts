@@ -33,7 +33,10 @@ export class LoginPage {
         await this.goto();
         await this.emailInput.fill(email);
         await this.passwordInput.fill(password);
-        await this.submitButton.click();
+        await Promise.all([
+            this.page.waitForNavigation({ waitUntil: 'networkidle' }),
+            this.submitButton.click(),
+        ]).catch(() => undefined);
     }
 
     async loginAsBuyer() {

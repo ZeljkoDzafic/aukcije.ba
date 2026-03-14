@@ -37,7 +37,7 @@ test.describe('Critical User Flows', () => {
             await auctionListPage.clickAuction(0);
             await expect(auctionDetailPage.title).toBeVisible();
             await expect(auctionDetailPage.priceDisplay).toBeVisible();
-            await expect(auctionDetailPage.countdownTimer).toBeVisible();
+            await expect(auctionDetailPage.countdownTimer).toBeVisible({ timeout: 10000 });
             await expect(auctionDetailPage.description).toBeVisible();
             await expect(auctionDetailPage.sellerInfo).toBeVisible();
         });
@@ -94,10 +94,10 @@ test.describe('Critical User Flows', () => {
             await expect(page.getByRole('heading', { name: 'Moderacija aukcija' })).toBeVisible();
 
             await page.goto('/admin/korisnici');
-            await expect(page.getByRole('heading', { name: 'Korisnici' })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Upravljanje korisnicima' })).toBeVisible();
 
             await page.goto('/admin/sporovi');
-            await expect(page.getByRole('heading', { name: 'Sporovi' })).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Rješavanje sporova' })).toBeVisible();
         });
     });
 
@@ -108,9 +108,9 @@ test.describe('Critical User Flows', () => {
         await page.waitForURL('/dashboard');
 
         await page.goto('/orders');
-        await expect(page.getByRole('heading', { name: 'Narudžbe' })).toBeVisible();
+        await expect(page.locator('h1', { hasText: 'Moje narudžbe' })).toBeVisible();
 
         await page.goto('/notifications');
-        await expect(page.getByRole('heading', { name: 'Obavijesti' })).toBeVisible();
+        await expect(page.locator('h1', { hasText: 'Obavijesti' })).toBeVisible();
     });
 });

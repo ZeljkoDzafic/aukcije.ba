@@ -25,7 +25,7 @@ export class AuctionDetailPage {
         this.page = page;
         this.title = page.locator('h1');
         this.priceDisplay = page.locator('text=Trenutna cijena').first();
-        this.countdownTimer = page.locator('text=Vrijeme do kraja').first();
+        this.countdownTimer = page.locator('text=Kraj aukcije').first();
         this.bidInput = page.locator('input[name="bid_amount"]');
         this.bidButton = page.locator('button:has-text("Licitiraj odmah")');
         this.proxyBidInput = page.locator('input[name="proxy_max"]');
